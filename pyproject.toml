@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "vcon-lib"
-version = "0.1.0"
+name = "vcon"
+version = "0.3.0"
 description = "The vCon library"
 authors = ["pair <dev_team@strolid.com>"]
 license = "MIT"
