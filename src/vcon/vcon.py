@@ -1,27 +1,54 @@
 import copy
 import json
-from typing import Optional, Union
+from typing import Optional, Union, Self, Any
 import hashlib
 import time
 import uuid6
+import requests
 from datetime import datetime, UTC
 from pydash import get as _get
 import base64
+from authlib.jose import JsonWebSignature
+from authlib.jose.errors import BadSignatureError
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from .party import Party
+from .dialog import Dialog
 
 _LAST_V8_TIMESTAMP = None
 
-
+        
 class Vcon:
-    def __init__(self, vcon_dict={}):
+    def __init__(self, vcon_dict={}) -> None:
         # deep copy
+        """
+        Initialize a Vcon object from a dictionary.
+
+        :param vcon_dict: a dictionary representing a vCon
+        :type vcon_dict: dict
+        """
         self.vcon_dict = json.loads(json.dumps(vcon_dict))
 
     @classmethod
-    def build_from_json(cls, json_string: str):
+    def build_from_json(cls, json_string: str) -> Self:
+        """
+        Initialize a Vcon object from a JSON string.
+
+        :param json_string: a JSON string representing a vCon
+        :type json_string: str
+        :return: a Vcon object
+        :rtype: Vcon
+        """
         return cls(json.loads(json_string))
 
     @classmethod
-    def build_new(cls):
+    def build_new(cls) -> Self:
+        """
+        Initialize a Vcon object with default values.
+
+        :return: a Vcon object
+        :rtype: Vcon
+        """
         vcon_dict = {
             "uuid": cls.uuid8_domain_name("strolid.com"),
             "vcon": "0.0.1",
@@ -36,10 +63,24 @@ class Vcon:
         return cls(vcon_dict)
 
     @property
-    def tags(self):
+    def tags(self) -> Optional[dict]:
+        """
+        Returns the tags attachment.
+        
+        :return: the tags attachment
+        :rtype: dict or None
+        """
         return self.find_attachment_by_type("tags")
 
-    def get_tag(self, tag_name):
+    def get_tag(self, tag_name) -> Optional[dict]:
+        """
+        Returns the value of a tag by name.
+
+        :param tag_name: the name of the tag
+        :type tag_name: str
+        :return: the value of the tag or None if not found
+        :rtype: str or None
+        """
         tags_attachment = self.find_attachment_by_type("tags")
         if not tags_attachment:
             return None
@@ -51,7 +92,17 @@ class Vcon:
         tag_value = tag.split(":")[1]
         return tag_value
 
-    def add_tag(self, tag_name, tag_value):
+    def add_tag(self, tag_name, tag_value) -> None:
+        """
+        Adds a tag to the vCon.
+
+        :param tag_name: the name of the tag
+        :type tag_name: str
+        :param tag_value: the value of the tag
+        :type tag_value: str
+        :return: None
+        :rtype: None
+        """
         tags_attachment = self.find_attachment_by_type("tags")
         if not tags_attachment:
             tags_attachment = {
@@ -62,12 +113,32 @@ class Vcon:
             self.vcon_dict["attachments"].append(tags_attachment)
         tags_attachment["body"].append(f"{tag_name}:{tag_value}")
 
-    def find_attachment_by_type(self, type):
+    def find_attachment_by_type(self, type: str) -> Optional[dict]:
+        """
+        Finds an attachment by type.
+
+        :param type: the type of the attachment
+        :type type: str
+        :return: the attachment or None if not found
+        :rtype: dict or None
+        """
         return next(
             (a for a in self.vcon_dict["attachments"] if a["type"] == type), None
         )
 
-    def add_attachment(self, *, body: Union[dict, list, str], type: str, encoding="none"):
+    def add_attachment(self, *, body: Union[dict, list, str], type: str, encoding="none") -> None:
+        """
+        Adds an attachment to the vCon.
+
+        :param body: the body of the attachment
+        :type body: Union[dict, list, str]
+        :param type: the type of the attachment
+        :type type: str
+        :param encoding: the encoding of the attachment body
+        :type encoding: str
+        :return: None
+        :rtype: None
+        """
         if encoding not in ['json', 'none', 'base64url']:
             raise Exception("Invalid encoding")
         
@@ -90,11 +161,36 @@ class Vcon:
         }
         self.vcon_dict["attachments"].append(attachment)
 
-    def find_analysis_by_type(self, type):  # TODO fix to search for specific dialog id if it's passed
+    def find_analysis_by_type(self, type) -> Any | None:
+        """
+        Finds an analysis by type.
+
+        :param type: the type of the analysis
+        :type type: str
+        :return: the analysis or None if not found
+        :rtype: dict or None
+        """
         return next((a for a in self.vcon_dict["analysis"] if a["type"] == type), None)
 
-    def add_analysis(self, *, type: str, dialog: Union[list, int], vendor: str, body: Union[dict, list, str], encoding="none", extra={}):
-        
+    def add_analysis(self, *, type: str, dialog: Union[list, int], vendor: str, body: Union[dict, list, str], encoding="none", extra={}) -> None:
+        """
+        Adds analysis data to the vCon.
+
+        :param type: the type of the analysis
+        :type type: str
+        :param dialog: the dialog(s) associated with the analysis
+        :type dialog: Union[list, int]
+        :param vendor: the vendor of the analysis
+        :type vendor: str
+        :param body: the body of the analysis
+        :type body: Union[dict, list, str]
+        :param encoding: the encoding of the body
+        :type encoding: str
+        :param extra: extra key-value pairs to include in the analysis
+        :type extra: dict
+        :return: None
+        :rtype: None
+        """
         if encoding not in ['json', 'none', 'base64url']:
             raise Exception("Invalid encoding")
         
@@ -120,10 +216,28 @@ class Vcon:
         }
         self.vcon_dict["analysis"].append(analysis)
 
-    def add_party(self, party: dict):
-        self.vcon_dict["parties"].append(party)
+    def add_party(self, party: Party) -> None:
+        """
+        Adds a party to the vCon.
+
+        :param party: the party to add
+        :type party: Party
+        :return: None
+        :rtype: None
+        """
+        self.vcon_dict["parties"].append(party.to_dict())
 
     def find_party_index(self, by: str, val: str) -> Optional[int]:
+        """
+        Find the index of a party in the vCon given a key-value pair.
+
+        :param by: the key to look for
+        :type by: str
+        :param val: the value to look for
+        :type val: str
+        :return: The index of the party if found, None otherwise
+        :rtype: Optional[int]
+        """
         return next(
             (
                 ind
@@ -133,28 +247,71 @@ class Vcon:
             None,
         )
 
+
     def find_dialog(self, by: str, val: str) -> Optional[dict]:
+        """
+        Find a dialog in the vCon given a key-value pair.
+
+        :param by: the key to look for
+        :type by: str
+        :param val: the value to look for
+        :type val: str
+        :return: The dialog if found, None otherwise
+        :rtype: Optional[dict]
+        """
         return next(
             (dialog for dialog in self.dialog if _get(dialog, by) == val),
             None,
         )
 
-    def add_dialog(self, dialog: dict):
+    def add_dialog(self, dialog: dict) -> None:
+        """
+        Add a dialog to the vCon.
+
+        :param dialog: the dialog to add
+        :type dialog: dict
+        :return: None
+        :rtype: None
+        """
         self.vcon_dict["dialog"].append(dialog)
 
     def to_json(self) -> str:
+        """
+        Serialize the vCon to a JSON string.
+
+        :return: a JSON string representation of the vCon
+        :rtype: str
+        """
         tmp_vcon_dict = copy.copy(self.vcon_dict)
         return json.dumps(tmp_vcon_dict)
 
     def to_dict(self) -> dict:
-        return json.loads(self.to_json())  # convert from internal dict format to vcon format
+        """
+        Serialize the vCon to a dictionary.
+
+        :return: a dictionary representation of the vCon
+        :rtype: dict
+        """
+        return json.loads(self.to_json())
 
     def dumps(self) -> str:
+        """
+        Alias for `to_json()`.
+
+        :return: a JSON string representation of the vCon
+        :rtype: str
+        """
         return self.to_json()
 
     @property
-    def parties(self) -> list:
-        return self.vcon_dict.get("parties", [])
+    def parties(self) -> list[Party]:
+        """
+        Returns the list of parties.
+
+        :return: a list of parties
+        :rtype: list[Party]
+        """
+        return [Party(**party) for party in self.vcon_dict.get("parties", [])]
 
     @property
     def dialog(self) -> list:
@@ -170,18 +327,10 @@ class Vcon:
 
     @property
     def uuid(self) -> str:
-        """
-        The [UUID] for the vCon is used to refer to it when privacy or
-        security may not allow for inclusion or URL reference to a vCon.  The
-        UUID MUST be globally unique.
-        """
         return self.vcon_dict["uuid"]
 
     @property
     def vcon(self) -> str:
-        """
-        The the value of vcon parameter contains the syntactic version of the JSON format used in the vCon.
-        """
         return self.vcon_dict["vcon"]
 
     @property
@@ -190,11 +339,6 @@ class Vcon:
 
     @property
     def created_at(self):
-        """"
-        The created_at parameter provides the creation time of this vcon,
-        which MUST be present, and should not changed once the vcon object is
-        created.
-        """
         return self.vcon_dict.get("created_at")
 
     @property
@@ -219,20 +363,6 @@ class Vcon:
 
     @staticmethod
     def uuid8_domain_name(domain_name: str) -> str:
-        """
-        Generate a version 8 (custom) UUID using the upper 62 bits of the SHA-1 hash
-        for the given DNS domain name string for custom_c and generating
-        custom_a and custom_b the same way as unix_ts_ms and rand_a respectively
-        for UUID version 7 (per IETF I-D draft-peabody-dispatch-new-uuid-format-04).
-
-        Parameters:
-        domain_name: a DNS domain name string, should generally be a fully qualified host
-            name.
-
-        Returns:
-        UUID version 8 string
-        """
-
         sha1_hasher = hashlib.sha1()
         sha1_hasher.update(bytes(domain_name, "utf-8"))
         dn_sha1 = sha1_hasher.digest()
@@ -246,37 +376,103 @@ class Vcon:
 
     @staticmethod
     def uuid8_time(custom_c_62_bits: int) -> str:
-        """
-        Generate a version 8 (custom) UUID using the given custom_c and generating
-        custom_a and custom_b the same way as unix_ts_ms and rand_a respectively
-        for UUID version 7 (per IETF I-D draft-peabody-dispatch-new-uuid-format-04).
-
-        Parameters:
-        custom_c_62_bits: the 62 bit value as an integer to be used for custom_b
-            portion of UUID version 8.
-
-        Returns:
-        UUID version 8 string
-        """
-        # This is partially from uuid6.uuid7 implementation:
         global _LAST_V8_TIMESTAMP
 
-        nanoseconds = time.time_ns()
-        if _LAST_V8_TIMESTAMP is not None and nanoseconds <= _LAST_V8_TIMESTAMP:
-            nanoseconds = _LAST_V8_TIMESTAMP + 1
-        timestamp_ms, timestamp_ns = divmod(nanoseconds, 10**6)
+        ns = time.time_ns()
+        if _LAST_V8_TIMESTAMP is not None and ns <= _LAST_V8_TIMESTAMP:
+            ns = _LAST_V8_TIMESTAMP + 1
+        timestamp_ms, timestamp_ns = divmod(ns, 10**6)
         subsec = uuid6._subsec_encode(timestamp_ns)
 
-        # This is not what is in the vCon I-D.  It says random bits
-        # not bits from the time stamp.  May want to change this
         subsec_a = subsec >> 8
         uuid_int = (timestamp_ms & 0xFFFFFFFFFFFF) << 80
         uuid_int |= subsec_a << 64
         uuid_int |= custom_c_62_bits
 
-        # We lie about the version and then correct it afterwards
         uuid_str = str(uuid6.UUID(int=uuid_int, version=7))
         assert uuid_str[14] == "7"
         uuid_str = uuid_str[:14] + "8" + uuid_str[15:]
 
         return uuid_str
+
+    def sign(self, private_key) -> None:
+        """
+        Sign the vCon using JWS.
+
+        :param private_key: the private key used for signing
+        :type private_key: Union[rsa.RSAPrivateKey, bytes]
+        :return: None
+        :rtype: None
+        """
+        """Sign the vCon using JWS."""
+        payload = self.to_json()
+        jws = JsonWebSignature()
+        protected = {
+            "alg": "RS256",
+            "typ": "JWS"
+        }
+        
+        # Convert private key to PEM format if it's not already
+        if isinstance(private_key, rsa.RSAPrivateKey):
+            pem = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+        else:
+            pem = private_key
+
+        signed = jws.serialize_compact(protected, payload, pem)
+        header, payload, signature = signed.split('.')
+        
+        self.vcon_dict['signatures'] = [{
+            "protected": header,
+            "signature": signature
+        }]
+        self.vcon_dict['payload'] = payload
+
+    def verify(self, public_key) -> bool:
+        """Verify the JWS signature of the vCon.
+
+        :param public_key: the public key used for verification
+        :type public_key: Union[rsa.RSAPublicKey, bytes]
+        :return: True if the signature is valid, False otherwise
+        :rtype: bool
+        """
+        """Verify the JWS signature of the vCon."""
+        if 'signatures' not in self.vcon_dict or 'payload' not in self.vcon_dict:
+            raise ValueError("vCon is not signed")
+
+        jws = JsonWebSignature()
+        signed_data = f"{self.vcon_dict['signatures'][0]['protected']}.{self.vcon_dict['payload']}.{self.vcon_dict['signatures'][0]['signature']}"
+        
+        # Convert public key to PEM format if it's not already
+        if isinstance(public_key, rsa.RSAPublicKey):
+            pem = public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+        else:
+            pem = public_key
+
+        try:
+            jws.deserialize_compact(signed_data, pem)
+            return True
+        except BadSignatureError:
+            return False
+
+    @staticmethod
+    @classmethod
+    def generate_key_pair(cls) -> tuple:
+        """
+        Generate a new RSA key pair for signing vCons.
+
+        :return: a tuple containing the private key and public key
+        :rtype: tuple[rSA.RSAPrivateKey, rsa.RSAPublicKey]
+        """
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048
+        )
+        public_key = private_key.public_key()
+        return private_key, public_key

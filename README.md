@@ -1,21 +1,27 @@
-# Vcon Library Documentation
+# vCon Python Library
 
-The Vcon library provides a Python implementation for working with vCon (Virtualized Conversation) containers. vCons are used to store and manage conversation data, including metadata, dialog, analysis, and attachments.
+This Python library provides a convenient way to work with vCon (Virtualized Conversation) objects. vCon is a standard for representing conversation data, including metadata, dialog, analysis, and attachments.
 
-## Table of Contents
+## Features
 
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Vcon Class](#vcon-class)
-4. [Methods](#methods)
-5. [Properties](#properties)
-6. [Utility Methods](#utility-methods)
+- Create and manipulate vCon objects
+- Add parties, dialogs, attachments, and analysis to vCons
+- Sign and verify vCons using JWS (JSON Web Signature)
+- Generate UUID8 identifiers
+- Pack and unpack dialogs
+- Add and retrieve tags
 
 ## Installation
 
-[Instructions for installing the library would go here]
+To install the vCon library, use pip:
+
+```
+pip install vcon
+```
 
 ## Usage
+
+Here's a quick example of how to use the vCon library:
 
 ```python
 from vcon import Vcon
@@ -24,125 +30,90 @@ from vcon import Vcon
 vcon = Vcon.build_new()
 
 # Add a party
-vcon.add_party({"name": "Alice", "tel": "+1234567890"})
+vcon.add_party({
+    "name": "Alice",
+    "tel": "+1234567890"
+})
 
 # Add a dialog
 vcon.add_dialog({
     "type": "text",
-    "start": "2023-07-21T10:00:00Z",
+    "start": "2023-06-01T10:00:00Z",
     "parties": [0],
     "body": "Hello, world!",
     "encoding": "none"
 })
 
 # Add an attachment
-vcon.add_attachment(type="document", body="Sample content", encoding="none")
+vcon.add_attachment(
+    body={"key": "value"},
+    type="json_data",
+    encoding="json"
+)
 
 # Add analysis
 vcon.add_analysis(
     type="sentiment",
     dialog=[0],
-    vendor="SentimentAnalyzer",
-    body={"score": 0.8},
+    vendor="AnalysisCompany",
+    body={"sentiment": "positive"},
     encoding="json"
 )
 
+# Add a tag
+vcon.add_tag("importance", "high")
+
+# Sign the vCon
+private_key, public_key = Vcon.generate_key_pair()
+vcon.sign(private_key)
+
+# Verify the signature
+is_valid = vcon.verify(public_key)
+
 # Convert to JSON
-json_data = vcon.to_json()
+json_string = vcon.to_json()
+
+# Create a vCon from JSON
+new_vcon = Vcon.build_from_json(json_string)
 ```
 
-## Vcon Class
+## API Reference
 
-The `Vcon` class is the main class for working with vCon containers.
+For detailed information about the available methods and their usage, please refer to the docstrings in the source code.
 
-### Constructor
+## Contributing
 
-- `Vcon(vcon_dict={})`: Creates a new Vcon instance from a dictionary.
+Contributions to the vCon library are welcome! Please submit pull requests or open issues on the GitHub repository.
 
-### Class Methods
+## License
 
-- `build_from_json(json_string)`: Creates a Vcon instance from a JSON string.
-- `build_new()`: Creates a new empty Vcon instance with default values.
+This project is licensed under the MIT License:
 
-## Methods
+MIT License
 
-### add_tag(tag_name, tag_value)
+Copyright (c) 2023 Thomas McCarthy-Howe
 
-Adds a tag to the vCon.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-### add_attachment(body, type, encoding="none")
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Adds an attachment to the vCon.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-### add_analysis(type, dialog, vendor, body, encoding="none", extra={})
+## Contact
 
-Adds analysis data to the vCon.
+For questions or support, please contact:
 
-### add_party(party)
-
-Adds a party to the vCon.
-
-### add_dialog(dialog)
-
-Adds a dialog to the vCon.
-
-### to_json()
-
-Converts the vCon to a JSON string.
-
-### to_dict()
-
-Converts the vCon to a dictionary.
-
-### dumps()
-
-Alias for `to_json()`.
-
-## Properties
-
-- `tags`: Returns the tags attachment.
-- `parties`: Returns the list of parties.
-- `dialog`: Returns the list of dialogs.
-- `attachments`: Returns the list of attachments.
-- `analysis`: Returns the list of analysis data.
-- `uuid`: Returns the UUID of the vCon.
-- `vcon`: Returns the vCon version.
-- `subject`: Returns the subject of the vCon.
-- `created_at`: Returns the creation timestamp.
-- `updated_at`: Returns the last update timestamp.
-- `redacted`: Returns redaction information.
-- `appended`: Returns appended information.
-- `group`: Returns the group information.
-- `meta`: Returns metadata information.
-
-## Utility Methods
-
-### find_attachment_by_type(type)
-
-Finds an attachment by its type.
-
-### find_analysis_by_type(type)
-
-Finds analysis data by its type.
-
-### find_party_index(by, val)
-
-Finds the index of a party based on a key-value pair.
-
-### find_dialog(by, val)
-
-Finds a dialog based on a key-value pair.
-
-### get_tag(tag_name)
-
-Gets the value of a specific tag.
-
-### uuid8_domain_name(domain_name)
-
-Generates a version 8 UUID based on a domain name.
-
-### uuid8_time(custom_c_62_bits)
-
-Generates a version 8 UUID based on a custom 62-bit value.
-
-This documentation provides an overview of the Vcon library's functionality. For more detailed information on each method and property, refer to the inline comments and docstrings in the source code.
+Thomas McCarthy-Howe
+Email: ghostofbasho@gmail.com
