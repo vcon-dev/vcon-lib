@@ -24,7 +24,7 @@ Generating a UUID8 based on a domain name
 
 def test_build_from_json():
     json_string = '{"uuid": "12345", "vcon": "0.0.1", "created_at": "2023-05-02T12:00:00+00:00", "redacted": {}, "group": [], "parties": [], "dialog": [], "attachments": [], "analysis": []}'
-    vcon = vcon.Vcon.build_from_json(json_string)
+    vcon = Vcon.build_from_json(json_string)
     assert vcon.uuid == "12345"
     assert vcon.vcon == "0.0.1"
     assert vcon.created_at == "2023-05-02T12:00:00+00:00"
