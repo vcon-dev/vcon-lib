@@ -162,9 +162,22 @@ def test_find_analysis_by_type():
 
 def test_find_party_index():
     vcon = Vcon.build_new()
-    vcon.add_party({"id": "party1"})
-    assert vcon.find_party_index("id", "party1") == 0
-    assert vcon.find_party_index("id", "nonexistent_party") is None
+    p = Party(name="Alice")
+    vcon.add_party(p)
+    assert vcon.find_party_index("name", "Alice") == 0
+    assert vcon.find_party_index("name", "Bob") is None
+    assert vcon.find_party_index("nonexistent_field", "Alice") is None
+    assert vcon.find_party_index("name", "nonexistent_party") is None
+
+    vcon.add_party(Party(name="Bob"))
+    assert vcon.find_party_index("name", "Bob") == 1
+    assert vcon.find_party_index("name", "Alice") == 0
+
+    assert vcon.find_party_index("nonexistent_field", "Alice") is None
+
+    vcon.add_party(Party(name="Charlie"))
+    assert vcon.find_party_index("name", "Charlie") == 2
+    assert vcon.find_party_index("nonexistent_field", "Alice") is None
 
 
 def test_properties():
@@ -174,14 +187,6 @@ def test_properties():
     assert vcon.uuid == "f6603c8b-f3c6-4d12-bc50-b0a1f1c887b3"
     assert vcon.created_at == "2024-05-03T20:13:48.414984"
     assert vcon.updated_at == "2024-05-03T20:13:48.414984"
-
-    # Note: vcon and redacted fields are not present in the provided JSON
-    # assert vcon.vcon == "0.0.1"
-    # assert vcon.redacted == {"key": "value"}
-
-    # Note: group field is not present in the provided JSON
-    # assert vcon.group == [1, 2]
-
     assert len(vcon.parties) == 2
 
     assert vcon.parties[0].to_dict() == {

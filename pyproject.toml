@@ -23,6 +23,9 @@ priority = "primary"
 python = "^3.12"
 authlib = "^1.3.2"
 pytest = "^8.3.2"
+uuid6 = "^2024.7.10"
+requests = "^2.32.3"
+pydash = "^8.0.3"
 
 [build-system]
 requires = ["poetry-core"]
