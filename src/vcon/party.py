@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 from vcon.civic_address import CivicAddress
 from datetime import datetime
@@ -49,7 +48,6 @@ class Party:
         for key, value in locals().items():
             if value is not None:
                 setattr(self, key, value)
-        
 
     def to_dict(self):
         # copy the attributes that are not None
