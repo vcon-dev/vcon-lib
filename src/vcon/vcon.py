@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import copy
 import json
-from typing import Optional, Union, Self, Any
+from typing import Optional, Union, Any
 import hashlib
 import time
 import uuid6
-import requests
-from datetime import datetime, UTC
+from datetime import datetime
+from datetime import timezone
 from pydash import get as _get
 import base64
 from authlib.jose import JsonWebSignature
@@ -17,7 +19,7 @@ from .dialog import Dialog
 
 _LAST_V8_TIMESTAMP = None
 
-        
+
 class Vcon:
     def __init__(self, vcon_dict={}) -> None:
         # deep copy
@@ -52,7 +54,7 @@ class Vcon:
         vcon_dict = {
             "uuid": cls.uuid8_domain_name("strolid.com"),
             "vcon": "0.0.1",
-            "created_at": datetime.now(UTC).isoformat()[:-3] + "+00:00",
+            "created_at": datetime.now(timezone.utc).isoformat()[:-3] + "+00:00",
             "redacted": {},
             "group": [],
             "parties": [],
