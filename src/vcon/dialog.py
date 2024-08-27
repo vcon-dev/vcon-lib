@@ -23,27 +23,27 @@ class Dialog:
     def __init__(self, 
                  type: str, 
                  start: datetime, 
-                 duration: Optional[float], 
                  parties: List[int], 
-                 originator: Optional[int], 
-                 mimetype: Optional[str], 
-                 filename: Optional[str], 
-                 body: Optional[str], 
-                 encoding: Optional[str], 
-                 url: Optional[str], 
-                 alg: Optional[str], 
-                 signature: Optional[str], 
-                 disposition: Optional[str], 
-                 party_history: Optional[List[PartyHistory]], 
-                 transferee: Optional[int], 
-                 transferor: Optional[int], 
-                 transfer_target: Optional[int], 
-                 original: Optional[int], 
-                 consultation: Optional[int], 
-                 target_dialog: Optional[int], 
-                 campaign: Optional[str], 
-                 interaction: Optional[str], 
-                 skill: Optional[str]) -> None:
+                 originator: Optional[int] = None, 
+                 mimetype: Optional[str] = None, 
+                 filename: Optional[str] = None, 
+                 body: Optional[str] = None, 
+                 encoding: Optional[str] = None, 
+                 url: Optional[str] = None, 
+                 alg: Optional[str] = None, 
+                 signature: Optional[str] = None, 
+                 disposition: Optional[str] = None, 
+                 party_history: Optional[List[PartyHistory]] = None, 
+                 transferee: Optional[int] = None, 
+                 transferor: Optional[int] = None, 
+                 transfer_target: Optional[int] = None, 
+                 original: Optional[int] = None, 
+                 consultation: Optional[int] = None, 
+                 target_dialog: Optional[int] = None, 
+                 campaign: Optional[str] = None, 
+                 interaction: Optional[str] = None, 
+                 skill: Optional[str] = None, 
+                 duration: Optional[float] = None) -> None:
         """
         Initialize a Dialog object.
 
@@ -51,52 +51,51 @@ class Dialog:
         :type type: str
         :param start: the start time of the dialog
         :type start: datetime
-        :param duration: the duration of the dialog
-        :type duration: float
         :param parties: the parties involved in the dialog
         :type parties: List[int]
         :param originator: the party that originated the dialog
-        :type originator: int
+        :type originator: int or None
         :param mimetype: the MIME type of the dialog body
-        :type mimetype: str
+        :type mimetype: str or None
         :param filename: the filename of the dialog body
-        :type filename: str
+        :type filename: str or None
         :param body: the body of the dialog
-        :type body: str
+        :type body: str or None
         :param encoding: the encoding of the dialog body
-        :type encoding: str
+        :type encoding: str or None
         :param url: the URL of the dialog
-        :type url: str
+        :type url: str or None
         :param alg: the algorithm used to sign the dialog
-        :type alg: str
+        :type alg: str or None
         :param signature: the signature of the dialog
-        :type signature: str
+        :type signature: str or None
         :param disposition: the disposition of the dialog
-        :type disposition: str
+        :type disposition: str or None
         :param party_history: the history of parties involved in the dialog
-        :type party_history: List[PartyHistory]
+        :type party_history: List[PartyHistory] or None
         :param transferee: the party that the dialog was transferred to
-        :type transferee: int
+        :type transferee: int or None
         :param transferor: the party that transferred the dialog
-        :type transferor: int
+        :type transferor: int or None
         :param transfer_target: the target of the transfer
-        :type transfer_target: int
+        :type transfer_target: int or None
         :param original: the original dialog
-        :type original: int
+        :type original: int or None
         :param consultation: the consultation dialog
-        :type consultation: int
+        :type consultation: int or None
         :param target_dialog: the target dialog
-        :type target_dialog: int
+        :type target_dialog: int or None
         :param campaign: the campaign that the dialog is associated with
-        :type campaign: str
+        :type campaign: str or None
         :param interaction: the interaction that the dialog is associated with
-        :type interaction: str
+        :type interaction: str or None
         :param skill: the skill that the dialog is associated with
-        :type skill: str
+        :type skill: str or None
+        :param duration: the duration of the dialog
+        :type duration: float or None
         """
         self.type = type
         self.start = start
-        self.duration = duration
         self.parties = parties
         self.originator = originator
         self.mimetype = mimetype
@@ -117,6 +116,7 @@ class Dialog:
         self.campaign = campaign
         self.interaction = interaction
         self.skill = skill
+        self.duration = duration
 
     def to_dict(self):
         """

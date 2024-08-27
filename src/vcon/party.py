@@ -78,3 +78,10 @@ class PartyHistory:
         self.party = party
         self.event = event
         self.time = time
+        
+    def to_dict(self):
+        return {
+            "party": self.party,
+            "event": self.event,
+            "time": self.time
+        }
