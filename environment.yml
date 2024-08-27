@@ -9,7 +9,6 @@ dependencies:
   - cryptography
   - authlib
   - pydash
-  - base64
   - uuid6
   - pytest
   - packaging
