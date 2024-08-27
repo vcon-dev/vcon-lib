@@ -1,25 +1,25 @@
 from typing import Optional
-
+from typing import Optional
 
 class CivicAddress:
     def __init__(self,
-                 country: Optional[str],
-                 a1: Optional[str],
-                 a2: Optional[str],
-                 a3: Optional[str],
-                 a4: Optional[str],
-                 a5: Optional[str],
-                 a6: Optional[str],
-                 prd: Optional[str],
-                 pod: Optional[str],
-                 sts: Optional[str],
-                 hno: Optional[str],
-                 hns: Optional[str],
-                 lmk: Optional[str],
-                 loc: Optional[str],
-                 flr: Optional[str],
-                 nam: Optional[str],
-                 pc: Optional[str]):
+                 country: Optional[str] = None,
+                 a1: Optional[str] = None,
+                 a2: Optional[str] = None,
+                 a3: Optional[str] = None,
+                 a4: Optional[str] = None,
+                 a5: Optional[str] = None,
+                 a6: Optional[str] = None,
+                 prd: Optional[str] = None,
+                 pod: Optional[str] = None,
+                 sts: Optional[str] = None,
+                 hno: Optional[str] = None,
+                 hns: Optional[str] = None,
+                 lmk: Optional[str] = None,
+                 loc: Optional[str] = None,
+                 flr: Optional[str] = None,
+                 nam: Optional[str] = None,
+                 pc: Optional[str] = None):
         """
         Initialize a new CivicAddress object.
 
@@ -76,29 +76,15 @@ class CivicAddress:
         self.nam = nam
         self.pc = pc
 
-    def to_dict(self) -> dict[str, str | None]:
+    def to_dict(self) -> dict[str, Optional[str]]:
         """
         Convert the CivicAddress object to a dictionary.
 
+        The dictionary keys are the attribute names of the object, and the
+        values are the attribute values.
+
         :return: A dictionary of the object's attributes
-        :rtype: dict[str, str | None]
+        :rtype: dict[str, Optional[str]]
         """
-        return {
-            "country": self.country,
-            "a1": self.a1,
-            "a2": self.a2,
-            "a3": self.a3,
-            "a4": self.a4,
-            "a5": self.a5,
-            "a6": self.a6,
-            "prd": self.prd,
-            "pod": self.pod,
-            "sts": self.sts,
-            "hno": self.hno,
-            "hns": self.hns,
-            "lmk": self.lmk,
-            "loc": self.loc,
-            "flr": self.flr,
-            "nam": self.nam,
-            "pc": self.pc
-        }
+        return {attr: getattr(self, attr) for attr in dir(self) if not attr.startswith("_") and getattr(self, attr) is not None and not callable(getattr(self, attr))}
+
