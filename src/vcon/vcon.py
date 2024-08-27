@@ -32,7 +32,7 @@ class Vcon:
         self.vcon_dict = json.loads(json.dumps(vcon_dict))
 
     @classmethod
-    def build_from_json(cls, json_string: str) -> Self:
+    def build_from_json(cls, json_string: str) -> Vcon:
         """
         Initialize a Vcon object from a JSON string.
 
@@ -44,7 +44,7 @@ class Vcon:
         return cls(json.loads(json_string))
 
     @classmethod
-    def build_new(cls) -> Self:
+    def build_new(cls) -> Vcon:
         """
         Initialize a Vcon object with default values.
 
