@@ -20,62 +20,55 @@ pip install vcon
 ```
 
 ## Usage
-
-Here's a quick example of how to use the vCon library:
-
-```python
 from vcon import Vcon
+from vcon.party import Party
 
-# Create a new vCon
+# Create a new vcon
 vcon = Vcon.build_new()
 
-# Add a party
-vcon.add_party({
-    "name": "Alice",
-    "tel": "+1234567890"
-})
+# Add a party to the vcon
+party = Party(mailto="example@example.com")
+vcon.add_party(party)
 
-# Add a dialog
-vcon.add_dialog({
+# Add a dialog to the vcon
+dialog = {
+    "id": "dialog1",
     "type": "text",
-    "start": "2023-06-01T10:00:00Z",
+    "start": "2024-05-03T20:13:48.414984",
     "parties": [0],
     "body": "Hello, world!",
     "encoding": "none"
-})
+}
+vcon.add_dialog(dialog)
 
-# Add an attachment
-vcon.add_attachment(
-    body={"key": "value"},
-    type="json_data",
-    encoding="json"
-)
+# Add an attachment to the vcon
+attachment = {
+    "type": "tags",
+    "body": ["tag1:value1", "tag2:value2"],
+    "encoding": "json"
+}
+vcon.add_attachment(attachment)
 
-# Add analysis
-vcon.add_analysis(
-    type="sentiment",
-    dialog=[0],
-    vendor="AnalysisCompany",
-    body={"sentiment": "positive"},
-    encoding="json"
-)
+# Add analysis to the vcon
+analysis = {
+    "type": "transcript",
+    "dialog": 0,
+    "vendor": "openai",
+    "body": {"key": "value"},
+    "encoding": "json"
+}
+vcon.add_analysis(analysis)
 
-# Add a tag
-vcon.add_tag("importance", "high")
-
-# Sign the vCon
-private_key, public_key = Vcon.generate_key_pair()
-vcon.sign(private_key)
-
-# Verify the signature
-is_valid = vcon.verify(public_key)
-
-# Convert to JSON
+# Serialize the vcon to JSON
 json_string = vcon.to_json()
+print(json_string)
 
-# Create a vCon from JSON
+# Create a new vcon from the JSON string
 new_vcon = Vcon.build_from_json(json_string)
-```
+
+# Print the new vcon's UUID
+print(new_vcon.uuid)
+
 
 ## API Reference
 
