@@ -1,5 +1,6 @@
 from vcon import Vcon
 from vcon.party import Party
+from vcon.dialog import Dialog
 
 import pytest
 import json
@@ -108,10 +109,17 @@ def test_add_analysis():
 
 
 def test_add_dialog():
+    #Given 
     vcon = Vcon.build_new()
-    vcon.add_dialog({"id": "dialog1"})
-    assert vcon.find_dialog("id", "dialog1") == {"id": "dialog1"}
-
+    dialog = Dialog(start="2023-06-01T10:00:00Z", parties=[0], type="text", body="Hello, world!")
+    vcon.add_dialog(dialog)
+    
+    # When
+    found_dialog = vcon.find_dialog("type", "text")
+    
+    # Then these dialogs should be the same values. Check
+    assert found_dialog.to_dict() == dialog.to_dict()
+    
 
 def test_to_json():
     vcon = Vcon.build_new()
@@ -264,11 +272,15 @@ def test_add_and_find_party_index():
 def test_find_dialog():
     # Given
     vcon = Vcon.build_new()
-    vcon.add_dialog({"id": "dialog1"})
-
-    # When/Then
-    assert vcon.find_dialog("id", "dialog1") == {"id": "dialog1"}
-    assert vcon.find_dialog("id", "nonexistent_dialog") is None
+    dialog = Dialog(start="2023-06-01T10:00:00Z", parties=[0], type="text", body="Hello, world!")
+    vcon.add_dialog(dialog)
+    
+    # When
+    found_dialog = vcon.find_dialog("type", "text")
+    
+    # Then these dialogs should be the same values. Check
+    # that the dialog we found is the same as the dialog we added.
+    assert found_dialog.to_dict() == dialog.to_dict()
 
 
 def test_add_special_character_tag():

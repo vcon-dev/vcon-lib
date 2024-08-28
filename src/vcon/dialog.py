@@ -125,9 +125,14 @@ class Dialog:
         :return: a dictionary containing the Dialog object's attributes
         :rtype: dict
         """
+        # Check to see if the start time provided. If not,
+        # set the start time to the current time
+        if not self.start:
+            self.start = datetime.now().isoformat()
+            
         dialog_dict = {
             "type": self.type,
-            "start": self.start.isoformat(),
+            "start": self.start,
             "duration": self.duration,
             "parties": self.parties,
             "originator": self.originator,

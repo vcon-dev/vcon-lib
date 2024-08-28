@@ -250,9 +250,9 @@ class Vcon:
         )
 
 
-    def find_dialog(self, by: str, val: str) -> Optional[dict]:
+    def find_dialog(self, by: str, val: str) -> Optional[Dialog]:
         """
-        Find a dialog in the vCon given a key-value pair.
+        Find a dialog in the vCon given a key-value pair. Convert the dialog to a Dialog object.
 
         :param by: the key to look for
         :type by: str
@@ -261,12 +261,19 @@ class Vcon:
         :return: The dialog if found, None otherwise
         :rtype: Optional[dict]
         """
-        return next(
-            (dialog for dialog in self.dialog if _get(dialog, by) == val),
+        dialog = next(
+            (
+                dialog
+                for dialog in self.vcon_dict["dialog"]
+                if _get(dialog, by) == val
+            ),
             None,
         )
-
-    def add_dialog(self, dialog: dict) -> None:
+        if dialog:
+            return Dialog(**dialog)
+        return None
+        
+    def add_dialog(self, dialog: Dialog) -> None:
         """
         Add a dialog to the vCon.
 
@@ -275,7 +282,7 @@ class Vcon:
         :return: None
         :rtype: None
         """
-        self.vcon_dict["dialog"].append(dialog)
+        self.vcon_dict["dialog"].append(dialog.to_dict())
 
     def to_json(self) -> str:
         """
@@ -397,6 +404,7 @@ class Vcon:
 
         return uuid_str
 
+
     def sign(self, private_key) -> None:
         """
         Sign the vCon using JWS.
@@ -425,7 +433,8 @@ class Vcon:
             pem = private_key
 
         signed = jws.serialize_compact(protected, payload, pem)
-        header, payload, signature = signed.split('.')
+        signed_str = signed.decode('utf-8')
+        header, payload, signature = signed_str.split('.')
         
         self.vcon_dict['signatures'] = [{
             "protected": header,
@@ -463,7 +472,6 @@ class Vcon:
         except BadSignatureError:
             return False
 
-    @staticmethod
     @classmethod
     def generate_key_pair(cls) -> tuple:
         """
