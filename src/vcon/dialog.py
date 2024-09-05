@@ -175,7 +175,6 @@ class Dialog:
         """
         response = requests.get(url)
         if response.status_code == 200:
-            self.body = response.text
             self.mimetype = response.headers["Content-Type"]
         else:
             raise Exception(f"Failed to fetch external data: {response.status_code}")
@@ -193,7 +192,7 @@ class Dialog:
         # Calculate the SHA-256 hash of the body as the signature
         self.alg = "sha256"
         self.encoding = "base64url"
-        self.signature = base64.urlsafe_b64encode(hashlib.sha256(self.body.encode()).digest()).decode()
+        self.signature = base64.urlsafe_b64encode(hashlib.sha256(response.text.encode()).digest()).decode()
 
     def add_inline_data(self, body: str, filename: str, mimetype: str) -> None:
         """
