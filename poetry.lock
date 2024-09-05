@@ -387,16 +387,6 @@ files = [
 ]
 
 [[package]]
-name = "mocker"
-version = "1.1.1"
-description = "Graceful platform for test doubles in Python (mocks, stubs, fakes, and dummies)."
-optional = false
-python-versions = "*"
-files = [
-    {file = "mocker-1.1.1.tar.bz2", hash = "sha256:2009911707c74b28bdc9959b5224717e45fcb93475b4b7bb4efad3285fcf2919"},
-]
-
-[[package]]
 name = "packaging"
 version = "24.1"
 description = "Core utilities for Python packages"
@@ -581,4 +571,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "fd62cc51a5daa517b9381bf3a02356f7a1bceb41a58d945c87842fa5b68e6de5"
+content-hash = "bfcf9a0ec485f8d1e44988ab3d0286c72f269568904421f204a9ea9a98a17773"
