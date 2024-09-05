@@ -43,7 +43,8 @@ class Dialog:
                  campaign: Optional[str] = None, 
                  interaction: Optional[str] = None, 
                  skill: Optional[str] = None, 
-                 duration: Optional[float] = None) -> None:
+                 duration: Optional[float] = None,
+                 meta: Optional[dict] = None) -> None:
         """
         Initialize a Dialog object.
 
@@ -117,6 +118,7 @@ class Dialog:
         self.interaction = interaction
         self.skill = skill
         self.duration = duration
+        self.meta = meta
 
     def to_dict(self):
         """
@@ -157,7 +159,8 @@ class Dialog:
             "target_dialog": self.target_dialog,
             "campaign": self.campaign,
             "interaction": self.interaction,
-            "skill": self.skill
+            "skill": self.skill,
+            "meta": self.meta
         }
         return {k: v for k, v in dialog_dict.items() if v is not None} 
     

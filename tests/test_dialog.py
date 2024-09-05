@@ -177,7 +177,25 @@ class TestDialog:
         assert dialog_dict["parties"] == [1, 2]
         assert dialog_dict["party_history"] == [{"party": 1, "event": "join", "time": party_time}]
 
-        # Successfully fetches external data from a valid URL
+
+    # Test the meta variable in the dialog
+    def test_meta_variable_in_dialog(self):
+        from datetime import datetime
+        from src.vcon.dialog import Dialog
+    
+        type = "audio"
+        start = datetime.now()
+        parties = [1, 2]
+        meta = {"key": "value"}
+    
+        dialog = Dialog(type=type, start=start, parties=parties, meta=meta)
+    
+        assert dialog.type == type
+        assert dialog.start == start
+        assert dialog.parties == parties
+        assert dialog.meta == meta
+
+    # Successfully fetches external data from a valid URL
     def test_fetch_external_data_success(self, mocker):
         # Arrange
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
