@@ -1,53 +1,77 @@
+import datetime
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
-import json
+from vcon.party import PartyHistory
 
-# Create a new vCon
-vcon = Vcon.build_new()
+def main():
+    # Create a new vCon object
+    vcon = Vcon.build_new()
 
-first_party = Party(name="Alice", tel="+1234567890")
-vcon.add_party(first_party)
-second_party = Party(name="Bob", tel="+0987654321")
-vcon.add_party(second_party)
+    # Add parties
+    caller = Party(tel="+1234567890", name="Alice", role="caller")
+    agent = Party(tel="+1987654321", name="Bob", role="agent")
+    vcon.add_party(caller)
+    vcon.add_party(agent)
 
-dialog = Dialog(start="2023-06-01T10:00:00Z",
-                parties=[0], 
-                type="text",
-                body="Hello, world!")
+    # Add a dialog
+    start_time = datetime.datetime.now()
+    dialog = Dialog(
+        type="text",
+        start=start_time.isoformat(),
+        parties=[0, 1],  # Indices of the parties in the vCon
+        originator=0,  # The caller (Alice) is the originator
+        mimetype="text/plain",
+        body="Hello, I need help with my account.",
+    )
+    vcon.add_dialog(dialog)
 
-vcon.add_dialog(dialog)
+    # Add a response from the agent
+    response_time = start_time + datetime.timedelta(minutes=1)
+    response = Dialog(
+        type="text",
+        start=response_time.isoformat(),
+        parties=[0, 1],
+        originator=1,  # The agent (Bob) is the originator
+        mimetype="text/plain",
+        body="Certainly! I'd be happy to help. Can you please provide your account number?",
+    )
+    vcon.add_dialog(response)
 
+    # Add some metadata
+    vcon.add_tag("customer_id", "12345")
+    vcon.add_tag("interaction_id", "INT-001")
 
-# Add an attachment
-vcon.add_attachment(
-    body={"call_center": "yarmouth"},
-    type="routing"
-)
+    # Add an attachment (e.g., a transcript)
+    transcript = "Alice: Hello, I need help with my account.\nBob: Certainly! I'd be happy to help. Can you please provide your account number?"
+    vcon.add_attachment(body=transcript, type="transcript", encoding="none")
 
-# Add analysis
-vcon.add_analysis(
-    type="sentiment",
-    dialog=[0],
-    vendor="AnalysisCompany",
-    body={"sentiment": "positive"}
-)
+    # Add some analysis (e.g., sentiment analysis)
+    sentiment_analysis = {
+        "overall_sentiment": "positive",
+        "customer_sentiment": "neutral",
+        "agent_sentiment": "positive"
+    }
+    vcon.add_analysis(
+        type="sentiment",
+        dialog=[0, 1],  # Indices of the dialogs analyzed
+        vendor="SentimentAnalyzer",
+        body=sentiment_analysis,
+        encoding="none"
+    )
 
-# Add a tag
-vcon.add_tag("importance", "high")
+    # Generate a key pair for signing
+    private_key, public_key = Vcon.generate_key_pair()
 
-# Sign the vCon
-private_key, public_key = Vcon.generate_key_pair()
-vcon.sign(private_key)
+    # Sign the vCon
+    vcon.sign(private_key)
 
-# Verify the signature
-is_valid = vcon.verify(public_key)
+    # Verify the signature
+    is_valid = vcon.verify(public_key)
+    print(f"Signature is valid: {is_valid}")
 
-# Convert to JSON
-vcon_json = vcon.to_json()
+    # Print the vCon as JSON
+    print(vcon.to_json())
 
-# Create a vCon from JSON
-new_vcon = Vcon.build_from_json(vcon_json)
-
-# Print the vCon
-print(json.dumps(new_vcon.to_json(), indent=4))
+if __name__ == "__main__":
+    main()
