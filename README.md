@@ -11,270 +11,282 @@ This Python library provides a convenient way to work with vCon (Virtualized Con
 - Pack and unpack dialogs
 - Add and retrieve tags
 
-## Installation
-
-To install the vCon library, use pip:
-
-```
-pip install vcon
-```
 
 ## Usage
+# vCon API Tutorial
+
+This tutorial will guide you through creating a vCon (Virtual Conversation) object using the vCon API. We'll cover creating a new vCon, adding parties and dialogs, attaching metadata and analysis, and finally signing and verifying the vCon.
+
+## Prerequisites
+
+Before you begin, make sure you have the vCon library installed in your Python environment.
+
+```bash
+pip install vcon  # Replace with the actual package name if different
+```
+
+## Step 1: Import Required Modules
+
+First, let's import the necessary modules:
+
+```python
+import datetime
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
-import json
+from vcon.party import PartyHistory
+```
 
-# Create a new vCon
+## Step 2: Create a New vCon Object
+
+To start, we'll create a new vCon object:
+
+```python
 vcon = Vcon.build_new()
+```
 
-first_party = Party(name="Alice", tel="+1234567890")
-vcon.add_party(first_party)
-second_party = Party(name="Bob", tel="+0987654321")
-vcon.add_party(second_party)
+## Step 3: Add Parties
 
-dialog = Dialog(start="2023-06-01T10:00:00Z",
-                parties=[0], 
-                type="text",
-                body="Hello, world!")
+Next, we'll add two parties to our vCon: a caller and an agent.
 
+```python
+caller = Party(tel="+1234567890", name="Alice", role="caller")
+agent = Party(tel="+1987654321", name="Bob", role="agent")
+vcon.add_party(caller)
+vcon.add_party(agent)
+```
+
+## Step 4: Add Dialogs
+
+Now, let's add some dialog to our vCon. We'll add an initial message from the caller and a response from the agent.
+
+```python
+start_time = datetime.datetime.now(datetime.timezone.utc)
+dialog = Dialog(
+    type="text",
+    start=start_time.isoformat(),
+    parties=[0, 1],  # Indices of the parties in the vCon
+    originator=0,  # The caller (Alice) is the originator
+    mimetype="text/plain",
+    body="Hello, I need help with my account.",
+)
 vcon.add_dialog(dialog)
 
-
-# Add an attachment
-vcon.add_attachment(
-    body={"call_center": "yarmouth"},
-    type="routing"
+response_time = start_time + datetime.timedelta(minutes=1)
+response = Dialog(
+    type="text",
+    start=response_time.isoformat(),
+    parties=[0, 1],
+    originator=1,  # The agent (Bob) is the originator
+    mimetype="text/plain",
+    body="Certainly! I'd be happy to help. Can you please provide your account number?",
 )
+vcon.add_dialog(response)
+```
 
-# Add analysis
+Note that we're using ISO format strings for the datetime values and including UTC timezone information.
+
+## Step 5: Add Metadata
+
+We can add metadata to our vCon using tags:
+
+```python
+vcon.add_tag("customer_id", "12345")
+vcon.add_tag("interaction_id", "INT-001")
+```
+
+## Step 6: Add an Attachment
+
+Let's add a transcript as an attachment:
+
+```python
+transcript = "Alice: Hello, I need help with my account.\nBob: Certainly! I'd be happy to help. Can you please provide your account number?"
+vcon.add_attachment(body=transcript, type="transcript", encoding="none")
+```
+
+## Step 7: Add Analysis
+
+We can also add analysis data to our vCon. Here's an example of adding sentiment analysis:
+
+```python
+sentiment_analysis = {
+    "overall_sentiment": "positive",
+    "customer_sentiment": "neutral",
+    "agent_sentiment": "positive"
+}
 vcon.add_analysis(
     type="sentiment",
-    dialog=[0],
-    vendor="AnalysisCompany",
-    body={"sentiment": "positive"}
+    dialog=[0, 1],  # Indices of the dialogs analyzed
+    vendor="SentimentAnalyzer",
+    body=sentiment_analysis,
+    encoding="none"
 )
+```
 
-# Add a tag
-vcon.add_tag("importance", "high")
+## Step 8: Sign and Verify the vCon
+
+Finally, let's generate a key pair, sign the vCon, and verify the signature:
+
+```python
+# Generate a key pair for signing
+private_key, public_key = Vcon.generate_key_pair()
 
 # Sign the vCon
-private_key, public_key = Vcon.generate_key_pair()
 vcon.sign(private_key)
 
 # Verify the signature
 is_valid = vcon.verify(public_key)
-
-# Convert to JSON
-vcon_json = vcon.to_json()
-
-# Create a vCon from JSON
-new_vcon = Vcon.build_from_json(vcon_json)
-
-# Print the vCon
-print(json.dumps(new_vcon.to_json(), indent=4))
-
-
-## API Reference
-
-The vcon library provides functionality for working with vCon (Virtualized Conversation) objects.
-
-## Modules
-
-### vcon
-
-The main module containing the Vcon class.
-
-#### Classes
-
-##### Vcon
-
-```python
-class Vcon(vcon_dict={})
+print(f"Signature is valid: {is_valid}")
 ```
 
-The main class for working with vCon objects.
+## Step 9: Serialize to JSON
 
-- `vcon_dict`: A dictionary representing a vCon (default: empty dict)
-
-###### Class Methods
+To see the final result, we can serialize our vCon to JSON:
 
 ```python
-@classmethod
-def build_from_json(json_string: str) -> Vcon
+print(vcon.to_json())
 ```
 
-Initialize a Vcon object from a JSON string.
+## Complete Example
 
-- `json_string`: A JSON string representing a vCon
-- Returns: A Vcon object
+Here's the complete example putting all these steps together:
 
 ```python
-@classmethod
-def build_new() -> Vcon
+import datetime
+from vcon import Vcon
+from vcon.party import Party
+from vcon.dialog import Dialog
+from vcon.party import PartyHistory
+
+def main():
+    # Create a new vCon object
+    vcon = Vcon.build_new()
+
+    # Add parties
+    caller = Party(tel="+1234567890", name="Alice", role="caller")
+    agent = Party(tel="+1987654321", name="Bob", role="agent")
+    vcon.add_party(caller)
+    vcon.add_party(agent)
+
+    # Add a dialog
+    start_time = datetime.datetime.now(datetime.timezone.utc)
+    dialog = Dialog(
+        type="text",
+        start=start_time.isoformat(),
+        parties=[0, 1],  # Indices of the parties in the vCon
+        originator=0,  # The caller (Alice) is the originator
+        mimetype="text/plain",
+        body="Hello, I need help with my account.",
+    )
+    vcon.add_dialog(dialog)
+
+    # Add a response from the agent
+    response_time = start_time + datetime.timedelta(minutes=1)
+    response = Dialog(
+        type="text",
+        start=response_time.isoformat(),
+        parties=[0, 1],
+        originator=1,  # The agent (Bob) is the originator
+        mimetype="text/plain",
+        body="Certainly! I'd be happy to help. Can you please provide your account number?",
+    )
+    vcon.add_dialog(response)
+
+    # Add some metadata
+    vcon.add_tag("customer_id", "12345")
+    vcon.add_tag("interaction_id", "INT-001")
+
+    # Add an attachment (e.g., a transcript)
+    transcript = "Alice: Hello, I need help with my account.\nBob: Certainly! I'd be happy to help. Can you please provide your account number?"
+    vcon.add_attachment(body=transcript, type="transcript", encoding="none")
+
+    # Add some analysis (e.g., sentiment analysis)
+    sentiment_analysis = {
+        "overall_sentiment": "positive",
+        "customer_sentiment": "neutral",
+        "agent_sentiment": "positive"
+    }
+    vcon.add_analysis(
+        type="sentiment",
+        dialog=[0, 1],  # Indices of the dialogs analyzed
+        vendor="SentimentAnalyzer",
+        body=sentiment_analysis,
+        encoding="none"
+    )
+
+    # Generate a key pair for signing
+    private_key, public_key = Vcon.generate_key_pair()
+
+    # Sign the vCon
+    vcon.sign(private_key)
+
+    # Verify the signature
+    is_valid = vcon.verify(public_key)
+    print(f"Signature is valid: {is_valid}")
+
+    # Print the vCon as JSON
+    print(vcon.to_json())
+
+if __name__ == "__main__":
+    main()
 ```
 
-Initialize a Vcon object with default values.
+# vCon Python Library API Documentation
 
-- Returns: A Vcon object
+## Table of Contents
 
-###### Methods
+1. [Vcon Class](#vcon-class)
+2. [Dialog Class](#dialog-class)
+3. [Party Class](#party-class)
+4. [PartyHistory Class](#partyhistory-class)
+5. [Constants](#constants)
+
+## Vcon Class
+
+The `Vcon` class is the root class representing a vCon (Virtual Conversation) object.
+
+### Constructor
 
 ```python
-def get_tag(tag_name) -> Optional[dict]
+Vcon(vcon_dict: dict = {})
 ```
 
-Returns the value of a tag by name.
+Initializes a Vcon object from a dictionary.
 
-- `tag_name`: The name of the tag
-- Returns: The value of the tag or None if not found
+### Class Methods
 
-```python
-def add_tag(tag_name, tag_value) -> None
-```
+- `build_from_json(json_string: str) -> Vcon`: Initialize a Vcon object from a JSON string.
+- `build_new() -> Vcon`: Initialize a Vcon object with default values.
+- `generate_key_pair() -> tuple`: Generate a new RSA key pair for signing vCons.
 
-Adds a tag to the vCon.
+### Instance Methods
 
-- `tag_name`: The name of the tag
-- `tag_value`: The value of the tag
+- `to_json() -> str`: Serialize the vCon to a JSON string.
+- `to_dict() -> dict`: Serialize the vCon to a dictionary.
+- `dumps() -> str`: Alias for `to_json()`.
+- `get_tag(tag_name: str) -> Optional[dict]`: Returns the value of a tag by name.
+- `add_tag(tag_name: str, tag_value: str) -> None`: Adds a tag to the vCon.
+- `find_attachment_by_type(type: str) -> Optional[dict]`: Finds an attachment by type.
+- `add_attachment(body: Union[dict, list, str], type: str, encoding: str = "none") -> None`: Adds an attachment to the vCon.
+- `find_analysis_by_type(type: str) -> Any | None`: Finds an analysis by type.
+- `add_analysis(type: str, dialog: Union[list, int], vendor: str, body: Union[dict, list, str], encoding: str = "none", extra: dict = {}) -> None`: Adds analysis data to the vCon.
+- `add_party(party: Party) -> None`: Adds a party to the vCon.
+- `find_party_index(by: str, val: str) -> Optional[int]`: Find the index of a party in the vCon given a key-value pair.
+- `find_dialog(by: str, val: str) -> Optional[Dialog]`: Find a dialog in the vCon given a key-value pair.
+- `add_dialog(dialog: Dialog) -> None`: Add a dialog to the vCon.
+- `sign(private_key: Union[rsa.RSAPrivateKey, bytes]) -> None`: Sign the vCon using JWS.
+- `verify(public_key: Union[rsa.RSAPublicKey, bytes]) -> bool`: Verify the JWS signature of the vCon.
 
-```python
-def find_attachment_by_type(type: str) -> Optional[dict]
-```
+### Properties
 
-Finds an attachment by type.
-
-- `type`: The type of the attachment
-- Returns: The attachment or None if not found
-
-```python
-def add_attachment(*, body: Union[dict, list, str], type: str, encoding="none") -> None
-```
-
-Adds an attachment to the vCon.
-
-- `body`: The body of the attachment
-- `type`: The type of the attachment
-- `encoding`: The encoding of the attachment body (default: "none")
-
-```python
-def find_analysis_by_type(type) -> Any | None
-```
-
-Finds an analysis by type.
-
-- `type`: The type of the analysis
-- Returns: The analysis or None if not found
-
-```python
-def add_analysis(*, type: str, dialog: Union[list, int], vendor: str, body: Union[dict, list, str], encoding="none", extra={}) -> None
-```
-
-Adds analysis data to the vCon.
-
-- `type`: The type of the analysis
-- `dialog`: The dialog(s) associated with the analysis
-- `vendor`: The vendor of the analysis
-- `body`: The body of the analysis
-- `encoding`: The encoding of the body (default: "none")
-- `extra`: Extra key-value pairs to include in the analysis
-
-```python
-def add_party(party: Party) -> None
-```
-
-Adds a party to the vCon.
-
-- `party`: The party to add
-
-```python
-def find_party_index(by: str, val: str) -> Optional[int]
-```
-
-Find the index of a party in the vCon given a key-value pair.
-
-- `by`: The key to look for
-- `val`: The value to look for
-- Returns: The index of the party if found, None otherwise
-
-```python
-def find_dialog(by: str, val: str) -> Optional[dict]
-```
-
-Find a dialog in the vCon given a key-value pair.
-
-- `by`: The key to look for
-- `val`: The value to look for
-- Returns: The dialog if found, None otherwise
-
-```python
-def add_dialog(dialog: dict) -> None
-```
-
-Add a dialog to the vCon.
-
-- `dialog`: The dialog to add
-
-```python
-def to_json() -> str
-```
-
-Serialize the vCon to a JSON string.
-
-- Returns: A JSON string representation of the vCon
-
-```python
-def to_dict() -> dict
-```
-
-Serialize the vCon to a dictionary.
-
-- Returns: A dictionary representation of the vCon
-
-```python
-def dumps() -> str
-```
-
-Alias for `to_json()`.
-
-- Returns: A JSON string representation of the vCon
-
-```python
-def sign(private_key) -> None
-```
-
-Sign the vCon using JWS.
-
-- `private_key`: The private key used for signing
-
-```python
-def verify(public_key) -> bool
-```
-
-Verify the JWS signature of the vCon.
-
-- `public_key`: The public key used for verification
-- Returns: True if the signature is valid, False otherwise
-
-```python
-@classmethod
-def generate_key_pair() -> tuple
-```
-
-Generate a new RSA key pair for signing vCons.
-
-- Returns: A tuple containing the private key and public key
-
-###### Properties
-
-- `tags`: Returns the tags attachment.
-- `parties`: Returns the list of parties.
-- `dialog`: Returns the list of dialogs.
-- `attachments`: Returns the list of attachments.
-- `analysis`: Returns the list of analyses.
-- `uuid`: Returns the UUID of the vCon.
-- `vcon`: Returns the vCon version.
-- `subject`: Returns the subject of the vCon.
+- `tags: Optional[dict]`: Returns the tags attachment.
+- `parties: list[Party]`: Returns the list of parties.
+- `dialog: list`: Returns the list of dialogs.
+- `attachments: list`: Returns the list of attachments.
+- `analysis: list`: Returns the list of analyses.
+- `uuid: str`: Returns the UUID of the vCon.
+- `vcon: str`: Returns the vCon version.
+- `subject: Optional[str]`: Returns the subject of the vCon.
 - `created_at`: Returns the creation timestamp of the vCon.
 - `updated_at`: Returns the last update timestamp of the vCon.
 - `redacted`: Returns the redacted information of the vCon.
@@ -282,237 +294,119 @@ Generate a new RSA key pair for signing vCons.
 - `group`: Returns the group information of the vCon.
 - `meta`: Returns the metadata of the vCon.
 
-### party
+### Static Methods
 
-Module containing the Party class.
+- `uuid8_domain_name(domain_name: str) -> str`: Generate a UUID8 from a domain name.
+- `uuid8_time(custom_c_62_bits: int) -> str`: Generate a UUID8 from a custom 62-bit integer.
 
-#### Classes
+## Dialog Class
 
-##### Party
+The `Dialog` class represents a dialog in the system.
 
-```python
-class Party(tel: Optional[str] = None, stir: Optional[str] = None, mailto: Optional[str] = None, name: Optional[str] = None, validation: Optional[str] = None, gmlpos: Optional[str] = None, civicaddress: Optional[CivicAddress] = None, uuid: Optional[str] = None, role: Optional[str] = None, contact_list: Optional[str] = None, meta: Optional[dict] = None)
-```
-
-Represents a party in a vCon.
-
-- `tel`: Telephone number of the party
-- `stir`: STIR identifier of the party
-- `mailto`: Email address of the party
-- `name`: Display name of the party
-- `validation`: Validation information of the party
-- `gmlpos`: GML position of the party
-- `civicaddress`: Civic address of the party
-- `uuid`: UUID of the party
-- `role`: Role of the party
-- `contact_list`: Contact list of the party
-- `meta`: Additional metadata for the party
-
-###### Methods
+### Constructor
 
 ```python
-def to_dict() -> dict
+Dialog(type: str, 
+       start: datetime, 
+       parties: List[int], 
+       originator: Optional[int] = None, 
+       mimetype: Optional[str] = None, 
+       filename: Optional[str] = None, 
+       body: Optional[str] = None, 
+       encoding: Optional[str] = None, 
+       url: Optional[str] = None, 
+       alg: Optional[str] = None, 
+       signature: Optional[str] = None, 
+       disposition: Optional[str] = None, 
+       party_history: Optional[List[PartyHistory]] = None, 
+       transferee: Optional[int] = None, 
+       transferor: Optional[int] = None, 
+       transfer_target: Optional[int] = None, 
+       original: Optional[int] = None, 
+       consultation: Optional[int] = None, 
+       target_dialog: Optional[int] = None, 
+       campaign: Optional[str] = None, 
+       interaction: Optional[str] = None, 
+       skill: Optional[str] = None, 
+       duration: Optional[float] = None,
+       meta: Optional[dict] = None)
 ```
 
-Returns a dictionary representation of the Party object.
+Initializes a Dialog object with the given parameters.
 
-- Returns: A dictionary containing the Party object's attributes
+### Methods
 
-##### PartyHistory
+- `to_dict()`: Returns a dictionary representation of the Dialog object.
+- `add_external_data(url: str, filename: str, mimetype: str) -> None`: Adds external data to the dialog.
+- `add_inline_data(body: str, filename: str, mimetype: str) -> None`: Adds inline data to the dialog.
+- `is_external_data() -> bool`: Checks if the dialog is an external data dialog.
+- `is_inline_data() -> bool`: Checks if the dialog is an inline data dialog.
+- `is_text() -> bool`: Checks if the dialog is a text dialog.
+- `is_audio() -> bool`: Checks if the dialog is an audio dialog.
+- `is_video() -> bool`: Checks if the dialog is a video dialog.
+- `is_email() -> bool`: Checks if the dialog is an email dialog.
+- `is_external_data_changed() -> bool`: Checks if the external data dialog's contents have changed.
+- `to_inline_data() -> None`: Converts the dialog from an external data dialog to an inline data dialog.
+
+## Party Class
+
+The `Party` class represents a party in the system.
+
+### Constructor
 
 ```python
-class PartyHistory(party: int, event: str, time: datetime)
+Party(tel: Optional[str] = None,
+      stir: Optional[str] = None,
+      mailto: Optional[str] = None,
+      name: Optional[str] = None,
+      validation: Optional[str] = None,
+      gmlpos: Optional[str] = None,
+      civicaddress: Optional[CivicAddress] = None,
+      uuid: Optional[str] = None,
+      role: Optional[str] = None,
+      contact_list: Optional[str] = None,
+      meta: Optional[dict] = None)
 ```
 
-Represents the history of a party's participation in a dialog.
+Initializes a Party object with the given parameters.
 
-- `party`: Index of the party
-- `event`: Event type (e.g. "join", "leave")
-- `time`: Time of the event
+### Methods
 
-###### Methods
+- `to_dict()`: Returns a dictionary representation of the Party object.
+
+## PartyHistory Class
+
+The `PartyHistory` class represents the history of a party's participation in a dialog.
+
+### Constructor
 
 ```python
-def to_dict() -> dict
+PartyHistory(party: int, event: str, time: datetime)
 ```
 
-Returns a dictionary representation of the PartyHistory object.
+Initializes a PartyHistory object with the given parameters.
 
-- Returns: A dictionary containing the PartyHistory object's attributes
+### Methods
 
-### dialog
+- `to_dict()`: Returns a dictionary representation of the PartyHistory object.
 
-Module containing the Dialog class.
+## Constants
 
-#### Classes
-
-##### Dialog
+- `MIME_TYPES`: A list of supported MIME types for dialogs.
 
 ```python
-class Dialog(type: str, start: datetime, parties: List[int], originator: Optional[int] = None, mimetype: Optional[str] = None, filename: Optional[str] = None, body: Optional[str] = None, encoding: Optional[str] = None, url: Optional[str] = None, alg: Optional[str] = None, signature: Optional[str] = None, disposition: Optional[str] = None, party_history: Optional[List[PartyHistory]] = None, transferee: Optional[int] = None, transferor: Optional[int] = None, transfer_target: Optional[int] = None, original: Optional[int] = None, consultation: Optional[int] = None, target_dialog: Optional[int] = None, campaign: Optional[str] = None, interaction: Optional[str] = None, skill: Optional[str] = None, duration: Optional[float] = None)
+MIME_TYPES = [
+    "text/plain",
+    "audio/x-wav",
+    "audio/x-mp3",
+    "audio/x-mp4",
+    "audio/ogg",
+    "video/x-mp4",
+    "video/ogg",
+    "multipart/mixed",
+    "message/external-body",
+]
 ```
-
-Represents a dialog in a vCon.
-
-- `type`: The type of the dialog (e.g. "text", "audio", etc.)
-- `start`: The start time of the dialog
-- `parties`: The parties involved in the dialog
-- `originator`: The party that originated the dialog
-- `mimetype`: The MIME type of the dialog body
-- `filename`: The filename of the dialog body
-- `body`: The body of the dialog
-- `encoding`: The encoding of the dialog body
-- `url`: The URL of the dialog
-- `alg`: The algorithm used to sign the dialog
-- `signature`: The signature of the dialog
-- `disposition`: The disposition of the dialog
-- `party_history`: The history of parties involved in the dialog
-- `transferee`: The party that the dialog was transferred to
-- `transferor`: The party that transferred the dialog
-- `transfer_target`: The target of the transfer
-- `original`: The original dialog
-- `consultation`: The consultation dialog
-- `target_dialog`: The target dialog
-- `campaign`: The campaign that the dialog is associated with
-- `interaction`: The interaction that the dialog is associated with
-- `skill`: The skill that the dialog is associated with
-- `duration`: The duration of the dialog
-
-###### Methods
-
-```python
-def to_dict() -> dict
-```
-
-Returns a dictionary representation of the Dialog object.
-
-- Returns: A dictionary containing the Dialog object's attributes
-
-```python
-def add_external_data(url: str, filename: str, mimetype: str) -> None
-```
-
-Add external data to the dialog.
-
-- `url`: The URL of the external data
-- `filename`: The filename of the external data
-- `mimetype`: The MIME type of the external data
-
-```python
-def add_inline_data(body: str, filename: str, mimetype: str) -> None
-```
-
-Add inline data to the dialog.
-
-- `body`: The body of the inline data
-- `filename`: The filename of the inline data
-- `mimetype`: The MIME type of the inline data
-
-```python
-def is_external_data() -> bool
-```
-
-Check if the dialog is an external data dialog.
-
-- Returns: True if the dialog is an external data dialog, False otherwise
-
-```python
-def is_inline_data() -> bool
-```
-
-Check if the dialog is an inline data dialog.
-
-- Returns: True if the dialog is an inline data dialog, False otherwise
-
-```python
-def is_text() -> bool
-```
-
-Check if the dialog is a text dialog.
-
-- Returns: True if the dialog is a text dialog, False otherwise
-
-```python
-def is_audio() -> bool
-```
-
-Check if the dialog is an audio dialog.
-
-- Returns: True if the dialog is an audio dialog, False otherwise
-
-```python
-def is_video() -> bool
-```
-
-Check if the dialog is a video dialog.
-
-- Returns: True if the dialog is a video dialog, False otherwise
-
-```python
-def is_email() -> bool
-```
-
-Check if the dialog is an email dialog.
-
-- Returns: True if the dialog is an email dialog, False otherwise
-
-```python
-def is_external_data_changed() -> bool
-```
-
-Check if the external data dialog contents have changed.
-
-- Returns: True if the contents have changed, False otherwise
-
-```python
-def to_inline_data() -> None
-```
-
-Convert the dialog from an external data dialog to an inline data dialog.
-
-### civic_address
-
-Module containing the CivicAddress class.
-
-#### Classes
-
-##### CivicAddress
-
-```python
-class CivicAddress(country: Optional[str] = None, a1: Optional[str] = None, a2: Optional[str] = None, a3: Optional[str] = None, a4: Optional[str] = None, a5: Optional[str] = None, a6: Optional[str] = None, prd: Optional[str] = None, pod: Optional[str] = None, sts: Optional[str] = None, hno: Optional[str] = None, hns: Optional[str] = None, lmk: Optional[str] = None, loc: Optional[str] = None, flr: Optional[str] = None, nam: Optional[str] = None, pc: Optional[str] = None)
-```
-
-Represents a civic address.
-
-- `country`: Country code (ISO 3166-1 alpha-2)
-- `a1`: Administrative area 1 (e.g. state or province)
-- `a2`: Administrative area 2 (e.g. county or municipality)
-- `a3`: Administrative area 3 (e.g. city or town)
-- `a4`: Administrative area 4 (e.g. neighborhood or district)
-- `a5`: Administrative area 5 (e.g. postal code)
-- `a6`: Administrative area 6 (e.g. building or floor)
-- `prd`: Premier (e.g. department or suite number)
-- `pod`: Post office box identifier
-- `sts`: Street name
-- `hno`: House number
-- `hns`: House name
-- `lmk`: Landmark name
-- `loc`: Location name
-- `flr`: Floor
-- `nam`: Name of the location
-- `pc`: Postal code
-
-###### Methods
-
-```python
-def to_dict() -> dict[str, Optional[str]]
-```
-
-Convert the CivicAddress object to a dictionary.
-
-- Returns: A dictionary of the object's attributes
-
-This Markdown version of the API documentation should be easier to read and integrate into various documentation systems or README files. It provides a comprehensive overview of the classes, methods, and attributes available in the vcon library.
 
 
 ## Contributing
