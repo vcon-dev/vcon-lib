@@ -184,7 +184,7 @@ class TestDialog:
         from src.vcon.dialog import Dialog
     
         type = "audio"
-        start = datetime.now()
+        start = datetime.now().isoformat()
         parties = [1, 2]
         meta = {"key": "value"}
     
@@ -327,3 +327,73 @@ class TestDialog:
 
         # Check if the encoding is set to "base64url"
         assert dialog.encoding == "base64url"
+        
+        
+    # Initializes Dialog object with all required parameters
+    def test_initializes_with_required_parameters(self):
+        from datetime import datetime
+        from src.vcon.dialog import Dialog
+    
+        dialog = Dialog(
+            type="text",
+            start=datetime.now(),
+            parties=[1, 2, 3]
+        )
+    
+        assert dialog.type == "text"
+        assert isinstance(dialog.start, str)
+        assert dialog.parties == [1, 2, 3]
+
+    # Handles invalid datetime string for start parameter
+    def test_handles_invalid_datetime_string(self):
+        from src.vcon.dialog import Dialog
+        from dateutil.parser import ParserError
+        import pytest
+    
+        with pytest.raises(ParserError):
+            Dialog(
+                type="text",
+                start="invalid-datetime",
+                parties=[1, 2, 3]
+            )
+
+    # Converts start time to ISO 8601 string if provided as datetime
+    def test_convert_start_time_to_iso_string(self):
+        from datetime import datetime
+        from src.vcon.dialog import Dialog
+        from unittest.mock import patch
+
+        # Define a datetime object for the start time
+        start_time = datetime(2022, 9, 15, 10, 30, 0)
+
+        # Create a Dialog object with a datetime start time
+        with patch('src.vcon.dialog.parser') as mock_parser:
+            mock_parser.parse.return_value.isoformat.return_value = '2022-09-15T10:30:00'
+            dialog = Dialog(
+                type="audio",
+                start=start_time,
+                parties=[1, 2]
+            )
+
+        # Check if the start time is converted to ISO 8601 string
+        assert dialog.start == '2022-09-15T10:30:00'
+
+    # Converts start time to ISO 8601 string if provided as string
+    def test_convert_start_time_to_iso_string(self):
+        from datetime import datetime
+        from src.vcon.dialog import Dialog
+        from unittest.mock import patch
+
+        start_time = "2022-01-01T12:00:00"
+        expected_iso_time = "2022-01-01T12:00:00"
+
+        with patch('src.vcon.dialog.parser') as mock_parser:
+            mock_parser.parse.return_value.isoformat.return_value = expected_iso_time
+
+            dialog = Dialog(
+                type="text",
+                start=start_time,
+                parties=[1, 2, 3]
+            )
+
+            assert dialog.start == expected_iso_time
