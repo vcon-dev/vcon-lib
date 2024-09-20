@@ -4,7 +4,7 @@ from vcon.dialog import Dialog
 
 import pytest
 import json
-
+from datetime import datetime
 
 """
 This covers testing the main methods of the Vcon class, including:
@@ -305,3 +305,86 @@ def test_add_and_find_party_index_by_name():
     # Then
     assert vcon.find_party_index("name", "Alice") == 0
     assert vcon.find_party_index("name", "Bob") is None
+
+
+class Test__Init__:
+    # Initializes Vcon object with empty dictionary
+    def test_initializes_with_empty_dict(self):
+        from src.vcon.vcon import Vcon
+        vcon = Vcon()
+        assert isinstance(vcon.vcon_dict, dict)
+        assert "created_at" in vcon.vcon_dict
+
+    # Initializes Vcon object with dictionary containing datetime created_at
+    def test_initializes_with_datetime_created_at(self):
+        from src.vcon.vcon import Vcon
+        from datetime import datetime
+        vcon_dict = {"created_at": datetime.now()}
+        vcon = Vcon(vcon_dict)
+        assert isinstance(vcon.vcon_dict, dict)
+        assert "created_at" in vcon.vcon_dict
+
+    # Initializes Vcon object with dictionary containing string created_at
+    def test_initializes_with_created_at_string(self):
+        from src.vcon.vcon import Vcon
+        import datetime
+        vcon_dict = {"created_at": "2022-01-01T12:00:00Z"}
+        vcon = Vcon(vcon_dict)
+        assert isinstance(vcon.vcon_dict, dict)
+        assert "created_at" in vcon.vcon_dict
+        assert isinstance(vcon.vcon_dict["created_at"], str)
+
+    # Initializes Vcon object with dictionary without created_at
+    def test_initializes_without_created_at(self):
+        from src.vcon.vcon import Vcon
+        vcon = Vcon({})
+        assert isinstance(vcon.vcon_dict, dict)
+        assert "created_at" in vcon.vcon_dict
+
+    # Converts created_at to ISO 8601 format when datetime is provided
+    def test_converts_created_at_to_iso_format_when_datetime_provided_updated(self):
+        from src.vcon.vcon import Vcon
+        from datetime import datetime
+
+        # Create a datetime object for testing
+        test_datetime = datetime(2022, 9, 15, 8, 30, 0)
+
+        # Initialize Vcon object with a dictionary containing the datetime
+        vcon = Vcon({"created_at": test_datetime})
+
+        # Check if created_at is converted to ISO 8601 format
+        assert "created_at" in vcon.vcon_dict
+        assert isinstance(vcon.vcon_dict["created_at"], str)
+        assert len(vcon.vcon_dict["created_at"]) == 19  # ISO 8601 format length
+
+    # Sets created_at to current time in ISO 8601 format when not provided
+    def test_sets_created_at_to_current_time(self):
+        from src.vcon.vcon import Vcon
+        vcon = Vcon()
+        assert "created_at" in vcon.vcon_dict
+        assert isinstance(vcon.vcon_dict["created_at"], str)
+        assert datetime.fromisoformat(vcon.vcon_dict["created_at"])
+
+    # Converts created_at to ISO 8601 format when datetime object with timezone info is provided
+    def test_converts_created_at_to_iso_format_with_timezone_module(self):
+        from src.vcon.vcon import Vcon
+        from datetime import datetime, timezone
+
+        # Create a datetime object with timezone info
+        created_at = datetime(2022, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+        # Initialize Vcon object with created_at as a datetime object
+        vcon_dict = {"created_at": created_at}
+        vcon = Vcon(vcon_dict)
+
+        # Check if created_at is converted to ISO 8601 format
+        assert "created_at" in vcon.vcon_dict
+        assert isinstance(vcon.vcon_dict["created_at"], str)
+        assert vcon.vcon_dict["created_at"] == created_at.isoformat()
+
+    # Deep copies the provided dictionary into vcon_dict
+    def test_deep_copy_into_vcon_dict(self):
+        from src.vcon.vcon import Vcon
+        vcon_dict = {"created_at": "2022-01-01T12:00:00Z", "data": {"key": "value"}}
+        vcon = Vcon(vcon_dict)
+        assert vcon.vcon_dict is not vcon_dict, "vcon_dict should be a deep copy"

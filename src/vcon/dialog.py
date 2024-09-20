@@ -2,9 +2,9 @@ import requests
 import hashlib
 import base64
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from .party import PartyHistory
-
+from dateutil import parser
 
 MIME_TYPES = [
     "text/plain",
@@ -20,29 +20,29 @@ MIME_TYPES = [
 
 
 class Dialog:
-    def __init__(self, 
-                 type: str, 
-                 start: datetime, 
-                 parties: List[int], 
-                 originator: Optional[int] = None, 
-                 mimetype: Optional[str] = None, 
-                 filename: Optional[str] = None, 
-                 body: Optional[str] = None, 
-                 encoding: Optional[str] = None, 
-                 url: Optional[str] = None, 
-                 alg: Optional[str] = None, 
-                 signature: Optional[str] = None, 
-                 disposition: Optional[str] = None, 
-                 party_history: Optional[List[PartyHistory]] = None, 
-                 transferee: Optional[int] = None, 
-                 transferor: Optional[int] = None, 
-                 transfer_target: Optional[int] = None, 
-                 original: Optional[int] = None, 
-                 consultation: Optional[int] = None, 
-                 target_dialog: Optional[int] = None, 
-                 campaign: Optional[str] = None, 
-                 interaction: Optional[str] = None, 
-                 skill: Optional[str] = None, 
+    def __init__(self,
+                 type: str,
+                 start: Union[datetime, str],
+                 parties: List[int],
+                 originator: Optional[int] = None,
+                 mimetype: Optional[str] = None,
+                 filename: Optional[str] = None,
+                 body: Optional[str] = None,
+                 encoding: Optional[str] = None,
+                 url: Optional[str] = None,
+                 alg: Optional[str] = None,
+                 signature: Optional[str] = None,
+                 disposition: Optional[str] = None,
+                 party_history: Optional[List[PartyHistory]] = None,
+                 transferee: Optional[int] = None,
+                 transferor: Optional[int] = None,
+                 transfer_target: Optional[int] = None,
+                 original: Optional[int] = None,
+                 consultation: Optional[int] = None,
+                 target_dialog: Optional[int] = None,
+                 campaign: Optional[str] = None,
+                 interaction: Optional[str] = None,
+                 skill: Optional[str] = None,
                  duration: Optional[float] = None,
                  meta: Optional[dict] = None) -> None:
         """
@@ -95,6 +95,14 @@ class Dialog:
         :param duration: the duration of the dialog
         :type duration: float or None
         """
+        
+        # Convert the start time to an ISO 8601 string from a datetime or a string
+        if isinstance(start, datetime):
+            start = start.isoformat()
+        elif isinstance(start, str):
+            start = parser.parse(start).isoformat()
+
+        # Set the attributes
         self.type = type
         self.start = start
         self.parties = parties
@@ -131,7 +139,7 @@ class Dialog:
         # set the start time to the current time
         if not self.start:
             self.start = datetime.now().isoformat()
-            
+
         dialog_dict = {
             "type": self.type,
             "start": self.start,
@@ -162,8 +170,8 @@ class Dialog:
             "skill": self.skill,
             "meta": self.meta
         }
-        return {k: v for k, v in dialog_dict.items() if v is not None} 
-    
+        return {k: v for k, v in dialog_dict.items() if v is not None}
+
     def add_external_data(self, url: str, filename: str, mimetype: str) -> None:
         """
         Add external data to the dialog.
@@ -178,7 +186,7 @@ class Dialog:
             self.mimetype = response.headers["Content-Type"]
         else:
             raise Exception(f"Failed to fetch external data: {response.status_code}")
-        
+
         # Overide the filename if provided, otherwise use the filename from the URL
         if filename:
             self.filename = filename
@@ -188,7 +196,7 @@ class Dialog:
         # Overide the mimetype if provided, otherwise use the mimetype from the URL
         if mimetype:
             self.mimetype = mimetype
-            
+
         # Calculate the SHA-256 hash of the body as the signature
         self.alg = "sha256"
         self.encoding = "base64url"
@@ -214,35 +222,35 @@ class Dialog:
         self.encoding = "base64url"
         self.signature = base64.urlsafe_b64encode(
             hashlib.sha256(self.body.encode()).digest()).decode()
-        
+
     # Check if the dialog is an external data dialog
     def is_external_data(self) -> bool:
         return self.url is not None
-      
+
     # Check if the dialog is an inline data dialog
     def is_inline_data(self) -> bool:
         return self.body is not None
-    
-    
+
+
     # Check if the dialog is a text dialog
     def is_text(self) -> bool:
         return self.mimetype == "text/plain"
-    
-    
+
+
     # Check if the dialog is an audio dialog
     def is_audio(self) -> bool:
         return self.mimetype in ["audio/x-wav", "audio/x-mp3", "audio/x-mp4", "audio/ogg"]
-    
-    
+
+
     # Check if the dialog is a video dialog
     def is_video(self) -> bool:
         return self.mimetype in ["video/x-mp4", "video/ogg"]
-    
+
     # Check if the dialog is an email dialog
     def is_email(self) -> bool:
         return self.mimetype == "message/rfc822"
-    
-    # Check to see if it's an external data dialog, that the contents are valid by 
+
+    # Check to see if it's an external data dialog, that the contents are valid by
     # checking the hash of the body against the signature
     def is_external_data_changed(self) -> bool:
         if not self.is_external_data():
@@ -253,7 +261,7 @@ class Dialog:
         except Exception as e:
             print(e)
             return True
-        
+
     # Convert the dialog from an external data dialog to an inline data dialog
     # by reading the contents from the URL then adding the contents to the body
     def to_inline_data(self) -> None:
@@ -269,7 +277,7 @@ class Dialog:
         self.alg = "sha256"
         self.encoding = "base64url"
         self.signature = base64.urlsafe_b64encode(hashlib.sha256(self.body.encode()).digest()).decode()
-        
+
         # Overide the filename if provided, otherwise use the filename from the URL
         if self.filename:
             self.filename = self.filename

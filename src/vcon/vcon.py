@@ -16,6 +16,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from .party import Party
 from .dialog import Dialog
+from dateutil import parser
 
 _LAST_V8_TIMESTAMP = None
 
@@ -29,6 +30,20 @@ class Vcon:
         :param vcon_dict: a dictionary representing a vCon
         :type vcon_dict: dict
         """
+        # If the vcon_dict contains a created_at in datetime or in string, format it like a ISO 8601
+        if vcon_dict.get("created_at"):
+            if isinstance(vcon_dict["created_at"], datetime):
+                vcon_dict["created_at"] = (
+                    vcon_dict["created_at"].isoformat()
+                )
+            elif isinstance(vcon_dict["created_at"], str):
+                vcon_dict["created_at"] = (
+                    parser.parse(vcon_dict["created_at"]).isoformat()
+                )
+        else:
+            vcon_dict["created_at"] = (
+                datetime.now(timezone.utc).isoformat()
+            )
         self.vcon_dict = json.loads(json.dumps(vcon_dict))
 
     @classmethod
@@ -54,7 +69,11 @@ class Vcon:
         vcon_dict = {
             "uuid": cls.uuid8_domain_name("strolid.com"),
             "vcon": "0.0.1",
-            "created_at": datetime.now(timezone.utc).isoformat()[:-3] + "+00:00",
+            # the created_at timestamp is set to the current time in ISO 8601
+            # format with the timezone set to UTC. The last three characters
+            # of the ISO 8601 format string are the millisecond part of the
+            # timestamp, which is not used in vCon.
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "redacted": {},
             "group": [],
             "parties": [],
@@ -68,7 +87,7 @@ class Vcon:
     def tags(self) -> Optional[dict]:
         """
         Returns the tags attachment.
-        
+
         :return: the tags attachment
         :rtype: dict or None
         """
@@ -128,7 +147,9 @@ class Vcon:
             (a for a in self.vcon_dict["attachments"] if a["type"] == type), None
         )
 
-    def add_attachment(self, *, body: Union[dict, list, str], type: str, encoding="none") -> None:
+    def add_attachment(
+        self, *, body: Union[dict, list, str], type: str, encoding="none"
+    ) -> None:
         """
         Adds an attachment to the vCon.
 
@@ -141,16 +162,16 @@ class Vcon:
         :return: None
         :rtype: None
         """
-        if encoding not in ['json', 'none', 'base64url']:
+        if encoding not in ["json", "none", "base64url"]:
             raise Exception("Invalid encoding")
-        
+
         if encoding == "json":
             try:
                 json.loads(body)
             except Exception as e:
                 raise Exception("Invalid JSON body: ", e)
-            
-        if encoding == 'base64url':
+
+        if encoding == "base64url":
             try:
                 base64.urlsafe_b64decode(body)
             except Exception as e:
@@ -174,7 +195,16 @@ class Vcon:
         """
         return next((a for a in self.vcon_dict["analysis"] if a["type"] == type), None)
 
-    def add_analysis(self, *, type: str, dialog: Union[list, int], vendor: str, body: Union[dict, list, str], encoding="none", extra={}) -> None:
+    def add_analysis(
+        self,
+        *,
+        type: str,
+        dialog: Union[list, int],
+        vendor: str,
+        body: Union[dict, list, str],
+        encoding="none",
+        extra={},
+    ) -> None:
         """
         Adds analysis data to the vCon.
 
@@ -193,16 +223,16 @@ class Vcon:
         :return: None
         :rtype: None
         """
-        if encoding not in ['json', 'none', 'base64url']:
+        if encoding not in ["json", "none", "base64url"]:
             raise Exception("Invalid encoding")
-        
+
         if encoding == "json":
             try:
                 json.loads(body)
             except Exception as e:
                 raise Exception("Invalid JSON body: ", e)
-            
-        if encoding == 'base64url':
+
+        if encoding == "base64url":
             try:
                 base64.urlsafe_b64decode(body)
             except Exception as e:
@@ -249,7 +279,6 @@ class Vcon:
             None,
         )
 
-
     def find_dialog(self, by: str, val: str) -> Optional[Dialog]:
         """
         Find a dialog in the vCon given a key-value pair. Convert the dialog to a Dialog object.
@@ -262,17 +291,13 @@ class Vcon:
         :rtype: Optional[dict]
         """
         dialog = next(
-            (
-                dialog
-                for dialog in self.vcon_dict["dialog"]
-                if _get(dialog, by) == val
-            ),
+            (dialog for dialog in self.vcon_dict["dialog"] if _get(dialog, by) == val),
             None,
         )
         if dialog:
             return Dialog(**dialog)
         return None
-        
+
     def add_dialog(self, dialog: Dialog) -> None:
         """
         Add a dialog to the vCon.
@@ -404,7 +429,6 @@ class Vcon:
 
         return uuid_str
 
-
     def sign(self, private_key) -> None:
         """
         Sign the vCon using JWS.
@@ -417,30 +441,24 @@ class Vcon:
         """Sign the vCon using JWS."""
         payload = self.to_json()
         jws = JsonWebSignature()
-        protected = {
-            "alg": "RS256",
-            "typ": "JWS"
-        }
-        
+        protected = {"alg": "RS256", "typ": "JWS"}
+
         # Convert private key to PEM format if it's not already
         if isinstance(private_key, rsa.RSAPrivateKey):
             pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
         else:
             pem = private_key
 
         signed = jws.serialize_compact(protected, payload, pem)
-        signed_str = signed.decode('utf-8')
-        header, payload, signature = signed_str.split('.')
-        
-        self.vcon_dict['signatures'] = [{
-            "protected": header,
-            "signature": signature
-        }]
-        self.vcon_dict['payload'] = payload
+        signed_str = signed.decode("utf-8")
+        header, payload, signature = signed_str.split(".")
+
+        self.vcon_dict["signatures"] = [{"protected": header, "signature": signature}]
+        self.vcon_dict["payload"] = payload
 
     def verify(self, public_key) -> bool:
         """Verify the JWS signature of the vCon.
@@ -451,17 +469,17 @@ class Vcon:
         :rtype: bool
         """
         """Verify the JWS signature of the vCon."""
-        if 'signatures' not in self.vcon_dict or 'payload' not in self.vcon_dict:
+        if "signatures" not in self.vcon_dict or "payload" not in self.vcon_dict:
             raise ValueError("vCon is not signed")
 
         jws = JsonWebSignature()
         signed_data = f"{self.vcon_dict['signatures'][0]['protected']}.{self.vcon_dict['payload']}.{self.vcon_dict['signatures'][0]['signature']}"
-        
+
         # Convert public key to PEM format if it's not already
         if isinstance(public_key, rsa.RSAPublicKey):
             pem = public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
         else:
             pem = public_key
@@ -480,9 +498,6 @@ class Vcon:
         :return: a tuple containing the private key and public key
         :rtype: tuple[rSA.RSAPrivateKey, rsa.RSAPublicKey]
         """
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         public_key = private_key.public_key()
         return private_key, public_key
