@@ -31,6 +31,6 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda install pytest
-        conda install pytest-mock
+        conda install pytest python=3.12
+        conda install pytest-mock python=3.12
         pytest
