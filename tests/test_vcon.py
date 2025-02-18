@@ -770,3 +770,84 @@ def test_load_detects_file_vs_url() -> None:
         # Restore original methods
         Vcon.load_from_file = original_load_from_file
         Vcon.load_from_url = original_load_from_url
+
+
+def test_save_to_file(tmp_path):
+    """Test saving a vCon to a file"""
+    # Create a vCon with known content
+    vcon = Vcon.build_from_json(test_vcon_string)
+    
+    # Save to a temporary file
+    file_path = tmp_path / "saved_vcon.json"
+    vcon.save_to_file(str(file_path))
+    
+    # Verify the file exists and contains correct content
+    assert file_path.exists()
+    with open(file_path, 'r') as f:
+        saved_content = f.read()
+    assert json.loads(saved_content) == json.loads(vcon.to_json())
+
+
+def test_save_to_file_permission_error(tmp_path):
+    """Test saving to a file with no write permissions raises IOError"""
+    vcon = Vcon.build_new()
+    file_path = tmp_path / "readonly.json"
+    
+    # Create a read-only directory
+    file_path.parent.chmod(0o444)
+    
+    with pytest.raises(IOError):
+        vcon.save_to_file(str(file_path))
+
+
+@pytest.mark.vcr()
+def test_post_to_url():
+    """Test posting a vCon to a URL"""
+    vcon = Vcon.build_new()
+    url = "https://httpbin.org/post"  # Test endpoint that echoes back the request
+    
+    # Test with custom headers
+    headers = {
+        'x-conserver-api-token': 'test-token',
+        'x-custom-header': 'test-value'
+    }
+    
+    response = vcon.post_to_url(url, headers=headers)
+    
+    # Verify the response
+    assert response.status_code == 200
+    response_data = response.json()
+    
+    # Verify the sent data matches our vCon
+    assert json.loads(response_data['data']) == json.loads(vcon.to_json())
+    
+    # Verify headers were sent correctly
+    assert response_data['headers']['Content-Type'] == 'application/json'
+    assert response_data['headers']['X-Conserver-Api-Token'] == 'test-token'
+    assert response_data['headers']['X-Custom-Header'] == 'test-value'
+
+
+@pytest.mark.vcr()
+def test_post_to_url_no_headers():
+    """Test posting a vCon to a URL without custom headers"""
+    vcon = Vcon.build_new()
+    url = "https://httpbin.org/post"
+    
+    response = vcon.post_to_url(url)
+    
+    assert response.status_code == 200
+    response_data = response.json()
+    
+    # Verify only default headers were sent
+    assert response_data['headers']['Content-Type'] == 'application/json'
+    assert 'X-Conserver-Api-Token' not in response_data['headers']
+
+
+@pytest.mark.vcr()
+def test_post_to_url_error():
+    """Test posting to an invalid URL raises RequestException"""
+    vcon = Vcon.build_new()
+    url = "https://nonexistent.example.com"
+    
+    with pytest.raises(requests.RequestException):
+        vcon.post_to_url(url)

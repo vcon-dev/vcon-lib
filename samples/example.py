@@ -11,6 +11,7 @@ import os
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+import requests
 
 
 def main():
@@ -123,8 +124,37 @@ def main():
 
     # Save the vCon to a file
     output_filename = "example.vcon.json"
-    with open(output_filename, "w") as file:
-        file.write(vcon.to_json())
+    try:
+        vcon.save_to_file(output_filename)
+        print(f"Successfully saved vCon to {output_filename}")
+    except IOError as e:
+        print(f"Error saving vCon to file: {str(e)}")
+
+    # Post the vCon to a server (example using httpbin.org as a test endpoint)
+    try:
+        # Example with authentication and custom headers
+        headers = {
+            'x-conserver-api-token': 'your-token-here',
+            'x-custom-header': 'test-value'
+        }
+        response = vcon.post_to_url(
+            'https://httpbin.org/post',  # Test endpoint that echoes back the request
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            print("Successfully posted vCon to server")
+            # The response from httpbin.org includes the sent data and headers
+            response_data = response.json()
+            print("Server received our custom headers:")
+            for header, value in response_data['headers'].items():
+                if header.lower().startswith('x-'):
+                    print(f"  {header}: {value}")
+        else:
+            print(f"Server returned status code: {response.status_code}")
+            
+    except requests.RequestException as e:
+        print(f"Error posting vCon to server: {str(e)}")
 
 
 if __name__ == "__main__":

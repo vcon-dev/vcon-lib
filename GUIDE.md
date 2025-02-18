@@ -99,7 +99,32 @@ json_str = vcon.dumps()
 
 # To dictionary
 dict_data = vcon.to_dict()
+
+# Save to file
+vcon.save_to_file("conversation.json")
+
+# Post to URL with custom headers
+response = vcon.post_to_url(
+    'https://api.example.com/vcons',
+    headers={
+        'x-conserver-api-token': 'your-token-here',
+        'x-custom-header': 'custom-value'
+    }
+)
+if response.status_code == 200:
+    print("Successfully posted vCon")
 ```
+
+The `save_to_file` method allows you to save a vCon directly to a JSON file:
+- Takes a file path as argument
+- Automatically handles JSON serialization
+- Raises IOError if there are file permission issues
+
+The `post_to_url` method enables sending a vCon to a URL endpoint:
+- Automatically sets Content-Type to application/json
+- Supports custom headers for authentication and other purposes
+- Returns a requests.Response object for handling the server response
+- Raises requests.RequestException for network/server errors
 
 ### Tags
 ```python
