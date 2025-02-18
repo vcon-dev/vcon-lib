@@ -29,7 +29,7 @@ Here's a simple example of creating a vCon container:
     vcon.save("my_conference.vcon")
 
 Reading a vCon Container
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 To read an existing vCon container:
 
@@ -51,7 +51,7 @@ Advanced Usage
 -------------
 
 Working with Media Files
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 You can attach and manage media files in a vCon container:
 
@@ -67,4 +67,9 @@ You can attach and manage media files in a vCon container:
     # Add a transcript
     vcon.add_media("transcript.txt", media_type="text/plain")
 
-For more detailed information about the API, please refer to the :ref:`api-reference` section. 
+.. _api-reference:
+
+API Reference
+------------
+
+For more detailed information about the API, please refer to the sections below. 

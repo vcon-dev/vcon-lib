@@ -1,7 +1,8 @@
 """Example script demonstrating the usage of the vCon library.
 
 This script creates a sample vCon object representing a conversation between
-a caller and an agent, including text dialogs, audio content, metadata, and analysis.
+a caller and an agent, including text dialogs, audio content, metadata, 
+and analysis.
 """
 
 import datetime
@@ -10,7 +11,6 @@ import os
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
-from vcon.party import PartyHistory
 
 
 def main():

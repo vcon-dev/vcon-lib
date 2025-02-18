@@ -74,6 +74,7 @@ from vcon.dialog import Dialog
 - `video/x-mp4`
 - `video/ogg`
 - `multipart/mixed`
+- `message/rfc822` (for email dialogs)
 
 ## Creating and Managing vCons
 
@@ -224,3 +225,40 @@ uuid = Vcon.uuid8_domain_name("example.com")
 # Generate UUID8 with custom bits
 uuid = Vcon.uuid8_time(custom_bits)
 ```
+
+### Loading and Validating vCons
+
+#### Loading vCons
+```python
+# Load from file or URL
+vcon = Vcon.load("path/to/vcon.json")  # or "https://example.com/vcon.json"
+
+# Load specifically from file
+vcon = Vcon.load_from_file("path/to/vcon.json")
+
+# Load from URL
+vcon = Vcon.load_from_url("https://example.com/vcon.json")
+```
+
+#### Validating vCons
+```python
+# Validate a vCon object
+is_valid, errors = vcon.is_valid()
+if not is_valid:
+    print("Validation errors:", errors)
+
+# Validate a vCon file
+is_valid, errors = Vcon.validate_file("path/to/vcon.json")
+
+# Validate a vCon JSON string
+json_str = '{"uuid": "...", "vcon": "0.0.1", ...}'
+is_valid, errors = Vcon.validate_json(json_str)
+```
+
+The validation checks include:
+- Required fields (uuid, vcon, created_at)
+- Date format validation
+- Party references in dialogs
+- MIME type validation
+- Attachment and analysis format validation
+- Encoding validation

@@ -97,6 +97,55 @@ else:
 json_data = vcon.to_json()
 ```
 
+## File Validation
+
+The vCon library provides comprehensive validation capabilities for both files and JSON strings:
+
+```python
+# Validate a vCon file
+is_valid, errors = Vcon.validate_file("conversation.json")
+if not is_valid:
+    print("File validation errors:", errors)
+
+# Validate a vCon JSON string
+json_str = '{"uuid": "123", "vcon": "0.0.1", ...}'
+is_valid, errors = Vcon.validate_json(json_str)
+if not is_valid:
+    print("JSON validation errors:", errors)
+
+# Load and validate a vCon from file
+try:
+    vcon = Vcon.load_from_file("conversation.json")
+    is_valid, errors = vcon.is_valid()
+    if not is_valid:
+        print("vCon validation errors:", errors)
+except FileNotFoundError:
+    print("File not found")
+except json.JSONDecodeError:
+    print("Invalid JSON format")
+
+# Load and validate a vCon from URL
+try:
+    vcon = Vcon.load_from_url("https://example.com/conversation.json")
+    is_valid, errors = vcon.is_valid()
+    if not is_valid:
+        print("vCon validation errors:", errors)
+except requests.RequestException:
+    print("Error fetching from URL")
+except json.JSONDecodeError:
+    print("Invalid JSON format")
+```
+
+The validation checks include:
+- Required fields (uuid, vcon version, created_at)
+- Data type correctness
+- ISO 8601 datetime format validation
+- Party references in dialogs
+- MIME type validation
+- Analysis references to dialogs
+- Encoding format validation
+- Relationship integrity between different parts of the vCon
+
 ## IETF vCon Working Group
 
 The vCon (Virtual Conversation) format is being developed as an open standard through the Internet Engineering Task Force (IETF). The vCon Working Group is focused on creating a standardized format for representing digital conversations across various platforms and use cases.

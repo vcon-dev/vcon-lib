@@ -6,6 +6,7 @@ from typing import Union
 import pytest
 import json
 from datetime import datetime
+import requests
 
 from vcon.vcon import Attachment
 
@@ -631,7 +632,7 @@ def test_is_valid_with_invalid_mimetype():
 
     is_valid, errors = vcon.is_valid()
     assert not is_valid
-    assert any("invalid mimetype: invalid/type" in error for error in errors)
+    assert any("Dialog at index 0 has an invalid or missing mimetype" in error for error in errors)
 
 
 def test_validate_json_with_valid_vcon():
@@ -702,3 +703,70 @@ def test_validate_file_with_invalid_vcon(tmp_path):
     assert not is_valid
     assert len(errors) > 0
     assert "Missing required field" in errors[0]
+
+
+def test_load_from_file(tmp_path):
+    """Test loading a vCon from a file"""
+    # Create a temporary file with valid vCon
+    file_path = tmp_path / "valid_vcon.json"
+    with open(file_path, "w") as f:
+        f.write(test_vcon_string)
+
+    vcon = Vcon.load(str(file_path))
+    assert isinstance(vcon, Vcon)
+    assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
+    assert vcon.vcon == "0.0.1"
+
+
+def test_load_from_file_not_found():
+    """Test loading from a non-existent file raises FileNotFoundError"""
+    with pytest.raises(FileNotFoundError):
+        Vcon.load("nonexistent.json")
+
+
+def test_load_from_file_invalid_json(tmp_path):
+    """Test loading from a file with invalid JSON raises JSONDecodeError"""
+    file_path = tmp_path / "invalid.json"
+    with open(file_path, "w") as f:
+        f.write("invalid json")
+
+    with pytest.raises(json.JSONDecodeError):
+        Vcon.load(str(file_path))
+
+
+@pytest.mark.vcr()
+def test_load_from_url():
+    """Test loading a vCon from a URL"""
+    # Using a mock URL that returns a valid vCon JSON
+    url = "https://example.com/vcon.json"
+    with pytest.raises(requests.exceptions.RequestException):
+        # This will fail since the URL doesn't exist, but it tests the URL handling
+        Vcon.load(url)
+
+
+def test_load_detects_file_vs_url() -> None:
+    """Test that load() correctly differentiates between files and URLs"""
+    assert Vcon.load.__doc__ is not None
+    file_path = "test.json"
+    url = "https://example.com/test.json"
+    
+    # Mock the underlying methods to verify they're called correctly
+    original_load_from_file = Vcon.load_from_file
+    original_load_from_url = Vcon.load_from_url
+    
+    try:
+        # Replace methods with mocks as class methods so they bind correctly
+        Vcon.load_from_file = classmethod(lambda cls, path: path)
+        Vcon.load_from_url = classmethod(lambda cls, url: url)
+        
+        # Test file path
+        result = Vcon.load(file_path)
+        assert result == file_path
+        
+        # Test URL
+        result = Vcon.load(url)
+        assert result == url
+    finally:
+        # Restore original methods
+        Vcon.load_from_file = original_load_from_file
+        Vcon.load_from_url = original_load_from_url

@@ -13,7 +13,7 @@ The simplest way to install vcon is using pip:
     pip install vcon
 
 Using Poetry (recommended for development)
----------------------------------------
+----------------------------------------
 
 For development, we recommend using Poetry:
 
@@ -39,7 +39,7 @@ For development, we recommend using Poetry:
 This will create a virtual environment and install all dependencies, including development dependencies.
 
 Requirements
------------
+------------
 
 vcon requires Python 3.8 or later and has the following main dependencies:
 

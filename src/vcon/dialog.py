@@ -9,19 +9,26 @@ from dateutil import parser
 MIME_TYPES = [
     "text/plain",
     "audio/x-wav",
-    "audio/x-mp3",
-    "audio/x-mp4",
+    "audio/wav",
+    "audio/wave",
+    "audio/mpeg",
+    "audio/mp3",
     "audio/ogg",
+    "audio/webm",
+    "audio/x-m4a",
+    "audio/aac",
     "video/x-mp4",
     "video/ogg",
     "multipart/mixed",
+    "message/rfc822"
 ]
 
 
 class Dialog:
     MIME_TYPES = [
-        "audio/wav",
+        "text/plain",
         "audio/x-wav",
+        "audio/wav",
         "audio/wave",
         "audio/mpeg",
         "audio/mp3",
@@ -29,6 +36,10 @@ class Dialog:
         "audio/webm",
         "audio/x-m4a",
         "audio/aac",
+        "video/x-mp4",
+        "video/ogg",
+        "multipart/mixed",
+        "message/rfc822"
     ]
 
     def __init__(
@@ -244,9 +255,14 @@ class Dialog:
         """
         return self.mimetype in [
             "audio/x-wav",
-            "audio/x-mp3",
-            "audio/x-mp4",
+            "audio/wav",
+            "audio/wave",
+            "audio/mpeg",
+            "audio/mp3",
             "audio/ogg",
+            "audio/webm",
+            "audio/x-m4a",
+            "audio/aac",
         ]
 
     def is_video(self) -> bool:
