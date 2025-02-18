@@ -20,7 +20,7 @@ name = "PyPI"
 priority = "primary"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.12"
 authlib = "^1.3.2"
 pytest = "^8.3.2"
 uuid6 = "^2024.7.10"
@@ -37,6 +37,8 @@ requests = "^2.32.3"
 mutagen = "^1.47.0"
 sphinx = "<7.0.0"
 sphinx-rtd-theme = "^3.0.2"
+flake8 = "^7.1.2"
+pytest-mock = "^3.14.0"
 
 [build-system]
 requires = ["poetry-core"]
