@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="vcon",
-    version="0.3.10",
+    version="0.4.1",
     author="Thomas McCarthy-Howe",
     author_email="ghostofbasho@gmail.com",
     description="A package for working with vCon containers",
@@ -18,5 +18,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.12",
 )

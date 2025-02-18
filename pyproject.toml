@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vcon"
-version = "0.4.0"
+version = "0.4.1"
 description = "The vCon library"
 authors = ["Thomas McCarthy-Howe <ghostofbasho@gmail.com>"]
 license = "MIT"
