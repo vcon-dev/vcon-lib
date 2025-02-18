@@ -22,7 +22,9 @@ jobs:
       run: |
         # Enforce that packages come from a consistent channel set
         conda config --set channel_priority strict
-        # It can help to update conda first so that you have the latest dependency resolver fixes
+        # Make sure that urllib3 is installed, so that conda's internal libraries (like requests) work correctly
+        conda install urllib3 -y
+        # Update conda before installing packages, to pick up the latest dependency resolver fixes
         conda update -n base -c defaults conda -y
     - name: Install dependencies
       run: |
