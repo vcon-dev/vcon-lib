@@ -20,22 +20,22 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Configure Conda Consistency
       run: |
-        # Enforce that packages come from a consistent channel set
+        # Enforce strict channel priority to keep packages consistent
         conda config --set channel_priority strict
-        # Make sure that urllib3 is installed, so that conda's internal libraries (like requests) work correctly
-        conda install urllib3 -y
-        # Update conda before installing packages, to pick up the latest dependency resolver fixes
+        # First, update conda to pick up the latest dependency resolver fixes.
         conda update -n base -c defaults conda -y
+        # Then, explicitly install urllib3 into the base environment so that conda's internal libraries work correctly.
+        conda install -n base urllib3 -y
     - name: Install dependencies
       run: |
         conda env update --file environment.yml --name base
     - name: Lint with flake8
       run: |
-        # Install flake8 without switching solvers to avoid channel mixing issues
+        # Install flake8 in the base environment
         conda install flake8 -y
-        # Stop the build if there are Python syntax errors or undefined names
+        # Run flake8 to catch Python syntax errors or undefined names.
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        # Also run flake8 with exit-zero to report any style issues.
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
