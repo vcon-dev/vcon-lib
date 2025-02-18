@@ -1078,3 +1078,62 @@ class Vcon:
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for bad status codes
         return cls.build_from_json(response.text)
+
+    def save_to_file(self, file_path: str) -> None:
+        """
+        Save the vCon to a JSON file.
+
+        :param file_path: Path where the vCon JSON should be saved
+        :type file_path: str
+        :raises IOError: If there is an error writing to the file
+        """
+        logger.debug(f"Saving vCon to file: {file_path}")
+        try:
+            with open(file_path, 'w') as f:
+                f.write(self.to_json())
+            logger.info(f"Successfully saved vCon to {file_path}")
+        except IOError as e:
+            logger.error(f"Failed to save vCon to file: {str(e)}")
+            raise
+
+    def post_to_url(self, url: str, headers: Optional[Dict[str, str]] = None) -> requests.Response:
+        """
+        Post the vCon as JSON to a URL with optional headers.
+
+        :param url: The URL to post the vCon to
+        :type url: str
+        :param headers: Optional dictionary of HTTP headers (e.g., {'x-conserver-api-token': 'token123'})
+        :type headers: Optional[Dict[str, str]]
+        :return: The HTTP response from the server
+        :rtype: requests.Response
+        :raises requests.RequestException: If there is an error making the HTTP request
+        
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> response = vcon.post_to_url(
+            ...     'https://api.example.com/vcons',
+            ...     headers={'x-conserver-api-token': 'your-token-here'}
+            ... )
+            >>> print(response.status_code)  # Prints HTTP status code (e.g., 200 for success)
+        """
+        logger.debug(f"Posting vCon to URL: {url}")
+        
+        # Prepare headers
+        request_headers = {
+            'Content-Type': 'application/json'
+        }
+        if headers:
+            request_headers.update(headers)
+        
+        try:
+            response = requests.post(
+                url,
+                data=self.to_json(),
+                headers=request_headers
+            )
+            response.raise_for_status()
+            logger.info(f"Successfully posted vCon to {url}")
+            return response
+        except requests.RequestException as e:
+            logger.error(f"Failed to post vCon to URL: {str(e)}")
+            raise

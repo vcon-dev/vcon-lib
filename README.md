@@ -95,6 +95,15 @@ else:
 
 # Serialize to JSON
 json_data = vcon.to_json()
+
+# Save to file
+vcon.save_to_file("conversation.json")
+
+# Post to URL with authentication
+response = vcon.post_to_url(
+    'https://api.example.com/vcons',
+    headers={'x-conserver-api-token': 'your-token-here'}
+)
 ```
 
 ## File Validation
@@ -134,6 +143,17 @@ except requests.RequestException:
     print("Error fetching from URL")
 except json.JSONDecodeError:
     print("Invalid JSON format")
+
+# Save a vCon to file
+vcon.save_to_file("conversation.json")
+
+# Post a vCon to a URL with custom headers
+response = vcon.post_to_url(
+    'https://api.example.com/vcons',
+    headers={'x-conserver-api-token': 'your-token-here'}
+)
+if response.status_code == 200:
+    print("Successfully posted vCon")
 ```
 
 The validation checks include:
