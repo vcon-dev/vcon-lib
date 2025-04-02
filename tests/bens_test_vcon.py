@@ -44,17 +44,21 @@ _ALLOWED_PROPERTIES = {
 
 class Vcon:
     def __init__(self, vcon_dict: dict = None):
-        # Existing initialization code
+        # Initialize with empty dict if none provided
         if vcon_dict is None:
             vcon_dict = {}
-        
-        # Deep copy to avoid modifying the original dictionary
+    
+       # Deep copy to avoid modifying the original dictionary
         self.vcon_dict = copy.deepcopy(vcon_dict)
-        
-        # Existing creation_at handling logic
+    
+        # Set created_at if not present
         if "created_at" not in self.vcon_dict:
             self.vcon_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+        # Convert datetime to ISO string if needed
         elif isinstance(self.vcon_dict["created_at"], datetime):
+            # Ensure timezone is set to UTC if not already specified
+            if self.vcon_dict["created_at"].tzinfo is None:
+                self.vcon_dict["created_at"] = self.vcon_dict["created_at"].replace(tzinfo=timezone.utc)
             self.vcon_dict["created_at"] = self.vcon_dict["created_at"].isoformat()
 
     def set_updated_at(self, timestamp: Union[str, datetime]) -> None:
@@ -125,7 +129,7 @@ class Vcon:
         return cls(json.loads(json_string))
 
     @classmethod
-    def build_new(cls, created_at: Optional[Union[str, datetime]] = None) -> Vcon:
+    def build_new(cls, created_at=None):
         """
         Initialize a Vcon object with default values.
 
@@ -135,15 +139,44 @@ class Vcon:
         vcon_dict = {
             "uuid": cls.uuid8_domain_name("strolid.com"),
             "vcon": "0.0.1",
-            "created_at": datetime.now(timezone.utc).isoformat(),
             "redacted": {},
             "group": [],
             "parties": [],
-            "dialog": [],
-            "attachments": [],
+           "dialog": [],
+           "attachments": [],
             "analysis": [],
         }
-        return cls(vcon_dict, created_at)
+    
+        # Create a new Vcon instance
+        vcon = cls(vcon_dict)
+    
+        # Set the created_at timestamp if provided
+        if created_at is not None:
+            vcon.set_created_at(created_at)
+    
+        return vcon
+
+def created_at(self, timestamp):
+    """
+    Set the created_at timestamp.
+    
+    :param timestamp: The timestamp to set, either as ISO 8601 string or datetime object
+    :raises ValueError: If the timestamp is not a valid datetime or ISO string format
+    """
+    if isinstance(timestamp, datetime):
+        # Ensure timezone is set to UTC if not already specified
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        self.vcon_dict["created_at"] = timestamp.isoformat()
+    elif isinstance(timestamp, str):
+        try:
+            # Validate the timestamp format 
+            parser.parse(timestamp)  # This will raise ValueError if invalid
+            self.vcon_dict["created_at"] = timestamp
+        except ValueError:
+            raise ValueError("Invalid timestamp format. Use ISO 8601 format.")
+    else:
+        raise ValueError("Timestamp must be either a datetime object or ISO 8601 string")
 
     def get_created_at(self) -> str:
         """

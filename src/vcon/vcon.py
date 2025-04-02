@@ -110,7 +110,7 @@ class Vcon:
             >>> vcon = Vcon()  # Creates an empty vCon with default values
         """
         logger.debug("Initializing new Vcon object")
-        
+
         # If the vcon_dict contains a created_at in datetime or in string, format it like a ISO 8601
         if vcon_dict.get("created_at"):
             if isinstance(vcon_dict["created_at"], datetime):
@@ -132,6 +132,19 @@ class Vcon:
 
         self.vcon_dict = json.loads(json.dumps(vcon_dict))
         logger.info(f"Vcon object initialized with UUID: {vcon_dict.get('uuid', 'not set')}")
+
+    def set_created_at(self, created_at: Union[str, datetime]) -> None:
+        """
+        Set the created_at field in the vCon.
+
+        Args:
+            created_at (Union[str, datetime]): The timestamp to set, either as a string in ISO format
+                                           or as a datetime object.
+        """
+        if isinstance(created_at, datetime):
+            self.vcon_dict["created_at"] = created_at.isoformat()
+        else:
+            self.vcon_dict["created_at"] = created_at
 
     @classmethod
     def build_from_json(cls, json_string: str) -> Vcon:
@@ -164,13 +177,19 @@ class Vcon:
             raise
 
     @classmethod
-    def build_new(cls) -> Vcon:
+    def build_new(cls, created_at: Union[str, datetime] = None) -> Vcon:
         """
         Initialize a new Vcon object with default values.
 
         This method creates a new vCon with a generated UUID, default version,
         and initialized with empty arrays for groups, parties, dialog, attachments,
         and analysis.
+
+        Args:
+            created_at (Union[str, datetime], optional): The timestamp to set for creation, 
+                                                    either as a string in ISO format 
+                                                    or as a datetime object.
+                                                    Defaults to current time.
 
         Returns:
             A new Vcon object with default values
@@ -182,11 +201,10 @@ class Vcon:
         logger.debug("Building new Vcon with default values")
         uuid = cls.uuid8_domain_name("strolid.com")
         logger.debug(f"Generated UUID8: {uuid}")
-        
+    
         vcon_dict = {
             "uuid": uuid,
             "vcon": "0.0.1",
-            "created_at": datetime.now(timezone.utc).isoformat(),
             "redacted": {},
             "group": [],
             "parties": [],
@@ -194,8 +212,16 @@ class Vcon:
             "attachments": [],
             "analysis": [],
         }
+    
+        # Create the Vcon object
+        vcon = cls(vcon_dict)
+    
+        # Set created_at if provided, otherwise it will use the default from __init__
+        if created_at is not None:
+            vcon.set_created_at(created_at)
+        
         logger.info("Created new Vcon with default structure")
-        return cls(vcon_dict)
+        return vcon
 
     @property
     def tags(self) -> Optional[Dict[str, Any]]:
