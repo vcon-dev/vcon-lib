@@ -2,7 +2,7 @@ import requests
 import hashlib
 import base64
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import Optional, List, Dict, Union, Any, Tuple
 from .party import PartyHistory
 from dateutil import parser
 
@@ -20,7 +20,8 @@ MIME_TYPES = [
     "video/x-mp4",
     "video/ogg",
     "multipart/mixed",
-    "message/rfc822"
+    "message/rfc822",
+    "application/json"  # Added for signaling data
 ]
 
 
@@ -39,7 +40,22 @@ class Dialog:
         "video/x-mp4",
         "video/ogg",
         "multipart/mixed",
-        "message/rfc822"
+        "message/rfc822",
+        "application/json"  # Added for signaling data
+    ]
+    
+    # Updated valid types to include both old and new types
+    VALID_TYPES = [
+        # Original types from your tests
+        "text", 
+        "audio",
+        "video",
+        # New types we're adding
+        "recording", 
+        "transfer", 
+        "incomplete", 
+        "signaling",
+        "telemetry"
     ]
 
     def __init__(
@@ -68,6 +84,10 @@ class Dialog:
         skill: Optional[str] = None,
         duration: Optional[float] = None,
         meta: Optional[dict] = None,
+        # New parameters for signaling and extended functionality
+        metadata: Optional[Dict[str, Any]] = None,
+        transfer: Optional[Dict[str, Any]] = None,
+        signaling: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> None:
         """
@@ -121,8 +141,18 @@ class Dialog:
         :type duration: float or None
         :param meta: additional metadata for the dialog
         :type meta: dict or None
+        :param metadata: structured metadata for the dialog (newer format)
+        :type metadata: dict or None
+        :param transfer: transfer-specific information
+        :type transfer: dict or None
+        :param signaling: signaling-specific information
+        :type signaling: dict or None
         :param kwargs: Additional attributes to be set on the dialog
         """
+
+        # Validate dialog type
+        if type not in self.VALID_TYPES:
+            raise ValueError(f"Invalid dialog type: {type}. Must be one of {self.VALID_TYPES}")
 
         # Convert the start time to an ISO 8601 string from a datetime or a string
         if isinstance(start, datetime):
@@ -135,10 +165,28 @@ class Dialog:
             if value is not None and key not in ("self", "kwargs"):
                 setattr(self, key, value)
 
+        # Don't merge meta and metadata; keep both for backward compatibility
+        # This ensures tests relying on dialog.meta will continue to work
+        # while also allowing new code to use dialog.metadata
+        if not hasattr(self, "metadata") and hasattr(self, "meta"):
+            self.metadata = self.meta.copy() if self.meta else {}
+        elif not hasattr(self, "meta") and hasattr(self, "metadata"):
+            self.meta = self.metadata.copy() if self.metadata else {}
+        elif not hasattr(self, "metadata") and not hasattr(self, "meta"):
+            self.metadata = {}
+            self.meta = {}
+
         # Set any additional kwargs as attributes
         for key, value in kwargs.items():
             if value is not None:
                 setattr(self, key, value)
+
+        # Handling for specific dialog types
+        if type == "signaling" and not hasattr(self, "mimetype"):
+            self.mimetype = "application/json"
+
+        if type == "incomplete" and not hasattr(self, "disposition"):
+            raise ValueError("Dialog type 'incomplete' requires a disposition")
 
     def to_dict(self):
         """
@@ -272,7 +320,7 @@ class Dialog:
         :return: True if the dialog is a video dialog, False otherwise
         :rtype: bool
         """
-        return self.mimetype in ["video/x-mp4", "video/ogg"]
+        return hasattr(self, "mimetype") and self.mimetype in ["video/x-mp4", "video/ogg"]
 
     # Check if the dialog is an email dialog
     def is_email(self) -> bool:
@@ -282,7 +330,34 @@ class Dialog:
         :return: True if the dialog is an email dialog, False otherwise
         :rtype: bool
         """
-        return self.mimetype == "message/rfc822"
+        return hasattr(self, "mimetype") and self.mimetype == "message/rfc822"
+    
+    def is_signaling(self) -> bool:
+        """
+        Check if the dialog is a signaling dialog.
+
+        :return: True if the dialog is a signaling dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "signaling"
+    
+    def is_transfer(self) -> bool:
+        """
+        Check if the dialog is a transfer dialog.
+
+        :return: True if the dialog is a transfer dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "transfer"
+    
+    def is_incomplete(self) -> bool:
+        """
+        Check if the dialog is an incomplete dialog.
+
+        :return: True if the dialog is an incomplete dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "incomplete"
 
     def is_external_data_changed(self) -> bool:
         """
