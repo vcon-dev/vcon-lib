@@ -590,7 +590,7 @@ class Vcon:
         return [dialog for dialog in self.vcon_dict["dialog"] if dialog.get("type") == type]
 
     def add_telemetry_dialog(
-        elf,
+        self,
         start: Union[str, datetime],
         telemetry_data: Dict[str, Any],
         parties: List[int] = None,
