@@ -20,6 +20,39 @@ import logging
 from .party import Party
 from .dialog import Dialog
 
+# Define constants for property handling modes
+PROPERTY_HANDLING_DEFAULT = "default"  # Keep non-standard properties
+PROPERTY_HANDLING_STRICT = "strict"    # Remove non-standard properties
+PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
+
+# Define allowed properties for each object type
+_ALLOWED_VCON_PROPERTIES = {
+    "uuid", "vcon", "created_at", "updated_at", "redacted", 
+    "group", "parties", "dialog", "attachments", "analysis", 
+    "signatures", "payload", "meta", "subject", "appended"
+}
+
+_ALLOWED_PARTY_PROPERTIES = {
+    "type", "name", "contact", "meta", "external_id", "party_id"
+}
+
+_ALLOWED_DIALOG_PROPERTIES = {
+    "type", "start", "parties", "duration", "mimetype", "filename", 
+    "body", "encoding", "url", "alg", "signature", "disposition", 
+    "party_history", "transferee", "transferor", "transfer_target",
+    "original", "consultation", "target_dialog", "campaign", 
+    "interaction", "skill", "meta", "metadata", "transfer", 
+    "signaling", "originator"
+}
+
+_ALLOWED_ATTACHMENT_PROPERTIES = {
+    "type", "body", "encoding", "meta"
+}
+
+_ALLOWED_ANALYSIS_PROPERTIES = {
+    "type", "dialog", "vendor", "body", "encoding", "meta"
+}
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -93,25 +126,33 @@ class Vcon:
         vcon_dict (Dict): The underlying dictionary containing all vCon data
     """
 
-    def __init__(self, vcon_dict: Dict[str, Any] = {}) -> None:
+    def __init__(self, vcon_dict: Dict[str, Any] = None, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> None:
         """
         Initialize a Vcon object from a dictionary.
 
-        This constructor creates a new vCon object from a dictionary representation.
-        If no dictionary is provided, it creates an empty vCon with default values.
-        The constructor ensures that required fields like created_at and attachments
-        are properly initialized.
-
         Args:
             vcon_dict: A dictionary representing a vCon. Defaults to an empty dict.
+            property_handling: How to handle non-standard properties. 
+                                Options are:
+                                - "default": Keep non-standard properties (default)
+                                - "strict": Remove non-standard properties
+                                - "meta": Move non-standard properties to meta object
 
         Example:
-            >>> vcon = Vcon({"uuid": "123", "vcon": "0.0.1"})
-            >>> vcon = Vcon()  # Creates an empty vCon with default values
+            >>> vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"})
+            >>> strict_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="strict")
+            >>> meta_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="meta")
         """
         logger.debug("Initializing new Vcon object")
+
+        # Store property handling mode for later use
+        self.property_handling = property_handling
         
-        # If the vcon_dict contains a created_at in datetime or in string, format it like a ISO 8601
+        # Initialize with empty dict if none provided
+        if vcon_dict is None:
+            vcon_dict = {}
+        
+        # Handle created_at
         if vcon_dict.get("created_at"):
             if isinstance(vcon_dict["created_at"], datetime):
                 vcon_dict["created_at"] = vcon_dict["created_at"].isoformat()
@@ -129,12 +170,77 @@ class Vcon:
         if "attachments" not in vcon_dict:
             vcon_dict["attachments"] = []
             logger.debug("Initialized empty attachments array")
+            
+        # Process the vcon itself for non-standard properties
+        processed_vcon = self._process_properties(vcon_dict, _ALLOWED_VCON_PROPERTIES)
+            
+        # Process embedded objects based on property_handling
+        if "parties" in processed_vcon:
+            processed_vcon["parties"] = [
+                self._process_properties(party, _ALLOWED_PARTY_PROPERTIES) 
+                for party in processed_vcon["parties"]
+            ]
+            
+        if "dialog" in processed_vcon:
+            processed_vcon["dialog"] = [
+                self._process_properties(dialog, _ALLOWED_DIALOG_PROPERTIES)
+                for dialog in processed_vcon["dialog"]
+            ]
+            
+        if "attachments" in processed_vcon:
+            processed_vcon["attachments"] = [
+                self._process_properties(attachment, _ALLOWED_ATTACHMENT_PROPERTIES)
+                for attachment in processed_vcon["attachments"]
+            ]
+            
+        if "analysis" in processed_vcon:
+            processed_vcon["analysis"] = [
+                self._process_properties(analysis, _ALLOWED_ANALYSIS_PROPERTIES)
+                for analysis in processed_vcon["analysis"]
+            ]
 
-        self.vcon_dict = json.loads(json.dumps(vcon_dict))
-        logger.info(f"Vcon object initialized with UUID: {vcon_dict.get('uuid', 'not set')}")
+        self.vcon_dict = json.loads(json.dumps(processed_vcon))
+        logger.info(f"Vcon object initialized with UUID: {processed_vcon.get('uuid', 'not set')}")
 
+    def _process_properties(self, obj_dict: Dict[str, Any], allowed_properties: set) -> Dict[str, Any]:
+        """
+        Process an object dictionary based on the property handling mode.
+        
+        Args:
+            obj_dict: The dictionary to process
+            allowed_properties: Set of allowed property names
+            
+        Returns:
+            The processed dictionary
+        """
+        if not isinstance(obj_dict, dict):
+            return obj_dict
+            
+        result = {}
+        non_standard = {}
+        
+        # Separate standard and non-standard properties
+        for k, v in obj_dict.items():
+            if k in allowed_properties:
+                result[k] = v
+            else:
+                non_standard[k] = v
+                
+        # Handle non-standard properties based on mode
+        if self.property_handling == PROPERTY_HANDLING_STRICT:
+            # Ignore non-standard properties
+            pass
+        elif self.property_handling == PROPERTY_HANDLING_META:
+            # Move non-standard properties to meta
+            if non_standard:
+                result.setdefault("meta", {}).update(non_standard)
+        else:  # Default: Keep non-standard properties
+            result.update(non_standard)
+            
+        return result
+    
     @classmethod
-    def build_from_json(cls, json_string: str) -> Vcon:
+    def build_from_json(cls, json_string: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
         """
         Initialize a Vcon object from a JSON string.
 
@@ -158,13 +264,13 @@ class Vcon:
         try:
             vcon_dict = json.loads(json_string)
             logger.info("Successfully parsed JSON string")
-            return cls(vcon_dict)
+            return cls(vcon_dict, property_handling=property_handling)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON string: {str(e)}")
             raise
 
     @classmethod
-    def build_new(cls) -> Vcon:
+    def build_new(cls, created_at: Union[str, datetime] = None, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
         """
         Initialize a new Vcon object with default values.
 
@@ -194,6 +300,14 @@ class Vcon:
             "attachments": [],
             "analysis": [],
         }
+
+        # Create the Vcon object
+        vcon = cls(vcon_dict, property_handling=property_handling)
+
+        # Set created_at if provided, otherwise it will use the default from __init__
+        if created_at is not None:
+            vcon.set_created_at(created_at)
+    
         logger.info("Created new Vcon with default structure")
         return cls(vcon_dict)
 
@@ -333,10 +447,15 @@ class Vcon:
             >>> print(attachment.type)  # Prints "metadata"
         """
         logger.debug(f"Creating new attachment of type {type} with {encoding} encoding")
-        
+    
         attachment = Attachment(type, body, encoding)
-        self.vcon_dict["attachments"].append(attachment.to_dict())
-        
+        attachment_dict = attachment.to_dict()
+    
+        # Process attachment dict according to property handling mode
+        processed_attachment = self._process_properties(attachment_dict, _ALLOWED_ATTACHMENT_PROPERTIES)
+    
+        self.vcon_dict["attachments"].append(processed_attachment)
+    
         logger.info(f"Added new attachment of type {type}")
         return attachment
 
@@ -434,7 +553,11 @@ class Vcon:
             "encoding": encoding,
             **extra,
         }
-        self.vcon_dict["analysis"].append(analysis)
+
+        # Process analysis dict according to property handling mode
+        processed_analysis = self._process_properties(analysis, _ALLOWED_ANALYSIS_PROPERTIES)
+
+        self.vcon_dict["analysis"].append(processed_analysis)
         logger.info(f"Added analysis of type {type} from vendor {vendor}")
 
     def add_party(self, party: Party) -> None:
@@ -452,8 +575,14 @@ class Vcon:
             >>> party = Party(type="person", name="John Doe")
             >>> vcon.add_party(party)
         """
-        logger.debug(f"Adding party: {party.to_dict()}")
-        self.vcon_dict["parties"].append(party.to_dict())
+    
+        # Process party dict according to property handling mode
+        party_dict = party.to_dict()
+        processed_party = self._process_properties(party_dict, _ALLOWED_PARTY_PROPERTIES)
+    
+        self.vcon_dict["parties"].append(processed_party)
+        logger.info("Added party")
+
 
     def find_party_index(self, by: str, val: str) -> Optional[int]:
         """
@@ -538,8 +667,14 @@ class Vcon:
             >>> vcon.add_dialog(dialog)
         """
         logger.debug(f"Adding dialog: {dialog.to_dict()}")
-        self.vcon_dict["dialog"].append(dialog.to_dict())
+    
+        # Process dialog dict according to property handling mode
+        dialog_dict = dialog.to_dict()
+        processed_dialog = self._process_properties(dialog_dict, _ALLOWED_DIALOG_PROPERTIES)
+    
+        self.vcon_dict["dialog"].append(processed_dialog)
         logger.info(f"Added dialog of type {dialog.type}")
+
 
     def to_json(self) -> str:
         """
@@ -1025,59 +1160,74 @@ class Vcon:
             return False, [f"Error parsing vCon: {str(e)}"]
 
     @classmethod
-    def load(cls, source: str) -> Vcon:
+    def load(cls, source: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
         """
         Load a vCon from either a file path or URL.
 
-        :param source: File path or URL to load the vCon from
-        :type source: str
-        :return: A Vcon object
-        :rtype: Vcon
-        :raises ValueError: If the source is invalid or cannot be loaded
-        :raises requests.RequestException: If there is an error fetching from URL
-        :raises json.JSONDecodeError: If the source contains invalid JSON
+        Args:
+            source: File path or URL to load the vCon from
+            property_handling: How to handle non-standard properties. 
+                            Options are "default", "strict", or "meta"
+                            
+        Returns:
+            A Vcon object
+            
+        Raises:
+            ValueError: If the source is invalid or cannot be loaded
+            requests.RequestException: If there is an error fetching from URL
+            json.JSONDecodeError: If the source contains invalid JSON
         """
         if source.startswith(('http://', 'https://')):
-            return cls.load_from_url(source)
+            return cls.load_from_url(source, property_handling=property_handling)
         else:
-            return cls.load_from_file(source)
+            return cls.load_from_file(source, property_handling=property_handling)
 
     @classmethod
-    def load_from_file(cls, file_path: str) -> Vcon:
+    def load_from_file(cls, file_path: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
         """
         Load a vCon from a file.
 
-        :param file_path: Path to the vCon JSON file
-        :type file_path: str
-        :return: A Vcon object
-        :rtype: Vcon
-        :raises FileNotFoundError: If the file does not exist
-        :raises json.JSONDecodeError: If the file contains invalid JSON
+        Args:
+            file_path: Path to the vCon JSON file
+            property_handling: How to handle non-standard properties. 
+                            Options are "default", "strict", or "meta"
+                            
+        Returns:
+            A Vcon object
+            
+        Raises:
+            FileNotFoundError: If the file does not exist
+            json.JSONDecodeError: If the file contains invalid JSON
         """
         try:
             with open(file_path, 'r') as f:
                 json_str = f.read()
-            return cls.build_from_json(json_str)
+            return cls.build_from_json(json_str, property_handling=property_handling)
         except FileNotFoundError:
             raise FileNotFoundError(f"vCon file not found: {file_path}")
         except json.JSONDecodeError as e:
             raise json.JSONDecodeError(f"Invalid JSON in vCon file: {str(e)}", e.doc, e.pos)
 
     @classmethod
-    def load_from_url(cls, url: str) -> Vcon:
+    def load_from_url(cls, url: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
         """
         Load a vCon from a URL.
 
-        :param url: URL to fetch the vCon JSON from
-        :type url: str
-        :return: A Vcon object
-        :rtype: Vcon
-        :raises requests.RequestException: If there is an error fetching from URL
-        :raises json.JSONDecodeError: If the response contains invalid JSON
+        Args:
+            url: URL to fetch the vCon JSON from
+            property_handling: How to handle non-standard properties. 
+                            Options are "default", "strict", or "meta"
+                            
+        Returns:
+            A Vcon object
+            
+        Raises:
+            requests.RequestException: If there is an error fetching from URL
+            json.JSONDecodeError: If the response contains invalid JSON
         """
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for bad status codes
-        return cls.build_from_json(response.text)
+        return cls.build_from_json(response.text, property_handling=property_handling)
 
     def save_to_file(self, file_path: str) -> None:
         """
