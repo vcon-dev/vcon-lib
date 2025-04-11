@@ -756,8 +756,8 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        Vcon.load_from_file = classmethod(lambda cls, path: path)
-        Vcon.load_from_url = classmethod(lambda cls, url: url)
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -770,7 +770,7 @@ def test_load_detects_file_vs_url() -> None:
         # Restore original methods
         Vcon.load_from_file = original_load_from_file
         Vcon.load_from_url = original_load_from_url
-
+        
 
 def test_save_to_file(tmp_path):
     """Test saving a vCon to a file"""
