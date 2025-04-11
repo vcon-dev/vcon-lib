@@ -756,7 +756,6 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        # Update these lambda functions to accept the property_handling parameter
         Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
         Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
         

@@ -50,7 +50,7 @@ _ALLOWED_ATTACHMENT_PROPERTIES = {
 }
 
 _ALLOWED_ANALYSIS_PROPERTIES = {
-    "type", "dialog", "vendor", "body", "encoding", "meta"
+    "type", "dialog", "vendor", "body", "encoding", "meta", "schema"
 }
 
 # Configure logging
@@ -495,7 +495,9 @@ class Vcon:
         vendor: str,
         body: Union[Dict[str, Any], List[Any], str],
         encoding: str = "none",
-        extra: Dict[str, Any] = {},
+        schema: Optional[Dict[str, Any]] = None,
+        meta: Optional[Dict[str, Any]] = None,
+        **extra,
     ) -> None:
         """
         Add analysis data to the vCon.
@@ -510,7 +512,9 @@ class Vcon:
             vendor: The name of the vendor who performed the analysis
             body: The analysis data
             encoding: The encoding format of the body (default: "none")
-            extra: Additional key-value pairs to include in the analysis (default: {})
+            schema: Optional schema information about the analysis (default: None)
+            meta: Optional metadata about the analysis (default: None)
+            **extra: Additional key-value pairs to include in the analysis
 
         Raises:
             Exception: If the encoding is invalid or if the body format is invalid for the specified encoding
@@ -522,7 +526,9 @@ class Vcon:
             ...     dialog=[0],
             ...     vendor="acme",
             ...     body={"score": 0.8},
-            ...     encoding="json"
+            ...     encoding="json",
+            ...     schema={"version": "1.0"},
+            ...     meta={"confidence": "high"}
             ... )
         """
         logger.debug(f"Adding analysis of type {type} from vendor {vendor}")
@@ -531,28 +537,38 @@ class Vcon:
             logger.error(f"Invalid encoding: {encoding}")
             raise Exception("Invalid encoding")
 
-        if encoding == "json":
+        if encoding == "json" and isinstance(body, str):
             try:
                 json.loads(body)
             except Exception as e:
                 logger.error(f"Invalid JSON body: {str(e)}")
                 raise Exception("Invalid JSON body: ", e)
 
-        if encoding == "base64url":
+        if encoding == "base64url" and isinstance(body, str):
             try:
                 base64.urlsafe_b64decode(body)
             except Exception as e:
                 logger.error(f"Invalid base64url body: {str(e)}")
                 raise Exception("Invalid base64url body: ", e)
 
+        # Build the analysis object
         analysis = {
             "type": type,
             "dialog": dialog,
             "vendor": vendor,
             "body": body,
             "encoding": encoding,
-            **extra,
         }
+        # Add schema if provided
+        if schema is not None:
+            analysis["schema"] = schema
+            
+        # Add meta if provided
+        if meta is not None:
+            analysis["meta"] = meta
+            
+        # Add any additional parameters
+        analysis.update(extra)
 
         # Process analysis dict according to property handling mode
         processed_analysis = self._process_properties(analysis, _ALLOWED_ANALYSIS_PROPERTIES)
