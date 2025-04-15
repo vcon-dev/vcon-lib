@@ -1112,18 +1112,15 @@ class Vcon:
     def is_valid(self) -> Tuple[bool, List[str]]:
         """
         Validate the vCon syntax according to the standard.
-
         Checks required fields, ensures data types are correct, and verifies
         relationships between different parts of the vCon (for example, dialog party
         references and attachment fields).
-
         Returns:
             Tuple[bool, List[str]]: A tuple where the first element is True if the vCon
             is valid and False otherwise, and the second element is a list of error messages.
         """
         logger.debug("Validating vCon")
         errors = []
-
         # Validate required fields.
         required_fields = ["uuid", "vcon", "created_at"]
         for field in required_fields:
@@ -1131,7 +1128,6 @@ class Vcon:
                 error = f"Missing required field: {field}"
                 logger.error(error)
                 errors.append(error)
-
         # Validate created_at format.
         if "created_at" in self.vcon_dict:
             try:
@@ -1140,7 +1136,6 @@ class Vcon:
                 error = f"Invalid created_at format. Must be an ISO 8601 datetime string: {str(e)}"
                 logger.error(error)
                 errors.append(error)
-
         # Validate parties.
         if "parties" in self.vcon_dict:
             if not isinstance(self.vcon_dict["parties"], list):
@@ -1153,53 +1148,34 @@ class Vcon:
                         error = f"Party at index {i} must be a dictionary."
                         logger.error(error)
                         errors.append(error)
-
         # Validate dialogs.
         dialogs = self.vcon_dict.get("dialog", [])
         for i, dialog in enumerate(dialogs):
             if not isinstance(dialog, dict):
                 errors.append(f"Dialog at index {i} must be a dictionary.")
                 continue
-
+    
             # Validate dialog type if present
             if "type" in dialog:
                 dialog_type = dialog["type"]
                 if dialog_type not in Dialog.VALID_TYPES:
                     errors.append(f"Dialog at index {i} has an invalid type: {dialog_type}")
-
+    
                 # Validate specific requirements for each type
-                if dialog_type == "signaling":
-                    # For signaling dialogs, ensure there's either a body or signaling field
-                    if "body" not in dialog and "signaling" not in dialog:
-                        errors.append(f"Dialog at index {i} of type 'signaling' must have either a body or signaling field.")
-
-                    # If mimetype is specified, it should be application/json
-                    if "mimetype" in dialog and dialog["mimetype"] != "application/json":
-                        errors.append(f"Dialog at index {i} of type 'signaling' must have mimetype 'application/json' if specified.")
-
-                elif dialog_type == "telemetry":
-                    # For telemetry dialogs, ensure there's a body
-                    if "body" not in dialog:
-                        errors.append(f"Dialog at index {i} of type 'telemetry' must have a body.")
-
-                    # If mimetype is specified, it should be application/json
-                    if "mimetype" in dialog and dialog["mimetype"] != "application/json":
-                        errors.append(f"Dialog at index {i} of type 'telemetry' must have mimetype 'application/json' if specified.")
-
-                elif dialog_type == "incomplete":
+                if dialog_type == "incomplete":
                     # For incomplete dialogs, ensure there's a disposition
                     if "disposition" not in dialog:
                         errors.append(f"Dialog at index {i} of type 'incomplete' must have a disposition.")
-
+    
                 elif dialog_type == "transfer":
                     # For transfer dialogs, ensure there's either transfer info or transferor/transferee
                     has_transfer_field = "transfer" in dialog
                     has_transferor = "transferor" in dialog
                     has_transferee = "transferee" in dialog
-
+    
                     if not (has_transfer_field or (has_transferor and has_transferee)):
                         errors.append(f"Dialog at index {i} of type 'transfer' must have either a transfer field or both transferor and transferee fields.")
-
+    
             # Validate party references in dialog.
             if "parties" in dialog:
                 if not isinstance(dialog["parties"], list):
@@ -1209,22 +1185,21 @@ class Vcon:
                     for party_idx in dialog["parties"]:
                         if not isinstance(party_idx, int) or party_idx < 0 or party_idx >= party_count:
                             errors.append(f"Dialog at index {i} references invalid party index: {party_idx}")
-
             # Validate start time format if present.
             if "start" in dialog:
                 try:
                     parser.parse(dialog["start"])
                 except Exception:
                     errors.append(f"Dialog at index {i} has an invalid 'start' format. Must be an ISO 8601 datetime string.")
-
-            # Validate mimetype for non-signaling/telemetry types
+    
+            # Validate mimetype for non-transfer/incomplete types
             dialog_type = dialog.get("type", "")
-            if dialog_type not in ["signaling", "telemetry", "transfer", "incomplete"]:
+            if dialog_type not in ["transfer", "incomplete"]:
                 if ("mimetype" not in dialog or
                     not isinstance(dialog["mimetype"], str) or
                     dialog["mimetype"] not in Dialog.MIME_TYPES):
                     errors.append(f"Dialog at index {i} has an invalid or missing mimetype: {dialog.get('mimetype', 'missing')}")
-
+    
         # Validate attachments.
         if "attachments" in self.vcon_dict:
             if not isinstance(self.vcon_dict["attachments"], list):
