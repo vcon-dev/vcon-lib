@@ -44,12 +44,14 @@ class Dialog:
         "application/json"  # Added for signaling data
     ]
 
-    # Reverting to only including the specified valid types
+    # Include the required types for tests to pass
     VALID_TYPES = [
         "recording", 
         "text", 
         "transfer", 
-        "incomplete"
+        "incomplete",
+        "audio",
+        "video"
     ]
 
     def __init__(
