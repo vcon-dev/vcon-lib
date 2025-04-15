@@ -572,69 +572,18 @@ class Vcon:
     def find_dialogs_by_type(self, type: str) -> List[Dict[str, Any]]:
         """
         Find all dialog entries in the vCon by type.
-    
         This method searches through the dialog list and returns all dialog
         entries matching the specified type.
-    
         Args:
             type: The type of dialogs to find
-        
         Returns:
             A list of matching dialog dictionaries
-        
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_signaling_dialog(start="2025-03-20T14:00:00Z", signaling_data={...})
-            >>> signaling_dialogs = vcon.find_dialogs_by_type("signaling")
+            >>> vcon.add_transfer_dialog(start="2023-01-20T14:00:00Z", transfer_data={...})
+            >>> transfer_dialogs = vcon.find_dialogs_by_type("transfer")
         """
         return [dialog for dialog in self.vcon_dict["dialog"] if dialog.get("type") == type]
-
-    def add_telemetry_dialog(
-        self,
-        start: Union[str, datetime],
-        telemetry_data: Dict[str, Any],
-        parties: List[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
-        """
-        Add a telemetry dialog entry to the vCon.
-    
-        This method creates a dialog entry of type "telemetry" with the provided
-        telemetry data and adds it to the vCon's dialog list. Telemetry is useful
-        for device and system metrics that are not directly related to network
-        signaling.
-    
-        Args:
-            start: When the telemetry was collected (ISO 8601 string or datetime)
-            telemetry_data: The telemetry data to include
-            parties: List of party indices involved (optional)
-            metadata: Additional metadata (optional)
-        
-        Example:
-            >>> vcon = Vcon.build_new()
-            >>> vcon.add_telemetry_dialog(
-            ...     start="2025-03-20T14:00:00Z",
-            ...     telemetry_data={
-            ...         "batteryLevel": 85,
-            ...         "memoryUsage": 1240,
-            ...         "cpuLoad": 0.3,
-            ...         "deviceTemperature": 38.5
-            ...     },
-            ...     parties=[0]
-        """
-        if parties is None:
-            parties = []
-        
-        dialog = Dialog(
-            type="telemetry",
-            start=start,
-            parties=parties,
-            body=telemetry_data,
-            metadata=metadata,
-            mimetype="application/json"
-        )
-
-        self.add_dialog(dialog)
 
     def add_dialog(self, dialog: Dialog) -> None:
         """
@@ -655,51 +604,6 @@ class Vcon:
         self.vcon_dict["dialog"].append(dialog.to_dict())
         logger.info(f"Added dialog of type {dialog.type}")
 
-    def add_signaling_dialog(
-        self,
-        start: Union[str, datetime],
-        signaling_data: Dict[str, Any],
-        parties: List[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
-        """
-        Add a signaling dialog entry to the vCon.
-    
-        This method creates a dialog entry of type "signaling" with the provided
-        signaling data and adds it to the vCon's dialog list.
-    
-        Args:
-            start: When the signaling event occurred (ISO 8601 string or datetime)
-            signaling_data: The signaling data to include
-            parties: List of party indices involved (optional)
-            metadata: Additional metadata (optional)
-        
-        Example:
-            >>> vcon = Vcon.build_new()
-            >>> vcon.add_signaling_dialog(
-            ...     start="2025-03-20T14:00:00Z",
-            ...     signaling_data={
-            ...         "signalStrength": -85,
-            ...         "networkType": "5G",
-            ...         "latencyMs": 30
-            ...     },
-            ...     parties=[0, 1]
-            ... )
-        """
-        if parties is None:
-            parties = []
-        
-        dialog = Dialog(
-            type="signaling",
-            start=start,
-            parties=parties,
-            body=signaling_data,
-            metadata=metadata,
-            mimetype="application/json"
-        )
-
-        self.add_dialog(dialog)
-
     def add_transfer_dialog(
         self,
         start: Union[str, datetime],
@@ -709,20 +613,17 @@ class Vcon:
     ) -> None:
         """
         Add a transfer dialog entry to the vCon.
-
         This method creates a dialog entry of type "transfer" with the provided
         transfer data and adds it to the vCon's dialog list.
-
         Args:
             start: When the transfer occurred (ISO 8601 string or datetime)
             transfer_data: Transfer-specific information
             parties: List of party indices involved
             metadata: Additional metadata (optional)
-
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_transfer_dialog(
-            ...     start="2025-03-20T14:05:00Z",
+            ...     start="2023-01-20T14:05:00Z",
             ...     transfer_data={
             ...         "reason": "Call forwarded",
             ...         "from": "+1234567890",
@@ -742,9 +643,9 @@ class Vcon:
             transfer=transfer_data,
             metadata=metadata
         )
-
+    
         self.add_dialog(dialog)
-
+    
     def add_incomplete_dialog(
         self,
         start: Union[str, datetime],
@@ -755,10 +656,8 @@ class Vcon:
     ) -> None:
         """
         Add an incomplete dialog entry to the vCon.
-
         This method creates a dialog entry of type "incomplete" for conversations
         that failed to be set up, with the provided disposition and details.
-
         Args:
             start: When the attempt occurred (ISO 8601 string or datetime)
             disposition: Reason for the incomplete conversation
@@ -769,7 +668,7 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_incomplete_dialog(
-            ...     start="2025-03-20T14:00:00Z",
+            ...     start="2023-01-20T14:00:00Z",
             ...     disposition="NO_ANSWER",
             ...     details={"ringDuration": 45000},
             ...     parties=[0, 1]
@@ -777,14 +676,14 @@ class Vcon:
         """
         if parties is None:
             parties = []
-        
+    
         dialog_data = {
             "disposition": disposition
         }
     
         if details:
             dialog_data.update(details)
-        
+    
         dialog = Dialog(
             type="incomplete",
             start=start,
