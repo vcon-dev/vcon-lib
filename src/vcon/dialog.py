@@ -43,19 +43,13 @@ class Dialog:
         "message/rfc822",
         "application/json"  # Added for signaling data
     ]
-    
-    # Updated valid types to include both old and new types
+
+    # Reverting to only including the specified valid types
     VALID_TYPES = [
-        # Original types from your tests
-        "text", 
-        "audio",
-        "video",
-        # New types we're adding
         "recording", 
+        "text", 
         "transfer", 
-        "incomplete", 
-        "signaling",
-        "telemetry"
+        "incomplete"
     ]
 
     def __init__(
@@ -92,8 +86,7 @@ class Dialog:
     ) -> None:
         """
         Initialize a Dialog object.
-
-        :param type: the type of the dialog (e.g. "text", "audio", etc.)
+        :param type: the type of the dialog (e.g. "text", "recording", "transfer", "incomplete")
         :type type: str
         :param start: the start time of the dialog
         :type start: datetime
@@ -159,7 +152,6 @@ class Dialog:
             start = start.isoformat()
         elif isinstance(start, str):
             start = parser.parse(start).isoformat()
-
         # Set attributes from named parameters that are not None
         for key, value in locals().items():
             if value is not None and key not in ("self", "kwargs"):
@@ -182,9 +174,6 @@ class Dialog:
                 setattr(self, key, value)
 
         # Handling for specific dialog types
-        if type == "signaling" and not hasattr(self, "mimetype"):
-            self.mimetype = "application/json"
-
         if type == "incomplete" and not hasattr(self, "disposition"):
             raise ValueError("Dialog type 'incomplete' requires a disposition")
 
