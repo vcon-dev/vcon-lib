@@ -277,17 +277,39 @@ class Dialog:
     def is_text(self) -> bool:
         """
         Check if the dialog is a text dialog.
-
         :return: True if the dialog is a text dialog, False otherwise
         :rtype: bool
         """
-        return self.mimetype == "text/plain"
-
+        return hasattr(self, "type") and self.type == "text"
+    
+    def is_recording(self) -> bool:
+        """
+        Check if the dialog is a recording dialog.
+        :return: True if the dialog is a recording dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "recording"
+    
+    def is_transfer(self) -> bool:
+        """
+        Check if the dialog is a transfer dialog.
+        :return: True if the dialog is a transfer dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "transfer"
+    
+    def is_incomplete(self) -> bool:
+        """
+        Check if the dialog is an incomplete dialog.
+        :return: True if the dialog is an incomplete dialog, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "type") and self.type == "incomplete"
+    
     def is_audio(self) -> bool:
         """
-        Check if the dialog is an audio dialog.
-
-        :return: True if the dialog is an audio dialog, False otherwise
+        Check if the dialog has audio content.
+        :return: True if the dialog has audio content, False otherwise
         :rtype: bool
         """
         return self.mimetype in [
@@ -301,53 +323,23 @@ class Dialog:
             "audio/x-m4a",
             "audio/aac",
         ]
-
+    
     def is_video(self) -> bool:
         """
-        Check if the dialog is a video dialog.
-
-        :return: True if the dialog is a video dialog, False otherwise
+        Check if the dialog has video content.
+        :return: True if the dialog has video content, False otherwise
         :rtype: bool
         """
         return hasattr(self, "mimetype") and self.mimetype in ["video/x-mp4", "video/ogg"]
-
-    # Check if the dialog is an email dialog
+    
     def is_email(self) -> bool:
         """
         Check if the dialog is an email dialog.
-
         :return: True if the dialog is an email dialog, False otherwise
         :rtype: bool
         """
         return hasattr(self, "mimetype") and self.mimetype == "message/rfc822"
     
-    def is_signaling(self) -> bool:
-        """
-        Check if the dialog is a signaling dialog.
-
-        :return: True if the dialog is a signaling dialog, False otherwise
-        :rtype: bool
-        """
-        return hasattr(self, "type") and self.type == "signaling"
-    
-    def is_transfer(self) -> bool:
-        """
-        Check if the dialog is a transfer dialog.
-
-        :return: True if the dialog is a transfer dialog, False otherwise
-        :rtype: bool
-        """
-        return hasattr(self, "type") and self.type == "transfer"
-    
-    def is_incomplete(self) -> bool:
-        """
-        Check if the dialog is an incomplete dialog.
-
-        :return: True if the dialog is an incomplete dialog, False otherwise
-        :rtype: bool
-        """
-        return hasattr(self, "type") and self.type == "incomplete"
-
     def is_external_data_changed(self) -> bool:
         """
         Check to see if it's an external data dialog, that the contents are valid by
