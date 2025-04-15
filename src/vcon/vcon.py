@@ -216,6 +216,27 @@ class Vcon:
         else:
             self.vcon_dict["created_at"] = created_at
 
+    def set_updated_at(self, timestamp: Union[str, datetime]) -> None:
+        """
+        Set the updated_at timestamp.
+    
+        Args:
+        timestamp: The timestamp to set, either as ISO 8601 string or datetime object
+        
+        Example:
+        >>> vcon = Vcon.build_new()
+        >>> vcon.set_updated_at(datetime.now(timezone.utc))
+        >>> vcon.set_updated_at("2025-02-18T12:00:00Z")
+        """
+        if isinstance(timestamp, datetime):
+            self.vcon_dict["updated_at"] = timestamp.isoformat()
+        elif isinstance(timestamp, str):
+            # Validate the timestamp format
+            parser.parse(timestamp)  # This will raise ValueError if invalid
+            self.vcon_dict["updated_at"] = timestamp
+        else:
+            raise ValueError("Timestamp must be either a datetime object or ISO 8601 string")
+
     def _process_properties(self, obj_dict: Dict[str, Any], allowed_properties: set) -> Dict[str, Any]:
         """
         Process an object dictionary based on the property handling mode.
