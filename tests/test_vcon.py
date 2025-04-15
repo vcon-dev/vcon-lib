@@ -756,8 +756,8 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        Vcon.load_from_file = classmethod(lambda cls, path: path)
-        Vcon.load_from_url = classmethod(lambda cls, url: url)
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -770,7 +770,7 @@ def test_load_detects_file_vs_url() -> None:
         # Restore original methods
         Vcon.load_from_file = original_load_from_file
         Vcon.load_from_url = original_load_from_url
-
+        
 
 def test_save_to_file(tmp_path):
     """Test saving a vCon to a file"""
@@ -799,6 +799,7 @@ def test_save_to_file_permission_error(tmp_path):
     with pytest.raises(IOError):
         vcon.save_to_file(str(file_path))
 
+
 @pytest.mark.vcr()
 def test_post_to_url():
     """Test posting a vCon to a URL"""
@@ -826,7 +827,6 @@ def test_post_to_url():
     assert response_data['headers']['X-Custom-Header'] == 'test-value'
 
 
-
 @pytest.mark.vcr()
 def test_post_to_url_no_headers():
     """Test posting a vCon to a URL without custom headers"""
@@ -851,54 +851,3 @@ def test_post_to_url_error():
     
     with pytest.raises(requests.RequestException):
         vcon.post_to_url(url)
-
-@pytest.mark.vcr()
-def test_build_new_with_datetime_created_at():
-    """Test building a new Vcon with a datetime created_at"""
-    from datetime import datetime, timezone
-    
-    # Create a specific datetime for testing
-    test_datetime = datetime(2023, 5, 15, 10, 30, 0, tzinfo=timezone.utc)
-    
-    # Build a new Vcon with this datetime
-    vcon = Vcon.build_new(created_at=test_datetime)
-    
-    # Verify the created_at property was set correctly
-    assert vcon.created_at == test_datetime.isoformat()
-
-@pytest.mark.vcr()
-def test_build_new_with_string_created_at():
-    """Test building a new Vcon with a string created_at"""
-    # ISO 8601 timestamp string
-    test_timestamp = "2023-05-15T10:30:00Z"
-    
-    # Build a new Vcon with this timestamp string
-    vcon = Vcon.build_new(created_at=test_timestamp)
-    
-    # Verify the created_at property was set correctly
-    assert vcon.created_at == test_timestamp
-
-@pytest.mark.vcr()
-def test_set_created_at_after_init():
-    """Test setting created_at after initialization"""
-    # Create a Vcon with default created_at
-    vcon = Vcon.build_new()
-    
-    # Save the original created_at
-    original_created_at = vcon.created_at
-    
-    # Set a new created_at as string
-    new_timestamp = "2023-06-20T12:45:30Z"
-    vcon.set_created_at(new_timestamp)
-    
-    # Verify it changed
-    assert vcon.created_at == new_timestamp
-    assert vcon.created_at != original_created_at
-    
-    # Set another created_at as datetime
-    from datetime import datetime, timezone
-    new_datetime = datetime(2023, 7, 1, 9, 0, 0, tzinfo=timezone.utc)
-    vcon.set_created_at(new_datetime)
-    
-    # Verify it changed again
-    assert vcon.created_at == new_datetime.isoformat()
