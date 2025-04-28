@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from dateutil import parser
 import json
-from typing import Optional, List, Dict, Union, Any, Tuple
+from typing import Optional, Union, Any, List, Dict, Tuple
 import hashlib
 import time
 import uuid6
@@ -112,14 +112,6 @@ class Vcon:
         logger.debug("Initializing new Vcon object")
 
         # If the vcon_dict contains a created_at in datetime or in string, format it like a ISO 8601
-        # Store property handling mode for later use
-        self.property_handling = property_handling
-        
-        # Initialize with empty dict if none provided
-        if vcon_dict is None:
-            vcon_dict = {}
-        
-        # Handle created_at
         if vcon_dict.get("created_at"):
             if isinstance(vcon_dict["created_at"], datetime):
                 vcon_dict["created_at"] = vcon_dict["created_at"].isoformat()
@@ -142,40 +134,6 @@ class Vcon:
         logger.info(f"Vcon object initialized with UUID: {vcon_dict.get('uuid', 'not set')}")
 
     def set_created_at(self, created_at: Union[str, datetime]) -> None:
-        """
-        Set the created_at field in the vCon.
-
-        Args:
-            created_at (Union[str, datetime]): The timestamp to set, either as a string in ISO format
-                                           or as a datetime object.
-        """
-        if isinstance(created_at, datetime):
-            self.vcon_dict["created_at"] = created_at.isoformat()
-        else:
-            self.vcon_dict["created_at"] = created_at
-
-    def set_updated_at(self, timestamp: Union[str, datetime]) -> None:
-        """
-        Set the updated_at timestamp.
-    
-        Args:
-        timestamp: The timestamp to set, either as ISO 8601 string or datetime object
-        
-        Example:
-        >>> vcon = Vcon.build_new()
-        >>> vcon.set_updated_at(datetime.now(timezone.utc))
-        >>> vcon.set_updated_at("2025-02-18T12:00:00Z")
-        """
-        if isinstance(timestamp, datetime):
-            self.vcon_dict["updated_at"] = timestamp.isoformat()
-        elif isinstance(timestamp, str):
-            # Validate the timestamp format
-            parser.parse(timestamp)  # This will raise ValueError if invalid
-            self.vcon_dict["updated_at"] = timestamp
-        else:
-            raise ValueError("Timestamp must be either a datetime object or ISO 8601 string")
-
-    def _process_properties(self, obj_dict: Dict[str, Any], allowed_properties: set) -> Dict[str, Any]:
         """
         Set the created_at field in the vCon.
 
@@ -261,6 +219,7 @@ class Vcon:
         # Set created_at if provided, otherwise it will use the default from __init__
         if created_at is not None:
             vcon.set_created_at(created_at)
+        
         logger.info("Created new Vcon with default structure")
         return vcon
 
@@ -589,22 +548,6 @@ class Vcon:
         logger.debug(f"No dialog found with {by}={val}")
         return None
 
-    def find_dialogs_by_type(self, type: str) -> List[Dict[str, Any]]:
-        """
-        Find all dialog entries in the vCon by type.
-        This method searches through the dialog list and returns all dialog
-        entries matching the specified type.
-        Args:
-            type: The type of dialogs to find
-        Returns:
-            A list of matching dialog dictionaries
-        Example:
-            >>> vcon = Vcon.build_new()
-            >>> vcon.add_transfer_dialog(start="2023-01-20T14:00:00Z", transfer_data={...})
-            >>> transfer_dialogs = vcon.find_dialogs_by_type("transfer")
-        """
-        return [dialog for dialog in self.vcon_dict["dialog"] if dialog.get("type") == type]
-
     def add_dialog(self, dialog: Dialog) -> None:
         """
         Add a dialog entry to the vCon.
@@ -623,97 +566,6 @@ class Vcon:
         logger.debug(f"Adding dialog: {dialog.to_dict()}")
         self.vcon_dict["dialog"].append(dialog.to_dict())
         logger.info(f"Added dialog of type {dialog.type}")
-
-    def add_transfer_dialog(
-        self,
-        start: Union[str, datetime],
-        transfer_data: Dict[str, Any],
-        parties: List[int],
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
-        """
-        Add a transfer dialog entry to the vCon.
-        This method creates a dialog entry of type "transfer" with the provided
-        transfer data and adds it to the vCon's dialog list.
-        Args:
-            start: When the transfer occurred (ISO 8601 string or datetime)
-            transfer_data: Transfer-specific information
-            parties: List of party indices involved
-            metadata: Additional metadata (optional)
-        Example:
-            >>> vcon = Vcon.build_new()
-            >>> vcon.add_transfer_dialog(
-            ...     start="2023-01-20T14:05:00Z",
-            ...     transfer_data={
-            ...         "reason": "Call forwarded",
-            ...         "from": "+1234567890",
-            ...         "to": "+1987654321",
-            ...         "protocol": "SIP",
-            ...         "details": {
-            ...             "sipMessage": "SIP/2.0 302 Moved Temporarily"
-            ...         }
-            ...     },
-            ...     parties=[0, 1]
-            ... )
-        """
-        dialog = Dialog(
-            type="transfer",
-            start=start,
-            parties=parties,
-            transfer=transfer_data,
-            metadata=metadata
-        )
-    
-        self.add_dialog(dialog)
-    
-    def add_incomplete_dialog(
-        self,
-        start: Union[str, datetime],
-        disposition: str,
-        details: Optional[Dict[str, Any]] = None,
-        parties: List[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
-        """
-        Add an incomplete dialog entry to the vCon.
-        This method creates a dialog entry of type "incomplete" for conversations
-        that failed to be set up, with the provided disposition and details.
-        Args:
-            start: When the attempt occurred (ISO 8601 string or datetime)
-            disposition: Reason for the incomplete conversation
-            details: Additional details about the failure (optional)
-            parties: List of party indices involved (optional)
-            metadata: Additional metadata (optional)
-        
-        Example:
-            >>> vcon = Vcon.build_new()
-            >>> vcon.add_incomplete_dialog(
-            ...     start="2023-01-20T14:00:00Z",
-            ...     disposition="NO_ANSWER",
-            ...     details={"ringDuration": 45000},
-            ...     parties=[0, 1]
-            ... )
-        """
-        if parties is None:
-            parties = []
-    
-        dialog_data = {
-            "disposition": disposition
-        }
-    
-        if details:
-            dialog_data.update(details)
-    
-        dialog = Dialog(
-            type="incomplete",
-            start=start,
-            parties=parties,
-            body=dialog_data,
-            disposition=disposition,
-            metadata=metadata
-        )
-    
-        self.add_dialog(dialog)
 
     def to_json(self) -> str:
         """
@@ -1031,15 +883,18 @@ class Vcon:
     def is_valid(self) -> Tuple[bool, List[str]]:
         """
         Validate the vCon syntax according to the standard.
+
         Checks required fields, ensures data types are correct, and verifies
         relationships between different parts of the vCon (for example, dialog party
         references and attachment fields).
+
         Returns:
             Tuple[bool, List[str]]: A tuple where the first element is True if the vCon
             is valid and False otherwise, and the second element is a list of error messages.
         """
         logger.debug("Validating vCon")
         errors = []
+
         # Validate required fields.
         required_fields = ["uuid", "vcon", "created_at"]
         for field in required_fields:
@@ -1047,6 +902,7 @@ class Vcon:
                 error = f"Missing required field: {field}"
                 logger.error(error)
                 errors.append(error)
+
         # Validate created_at format.
         if "created_at" in self.vcon_dict:
             try:
@@ -1055,6 +911,7 @@ class Vcon:
                 error = f"Invalid created_at format. Must be an ISO 8601 datetime string: {str(e)}"
                 logger.error(error)
                 errors.append(error)
+
         # Validate parties.
         if "parties" in self.vcon_dict:
             if not isinstance(self.vcon_dict["parties"], list):
@@ -1067,34 +924,14 @@ class Vcon:
                         error = f"Party at index {i} must be a dictionary."
                         logger.error(error)
                         errors.append(error)
+
         # Validate dialogs.
         dialogs = self.vcon_dict.get("dialog", [])
         for i, dialog in enumerate(dialogs):
             if not isinstance(dialog, dict):
                 errors.append(f"Dialog at index {i} must be a dictionary.")
                 continue
-    
-            # Validate dialog type if present
-            if "type" in dialog:
-                dialog_type = dialog["type"]
-                if dialog_type not in Dialog.VALID_TYPES:
-                    errors.append(f"Dialog at index {i} has an invalid type: {dialog_type}")
-    
-                # Validate specific requirements for each type
-                if dialog_type == "incomplete":
-                    # For incomplete dialogs, ensure there's a disposition
-                    if "disposition" not in dialog:
-                        errors.append(f"Dialog at index {i} of type 'incomplete' must have a disposition.")
-    
-                elif dialog_type == "transfer":
-                    # For transfer dialogs, ensure there's either transfer info or transferor/transferee
-                    has_transfer_field = "transfer" in dialog
-                    has_transferor = "transferor" in dialog
-                    has_transferee = "transferee" in dialog
-    
-                    if not (has_transfer_field or (has_transferor and has_transferee)):
-                        errors.append(f"Dialog at index {i} of type 'transfer' must have either a transfer field or both transferor and transferee fields.")
-    
+
             # Validate party references in dialog.
             if "parties" in dialog:
                 if not isinstance(dialog["parties"], list):
@@ -1104,21 +941,20 @@ class Vcon:
                     for party_idx in dialog["parties"]:
                         if not isinstance(party_idx, int) or party_idx < 0 or party_idx >= party_count:
                             errors.append(f"Dialog at index {i} references invalid party index: {party_idx}")
+
             # Validate start time format if present.
             if "start" in dialog:
                 try:
                     parser.parse(dialog["start"])
                 except Exception:
                     errors.append(f"Dialog at index {i} has an invalid 'start' format. Must be an ISO 8601 datetime string.")
-    
-            # Validate mimetype for non-transfer/incomplete types
-            dialog_type = dialog.get("type", "")
-            if dialog_type not in ["transfer", "incomplete"]:
-                if ("mimetype" not in dialog or
-                    not isinstance(dialog["mimetype"], str) or
-                    dialog["mimetype"] not in Dialog.MIME_TYPES):
-                    errors.append(f"Dialog at index {i} has an invalid or missing mimetype: {dialog.get('mimetype', 'missing')}")
-    
+
+            # Validate mimetype.
+            if ("mimetype" not in dialog or
+                not isinstance(dialog["mimetype"], str) or
+                dialog["mimetype"] not in Dialog.MIME_TYPES):
+                errors.append(f"Dialog at index {i} has an invalid or missing mimetype: {dialog.get('mimetype', 'missing')}")
+
         # Validate attachments.
         if "attachments" in self.vcon_dict:
             if not isinstance(self.vcon_dict["attachments"], list):
