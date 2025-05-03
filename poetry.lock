@@ -984,7 +984,10 @@ files = [
     {file = "uuid6-2024.7.10.tar.gz", hash = "sha256:2d29d7f63f593caaeea0e0d0dd0ad8129c9c663b29e19bdf882e864bedf18fb0"},
 ]
 
+[extras]
+image = []
+
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "048b1cb82f6e620779a157bc36139b745bb58690dc48a70cb87500eaa3632d0f"
+content-hash = "7613e052c51e0e4cfa8ec1bd4b522be073804ebd462a0e0bd2f4119cc43f0385"
