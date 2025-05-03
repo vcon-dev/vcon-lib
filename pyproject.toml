@@ -41,3 +41,6 @@ flake8 = "^7.1.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+image = ["Pillow", "pypdf"]
