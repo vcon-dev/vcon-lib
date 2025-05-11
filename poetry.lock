@@ -396,6 +396,17 @@ files = [
 ]
 
 [[package]]
+name = "ffmpeg"
+version = "1.4"
+description = "ffmpeg python package url [https://github.com/jiashaokun/ffmpeg]"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "ffmpeg-1.4.tar.gz", hash = "sha256:6931692c890ff21d39938433c2189747815dca0c60ddc7f9bb97f199dba0b5b9"},
+]
+
+[[package]]
 name = "flake8"
 version = "7.1.2"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -465,6 +476,17 @@ MarkupSafe = ">=2.0"
 
 [package.extras]
 i18n = ["Babel (>=2.7)"]
+
+[[package]]
+name = "logger"
+version = "1.4"
+description = "Python logging helper"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "logger-1.4.tar.gz", hash = "sha256:4ecac57133c6376fa215f0fe6b4dc4d60e4d1ad8be005cab4e8a702df682f8b3"},
+]
 
 [[package]]
 name = "markupsafe"
@@ -987,4 +1009,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "048b1cb82f6e620779a157bc36139b745bb58690dc48a70cb87500eaa3632d0f"
+content-hash = "5a941d8a007b839795ffae3bd3b26cb82f0d9ed2ad6a1afecdf3e91f90ae04c6"

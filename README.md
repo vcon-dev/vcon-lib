@@ -211,6 +211,212 @@ vcon.add_attachment(
 )
 ```
 
+## Working with Images
+
+The vCon library supports various image formats including JPEG, TIFF, and PDF. You can add images as either dialog content or attachments.
+
+### Supported Image Formats
+
+- JPEG/JPG (.jpg, .jpeg)
+- TIFF (.tif, .tiff) 
+- PDF (.pdf)
+
+### Adding Images to Dialogs
+
+Images can be added directly to dialog entries, which is useful for including screenshots, scanned documents, or other visual content as part of the conversation flow:
+
+```python
+from vcon import Vcon
+from vcon.party import Party
+from vcon.dialog import Dialog
+from datetime import datetime, timezone
+
+# Create a vCon
+vcon = Vcon.build_new()
+
+# Add a party
+customer = Party(name="Alice Smith", role="customer")
+vcon.add_party(customer)
+
+# Create a dialog with an image
+image_dialog = Dialog(
+    type="recording",
+    start=datetime.now(timezone.utc),
+    parties=[0]
+)
+
+# Add image data from a file
+image_dialog.add_image_data("screenshot.jpg")
+vcon.add_dialog(image_dialog)
+
+# Check image type and metadata
+if image_dialog.is_image():
+    print("Dialog contains an image")
+    
+    # Access image metadata
+    if hasattr(image_dialog, "metadata") and "image" in image_dialog.metadata:
+        width = image_dialog.metadata["image"].get("width")
+        height = image_dialog.metadata["image"].get("height")
+        print(f"Image dimensions: {width}x{height}")
+
+# vCon Video Support
+
+The vCon library now supports a wide range of video formats, allowing conversations to include rich video content for various use cases.
+
+## Supported Video Formats
+
+The library supports the following video formats:
+
+- MP4 (.mp4) with H.264 and H.265/HEVC codecs
+- MOV (.mov) QuickTime format
+- WebM (.webm) for web-optimized video
+- AVI (.avi) for legacy compatibility
+- MKV (.mkv) for container flexibility
+- MPEG (.mpg, .mpeg) for standards compliance
+- FLV (.flv) for Flash Video content
+
+## Adding Videos to Conversations
+
+### Adding Inline Videos
+
+For smaller videos that can be embedded directly in the conversation:
+
+```
+from vcon import Dialog, Conversation
+
+# Create a dialog with an inline video
+dialog = Dialog()
+dialog.add_video_data("path/to/video.mp4")
+
+# Add to conversation
+conversation = Conversation()
+conversation.add_dialog(dialog)
+```
+
+### Adding Videos by Reference
+
+For larger videos that should be stored externally:
+
+```python
+dialog = Dialog()
+dialog.add_video_data("path/to/large_video.mp4", inline=False)
+```
+
+### Adding Streaming Videos
+
+For very large videos that should be streamed in chunks:
+
+```python
+dialog = Dialog()
+dialog.add_streaming_video("path/to/huge_video.mp4")
+```
+
+## Working with Video Metadata
+
+The library automatically extracts metadata from videos:
+
+```python
+# Add a video and get metadata
+dialog = Dialog()
+dialog.add_video_data("path/to/video.mp4")
+
+# Access metadata
+metadata = dialog.metadata["video"]
+print(f"Duration: {metadata['duration']} seconds")
+print(f"Resolution: {metadata['width']}x{metadata['height']}")
+print(f"Codec: {metadata['codec']}")
+print(f"Frame rate: {metadata['frame_rate']} fps")
+```
+
+## Generating Thumbnails
+
+Create thumbnails from videos at specific timestamps:
+
+```python
+dialog = Dialog()
+dialog.add_video_data("path/to/video.mp4")
+
+# Generate thumbnail at 5 seconds
+thumbnail_data = dialog.generate_thumbnail(timestamp=5.0, width=320, height=240)
+
+# The thumbnail is also stored in metadata
+thumbnail_base64 = dialog.metadata["video"]["thumbnail"]["data"]
+```
+
+## Best Practices
+
+### Handling Large Videos
+
+- For videos under 10MB, use inline embedding
+- For videos between 10MB and 100MB, use external references
+- For videos over 100MB, use streaming with appropriate chunk sizes
+
+```python
+video_size = os.path.getsize("path/to/video.mp4")
+
+dialog = Dialog()
+if video_size < 10 * 1024 * 1024:  # 10MB
+    dialog.add_video_data("path/to/video.mp4", inline=True)
+elif video_size < 100 * 1024 * 1024:  # 100MB
+    dialog.add_video_data("path/to/video.mp4", inline=False)
+else:
+    # Adjust chunk size based on video size
+    chunk_size = min(5 * 1024 * 1024, max(1 * 1024 * 1024, video_size // 100))
+    dialog.add_streaming_video("path/to/video.mp4", chunk_size=chunk_size)
+```
+
+### Optimizing for Different Use Cases
+
+#### For Video Calls and Conferences
+
+```python
+# Record a video call
+dialog = Dialog()
+dialog.add_video_data("path/to/call_recording.mp4")
+dialog.speaker = "participant1@example.com"
+dialog.timestamp = datetime.now()
+dialog.add_metadata("call", {
+    "duration": 2700,  # 45 minutes
+    "participants": ["participant1@example.com", "participant2@example.com"]
+})
+```
+
+#### For Customer Support Demonstrations
+
+```python
+# Create a support demo video
+dialog = Dialog()
+dialog.add_video_data("path/to/product_demo.mp4")
+dialog.speaker = "support@example.com"
+dialog.generate_thumbnail(timestamp=15.0)  # Get a meaningful frame
+dialog.add_metadata("support_case", {
+    "case_id": "CS12345",
+    "product": "ExampleApp",
+    "feature": "Data Export"
+})
+```
+
+#### For Field Service Applications
+
+```python
+# Document field service with video
+dialog = Dialog()
+dialog.add_video_data("path/to/field_inspection.mp4")
+dialog.speaker = "technician@example.com"
+dialog.add_metadata("field_service", {
+    "location": {"lat": 37.7749, "lng": -122.4194},
+    "equipment_id": "PUMP-123",
+    "inspection_type": "Quarterly Maintenance"
+})
+```
+
+## Performance Considerations
+
+- For web applications, WebM format provides the best balance of quality and size
+- For maximum compatibility, use MP4 with H.264 codec
+- For highest quality, use MP4 with H.265/HEVC codec (but note compatibility issues with older devices)
+- Consider generating multiple formats for different use cases
+
 ### Handling Party History
 
 ```python

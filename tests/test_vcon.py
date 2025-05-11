@@ -5,7 +5,11 @@ from typing import Union
 
 import pytest
 import json
-from datetime import datetime
+import time
+import base64
+import tempfile
+from datetime import datetime, timezone
+from unittest.mock import Mock, patch
 import requests
 
 from vcon.vcon import Attachment
@@ -851,3 +855,397 @@ def test_post_to_url_error():
     
     with pytest.raises(requests.RequestException):
         vcon.post_to_url(url)
+
+# Sample URLs for video files (for testing)
+SAMPLE_VIDEOS = {
+    "mp4": "https://example.com/sample.mp4",
+    "mov": "https://example.com/sample.mov",
+    "webm": "https://example.com/sample.webm",
+    "avi": "https://example.com/sample.avi",
+    "mkv": "https://example.com/sample.mkv",
+    "mpeg": "https://example.com/sample.mpeg",
+    "flv": "https://example.com/sample.flv"
+}
+
+def test_add_video_dialog():
+    """Test adding a video dialog to a Vcon."""
+    vcon = Vcon.build_new()
+    
+    # Add a party
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a video dialog with basic properties
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],  # First party (index 0)
+        mimetype="video/mp4",
+        filename="test_video.mp4"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Verify it was added correctly
+    assert len(vcon.dialog) == 1
+    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["mimetype"] == "video/mp4"
+
+@pytest.mark.parametrize("format_name,mimetype", [
+    ("mp4", "video/mp4"),
+    ("mov", "video/quicktime"),
+    ("webm", "video/webm"),
+    ("avi", "video/x-msvideo"),
+    ("mkv", "video/x-matroska"),
+    ("mpeg", "video/mpeg"),
+    ("flv", "video/x-flv")
+])
+def test_video_formats_support(format_name, mimetype):
+    """Test support for all required video formats."""
+    vcon = Vcon.build_new()
+    
+    # Add a party
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a video dialog with the specified format
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype=mimetype,
+        filename=f"test_video.{format_name}"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Verify it was added correctly
+    assert vcon.dialog[0]["mimetype"] == mimetype
+    
+    # Verify the is_video method works
+    loaded_dialog = Dialog(**vcon.dialog[0])
+    assert loaded_dialog.is_video()
+
+def test_dialog_property_handling():
+    """Test that video-related properties are properly handled in Vcon."""
+    vcon = Vcon.build_new()
+    
+    # Add a party
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a dialog with video-specific properties
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="test_video.mp4"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Convert to JSON and back to test serialization
+    vcon_json = vcon.to_json()
+    new_vcon = Vcon.build_from_json(vcon_json)
+    
+    # Verify properties are preserved
+    dialog_dict = new_vcon.dialog[0]
+    assert dialog_dict["type"] == "video"
+    assert dialog_dict["mimetype"] == "video/mp4"
+    assert dialog_dict["filename"] == "test_video.mp4"
+
+def test_multiple_video_formats_in_one_vcon():
+    """Test storing multiple video formats in a single vCon."""
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Add videos with different formats
+    formats = [
+        ("mp4", "video/mp4"),
+        ("mov", "video/quicktime"),
+        ("webm", "video/webm"),
+        ("avi", "video/x-msvideo"),
+        ("mkv", "video/x-matroska")
+    ]
+    
+    # Add a dialog for each format
+    for extension, mimetype in formats:
+        dialog = Dialog(
+            type="video",
+            start=datetime.now(timezone.utc),
+            parties=[0],
+            mimetype=mimetype,
+            filename=f"video.{extension}"
+        )
+        vcon.add_dialog(dialog)
+    
+    # Verify all dialogs were added
+    assert len(vcon.dialog) == len(formats)
+    
+    # Check each dialog has the correct mimetype
+    for i, (extension, mimetype) in enumerate(formats):
+        assert vcon.dialog[i]["mimetype"] == mimetype
+        assert vcon.dialog[i]["filename"] == f"video.{extension}"
+        assert Dialog(**vcon.dialog[i]).is_video()
+
+def test_inline_video_serialization():
+    """Test serialization of vCon with inline video content."""
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create mock video data (small for testing)
+    video_data = base64.b64encode(b'X' * 1024).decode()
+    
+    # Create a dialog with inline video
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="inline_video.mp4",
+        body=video_data,
+        encoding="base64url"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Serialize and deserialize
+    vcon_json = vcon.to_json()
+    new_vcon = Vcon.build_from_json(vcon_json)
+    
+    # Verify the inline data was preserved
+    assert new_vcon.dialog[0]["body"] == video_data
+    assert new_vcon.dialog[0]["encoding"] == "base64url"
+
+def test_external_video_serialization():
+    """Test serialization of vCon with external video references."""
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a dialog with external video reference
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="external_video.mp4",
+        url="https://example.com/videos/sample.mp4"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Serialize and deserialize
+    vcon_json = vcon.to_json()
+    new_vcon = Vcon.build_from_json(vcon_json)
+    
+    # Verify the external reference was preserved
+    assert new_vcon.dialog[0]["url"] == "https://example.com/videos/sample.mp4"
+    assert "body" not in new_vcon.dialog[0]
+
+@patch('requests.get')
+def test_video_http_fetching(mock_get):
+    """Test fetching video content from HTTP URLs."""
+    # Setup mock response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.content = b'FAKE_VIDEO_DATA'
+    mock_response.headers = {"Content-Type": "video/mp4"}
+    mock_get.return_value = mock_response
+    
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a dialog with an external video URL
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        url="https://example.com/videos/sample.mp4",
+        mimetype="video/mp4",
+        filename="sample.mp4"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Convert external to inline to test fetching
+    dialog_obj = Dialog(**vcon.dialog[0])
+    dialog_obj.to_inline_data()
+    
+    # Update the vCon dialog with the inline version
+    vcon.dialog[0] = dialog_obj.to_dict()
+    
+    # Verify conversion worked
+    assert "body" in vcon.dialog[0]
+    assert "url" not in vcon.dialog[0]
+    assert vcon.dialog[0]["encoding"] == "base64url"
+    
+    # Check the mock was called correctly
+    mock_get.assert_called_once_with("https://example.com/videos/sample.mp4")
+
+def test_vcon_validation_with_video():
+    """Test that vCon validation works correctly with video dialogs."""
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Add a valid video dialog
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="valid_video.mp4"
+    )
+    vcon.add_dialog(dialog)
+    
+    # Validate the vCon
+    is_valid, errors = vcon.is_valid()
+    assert is_valid
+    assert len(errors) == 0
+
+@pytest.mark.skip("Needs to be tested with real world metadata if available")
+def test_video_metadata_in_vcon():
+    """Test incorporating video metadata in a vCon."""
+    # This test is a placeholder for the real implementation
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Create a dialog with basic video metadata
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="test_video.mp4"
+    )
+    
+    # Add to vCon
+    vcon.add_dialog(dialog)
+    
+    # Verify the basic properties
+    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["mimetype"] == "video/mp4"
+
+@pytest.mark.skip("Property handling mode tests need vCon implementation check")
+def test_property_handling_modes():
+    """Test different property handling modes with video properties."""
+    # This would need to be tested against your specific implementation
+    pass
+
+@pytest.mark.skip("Advanced tests requiring FFmpeg integration")
+def test_video_metadata_extraction():
+    """Test integration of video metadata extraction."""
+    # This would need FFmpeg integration
+    pass
+
+@pytest.mark.skip("Advanced tests requiring FFmpeg integration")
+def test_helper_function_integration():
+    """Test integration of video helper functions with vCon."""
+    # This would need FFmpeg integration
+    pass
+
+def test_load_save_file_with_videos(tmp_path):
+    """Test saving and loading a vCon file with video dialogs."""
+    vcon = Vcon.build_new()
+    party = Party(name="Test User")
+    vcon.add_party(party)
+    
+    # Add a video dialog
+    dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="video/mp4",
+        filename="test_video.mp4"
+    )
+    vcon.add_dialog(dialog)
+    
+    # Save to a temporary file
+    temp_file = tmp_path / "vcon_with_video.json"
+    vcon.save_to_file(str(temp_file))
+    
+    # Load it back
+    loaded_vcon = Vcon.load_from_file(str(temp_file))
+    
+    # Verify video properties were preserved
+    assert loaded_vcon.dialog[0]["type"] == "video"
+    assert loaded_vcon.dialog[0]["mimetype"] == "video/mp4"
+    assert loaded_vcon.dialog[0]["filename"] == "test_video.mp4"
+
+def test_integration_basic_video_workflow():
+    """Test a simple workflow with video content in a vCon."""
+    # Create a vCon
+    vcon = Vcon.build_new()
+    
+    # Add parties
+    agent = Party(type="person", name="Agent")
+    customer = Party(type="person", name="Customer")
+    vcon.add_party(agent)
+    vcon.add_party(customer)
+    
+    # Mock video data
+    mock_video_data = base64.b64encode(b'FAKE_VIDEO_DATA').decode()
+    
+    # 1. Add an initial greeting text
+    text_dialog = Dialog(
+        type="text",
+        start=datetime.now(timezone.utc),
+        parties=[0, 1],  # Both parties
+        body="Hello, I'd like to demonstrate our product",
+        mimetype="text/plain"
+    )
+    vcon.add_dialog(text_dialog)
+    
+    # 2. Add a product demo video
+    video_dialog = Dialog(
+        type="video",
+        start=datetime.now(timezone.utc),
+        parties=[0],  # From agent
+        mimetype="video/mp4",
+        filename="product_demo.mp4",
+        body=mock_video_data,
+        encoding="base64url"
+    )
+    vcon.add_dialog(video_dialog)
+    
+    # 3. Add customer's response
+    response_dialog = Dialog(
+        type="text",
+        start=datetime.now(timezone.utc),
+        parties=[1],  # From customer
+        body="Thanks for the demo. I have a few questions.",
+        mimetype="text/plain"
+    )
+    vcon.add_dialog(response_dialog)
+    
+    # Verify the conversation flow
+    assert len(vcon.dialog) == 3
+    assert vcon.dialog[0]["type"] == "text"
+    assert vcon.dialog[1]["type"] == "video"
+    assert vcon.dialog[2]["type"] == "text"
+    
+    # Verify the video properties
+    assert vcon.dialog[1]["mimetype"] == "video/mp4"
+    assert vcon.dialog[1]["body"] == mock_video_data
+    assert vcon.dialog[1]["encoding"] == "base64url"
+    
+    # Serialize and deserialize
+    vcon_json = vcon.to_json()
+    new_vcon = Vcon.build_from_json(vcon_json)
+    
+    # Verify everything is preserved
+    assert len(new_vcon.dialog) == 3
+    assert new_vcon.dialog[1]["type"] == "video"
+    assert new_vcon.dialog[1]["mimetype"] == "video/mp4"
