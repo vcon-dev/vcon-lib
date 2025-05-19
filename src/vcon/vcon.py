@@ -17,6 +17,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import requests
 import logging
+import pypdf
+import PIL
 from .party import Party
 from .dialog import Dialog
 
@@ -102,6 +104,70 @@ class Attachment:
             Dict containing the attachment's type, body, and encoding
         """
         return {"type": self.type, "body": self.body, "encoding": self.encoding}
+        
+    @classmethod
+    def from_image(cls, image_path: str, type: str = "image") -> 'Attachment':
+        """
+        Create an Attachment from an image file.
+        
+        Args:
+            image_path: Path to the image file
+            type: The type of the attachment (default: "image")
+            
+        Returns:
+            An Attachment object containing the image
+            
+        Raises:
+            ValueError: If the image format is not supported
+            FileNotFoundError: If the image file cannot be found
+        """
+        import os
+        import mimetypes
+        
+        # Check if file exists
+        if not os.path.exists(image_path):
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+            
+        # Detect mimetype
+        mimetype, _ = mimetypes.guess_type(image_path)
+        if not mimetype or mimetype not in ["image/jpeg", "image/tiff", "application/pdf"]:
+            raise ValueError(f"Unsupported image format: {mimetype}. Must be JPEG, TIFF, or PDF.")
+            
+        # Read image data
+        with open(image_path, 'rb') as f:
+            image_data = f.read()
+            
+        # Create attachment
+        metadata = {"filename": os.path.basename(image_path), "mimetype": mimetype}
+        
+        # Extract additional metadata
+        try:
+            if mimetype == "application/pdf":
+                # Extract PDF metadata
+                from pypdf import PdfReader
+                pdf = PdfReader(image_path)
+                metadata["pages"] = len(pdf.pages)
+            elif mimetype in ["image/jpeg", "image/tiff"]:
+                # Extract image metadata
+                from PIL import Image
+                img = Image.open(image_path)
+                metadata["width"] = img.width
+                metadata["height"] = img.height
+                metadata["format"] = img.format
+        except ImportError:
+            # Library not available
+            pass
+        except Exception as e:
+            # Log error but continue
+            print(f"Warning: Could not extract image metadata: {str(e)}")
+        
+        # Create and return attachment
+        return cls(
+            type=type,
+            body=base64.b64encode(image_data).decode('utf-8'),
+            encoding="base64",
+            metadata=metadata
+        )
 
 
 class Vcon:
@@ -496,6 +562,34 @@ class Vcon:
         self.vcon_dict["attachments"].append(processed_attachment)
     
         logger.info(f"Added new attachment of type {type}")
+        return attachment
+
+    def add_image(self, image_path: str, type: str = "image") -> Attachment:
+        """
+        Add an image attachment to the vCon.
+        
+        This method creates a new attachment with the specified image
+        and adds it to the vCon's attachments list.
+        
+        Args:
+            image_path: Path to the image file
+            type: The type of the attachment (default: "image")
+            
+        Returns:
+            The created Attachment object
+            
+        Raises:
+            FileNotFoundError: If the image file cannot be found
+            ValueError: If the image format is not supported
+            
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> attachment = vcon.add_image("document.pdf", "identification")
+            >>> print(attachment.metadata.get("mimetype"))  # Prints "application/pdf"
+        """
+        attachment = Attachment.from_image(image_path, type)
+        self.vcon_dict["attachments"].append(attachment.to_dict())
+        logger.info(f"Added new image attachment of type {type}")
         return attachment
 
     def find_analysis_by_type(self, type: str) -> Optional[Dict[str, Any]]:

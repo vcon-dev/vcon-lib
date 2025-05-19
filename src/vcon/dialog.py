@@ -21,6 +21,9 @@ MIME_TYPES = [
     "video/ogg",
     "multipart/mixed",
     "message/rfc822",
+    "image/jpeg",
+    "image/tiff",
+    "application/pdf",  # Added for image data
     "application/json"  # Added for signaling data
 ]
 
@@ -41,6 +44,9 @@ class Dialog:
         "video/ogg",
         "multipart/mixed",
         "message/rfc822",
+        "image/jpeg",
+        "image/tiff",
+        "application/pdf",  # Added for image data
         "application/json"  # Added for signaling data
     ]
 
@@ -341,6 +347,190 @@ class Dialog:
         :rtype: bool
         """
         return hasattr(self, "mimetype") and self.mimetype == "message/rfc822"
+    
+    def is_image(self) -> bool:
+        """
+        Check if the dialog has image content.
+        
+        :return: True if the dialog has image content, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "mimetype") and self.mimetype in [
+            "image/jpeg", 
+            "image/tiff", 
+            "application/pdf"
+        ]
+        
+    def is_pdf(self) -> bool:
+        """
+        Check if the dialog has PDF content.
+        
+        :return: True if the dialog has PDF content, False otherwise
+        :rtype: bool
+        """
+        return hasattr(self, "mimetype") and self.mimetype == "application/pdf"
+
+    def add_image_data(self, image_path: str, mimetype: Optional[str] = None) -> None:
+        """
+        Add image data to the dialog from a local file.
+        
+        :param image_path: Path to the image file
+        :type image_path: str
+        :param mimetype: MIME type of the image (optional, auto-detected if not provided)
+        :type mimetype: str or None
+        :return: None
+        :rtype: None
+        """
+        import os
+        import mimetypes
+        
+        # Auto-detect mimetype if not provided
+        if not mimetype:
+            mimetype, _ = mimetypes.guess_type(image_path)
+            
+            if not mimetype or mimetype not in ["image/jpeg", "image/tiff", "application/pdf"]:
+                raise ValueError(f"Unsupported image format. Must be JPEG, TIFF, or PDF.")
+        
+        # Read image data
+        with open(image_path, 'rb') as f:
+            image_data = f.read()
+        
+        # Extract filename from path
+        filename = os.path.basename(image_path)
+        
+        # Add as inline data
+        self.body = base64.b64encode(image_data).decode('utf-8')
+        self.mimetype = mimetype
+        self.filename = filename
+        self.encoding = "base64"
+        
+        # Calculate hash for integrity validation
+        self.alg = "sha256"
+        self.signature = base64.urlsafe_b64encode(
+            hashlib.sha256(image_data).digest()
+        ).decode()
+        
+        # Extract metadata if possible
+        try:
+            self.extract_image_metadata(image_data, mimetype)
+        except Exception as e:
+            # Log the error but don't fail if metadata extraction fails
+            print(f"Warning: Could not extract image metadata: {str(e)}")
+            
+    def extract_image_metadata(self, image_data: bytes, mimetype: str) -> None:
+        """
+        Extract metadata from image data and add it to the dialog metadata.
+        
+        :param image_data: Raw image data
+        :type image_data: bytes
+        :param mimetype: MIME type of the image
+        :type mimetype: str
+        :return: None
+        :rtype: None
+        """
+        # Initialize metadata dict if it doesn't exist
+        if not hasattr(self, "metadata") or not self.metadata:
+            self.metadata = {}
+        
+        if "image" not in self.metadata:
+            self.metadata["image"] = {}
+        
+        if mimetype == "application/pdf":
+            # Extract PDF metadata
+            try:
+                import io
+                from pypdf import PdfReader
+                
+                pdf = PdfReader(io.BytesIO(image_data))
+                self.metadata["image"]["pages"] = len(pdf.pages)
+                
+                if pdf.metadata:
+                    for key, value in pdf.metadata.items():
+                        # Convert PDF metadata keys to standard format
+                        clean_key = key.lower().replace('/', '_')
+                        self.metadata["image"][clean_key] = str(value)
+            except ImportError:
+                # PyPDF not installed
+                self.metadata["image"]["note"] = "Install PyPDF for enhanced PDF metadata"
+        
+        elif mimetype in ["image/jpeg", "image/tiff"]:
+            # Extract image metadata
+            try:
+                import io
+                from PIL import Image, ExifTags
+                
+                img = Image.open(io.BytesIO(image_data))
+                self.metadata["image"]["width"] = img.width
+                self.metadata["image"]["height"] = img.height
+                self.metadata["image"]["format"] = img.format
+                
+                # Extract EXIF data if available
+                if hasattr(img, '_getexif') and img._getexif():
+                    exif = {
+                        ExifTags.TAGS.get(tag, tag): value
+                        for tag, value in img._getexif().items()
+                        if tag in ExifTags.TAGS
+                    }
+                    
+                    # Add select EXIF data to metadata
+                    for key in ['DateTimeOriginal', 'Make', 'Model', 'Orientation']:
+                        if key in exif:
+                            self.metadata["image"][key.lower()] = str(exif[key])
+            except ImportError:
+                # PIL not installed
+                self.metadata["image"]["note"] = "Install Pillow for enhanced image metadata"
+
+    def generate_thumbnail(self, max_size: Tuple[int, int] = (200, 200)) -> Optional[str]:
+        """
+        Generate a thumbnail for the image and return it as a base64-encoded string.
+        
+        :param max_size: Maximum thumbnail dimensions (width, height)
+        :type max_size: Tuple[int, int]
+        :return: Base64-encoded thumbnail or None if generation fails
+        :rtype: str or None
+        """
+        if not self.is_image():
+            return None
+            
+        try:
+            import io
+            from PIL import Image
+            
+            # Get image data
+            if hasattr(self, "body") and self.body:
+                if self.encoding in ["base64", "base64url"]:
+                    image_data = base64.b64decode(self.body)
+                else:
+                    # If not base64 encoded, assume it's already raw data
+                    image_data = self.body.encode() if isinstance(self.body, str) else self.body
+            else:
+                # For external data
+                if self.is_external_data():
+                    response = requests.get(self.url)
+                    if response.status_code != 200:
+                        return None
+                    image_data = response.content
+                else:
+                    return None
+            
+            # For PDFs, just return None as they require special handling
+            if self.mimetype == "application/pdf":
+                return None
+                
+            # Generate thumbnail
+            img = Image.open(io.BytesIO(image_data))
+            img.thumbnail(max_size)
+            
+            # Save thumbnail to bytes
+            thumb_io = io.BytesIO()
+            img.save(thumb_io, format='JPEG')
+            thumb_data = thumb_io.getvalue()
+            
+            # Return base64-encoded thumbnail
+            return base64.b64encode(thumb_data).decode('utf-8')
+        except Exception as e:
+            print(f"Thumbnail generation failed: {str(e)}")
+            return None
     
     def is_external_data_changed(self) -> bool:
         """

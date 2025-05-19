@@ -27,6 +27,8 @@ requests = "^2.32.3"
 pydash = "^8.0.3"
 python-dateutil = "^2.9.0.post0"
 mutagen = "^1.47.0"
+pypdf = "^5.4.0"
+pillow = "^11.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
@@ -41,3 +43,6 @@ flake8 = "^7.1.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+image = ["Pillow", "pypdf"]

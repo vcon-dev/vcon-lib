@@ -211,6 +211,51 @@ vcon.add_attachment(
 )
 ```
 
+## Working with Images
+
+The vCon library supports various image formats including JPEG, TIFF, and PDF. You can add images as either dialog content or attachments.
+
+### Adding Images to Dialogs
+
+```python
+from vcon import Vcon
+from vcon.dialog import Dialog
+from datetime import datetime, timezone
+
+# Create a vCon
+vcon = Vcon.build_new()
+
+# Add a party
+customer = Party(name="Alice Smith", role="customer")
+vcon.add_party(customer)
+
+# Create a dialog with an image
+image_dialog = Dialog(
+    type="recording",
+    start=datetime.now(timezone.utc),
+    parties=[0]
+)
+
+# Add image data from a file
+image_dialog.add_image_data("screenshot.jpg")
+vcon.add_dialog(image_dialog)
+
+# Check image type and metadata
+if image_dialog.is_image():
+    print("Dialog contains an image")
+    
+    # Access image metadata
+    if hasattr(image_dialog, "metadata") and "image" in image_dialog.metadata:
+        width = image_dialog.metadata["image"].get("width")
+        height = image_dialog.metadata["image"].get("height")
+        print(f"Image dimensions: {width}x{height}")
+        
+    # Generate a thumbnail
+    thumbnail = image_dialog.generate_thumbnail((100, 100))
+    if thumbnail:
+        print("Thumbnail generated successfully")
+```
+
 ### Handling Party History
 
 ```python
