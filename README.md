@@ -417,6 +417,12 @@ dialog.add_metadata("field_service", {
 - For highest quality, use MP4 with H.265/HEVC codec (but note compatibility issues with older devices)
 - Consider generating multiple formats for different use cases
 
+        
+    # Generate a thumbnail
+    thumbnail = image_dialog.generate_thumbnail((100, 100))
+    if thumbnail:
+        print("Thumbnail generated successfully")
+
 ### Handling Party History
 
 ```python
