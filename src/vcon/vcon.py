@@ -44,7 +44,8 @@ _ALLOWED_DIALOG_PROPERTIES = {
     "party_history", "transferee", "transferor", "transfer_target",
     "original", "consultation", "target_dialog", "campaign", 
     "interaction", "skill", "meta", "metadata", "transfer", 
-    "signaling", "originator"
+    "signaling", "originator", "resolution", "frame_rate", 
+    "codec", "bitrate", "thumbnail", "streaming", "video"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {

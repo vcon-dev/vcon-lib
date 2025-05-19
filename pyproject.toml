@@ -27,6 +27,8 @@ requests = "^2.32.3"
 pydash = "^8.0.3"
 python-dateutil = "^2.9.0.post0"
 mutagen = "^1.47.0"
+ffmpeg = "^1.4"
+logger = "^1.4"
 pypdf = "^5.4.0"
 pillow = "^11.2.1"
 
