@@ -9,7 +9,7 @@ import time
 import base64
 import tempfile
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 import requests
 
 from vcon.vcon import Attachment
@@ -804,27 +804,38 @@ def test_save_to_file_permission_error(tmp_path):
         vcon.save_to_file(str(file_path))
 
 
-@pytest.mark.vcr()
-def test_post_to_url():
-    """Test posting a vCon to a URL"""
+@patch('requests.post')
+def test_post_to_url(mock_post):
+    """Test posting a vCon to a URL (mocked, no real HTTP request)"""
     vcon = Vcon.build_new()
     url = "https://httpbin.org/post"  # Test endpoint that echoes back the request
-    
-    # Test with custom headers
     headers = {
         'x-conserver-api-token': 'test-token',
         'x-custom-header': 'test-value'
     }
-    
+
+    # Prepare mock response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json',
+            'X-Conserver-Api-Token': 'test-token',
+            'X-Custom-Header': 'test-value'
+        }
+    }
+    mock_post.return_value = mock_response
+
     response = vcon.post_to_url(url, headers=headers)
-    
+
     # Verify the response
     assert response.status_code == 200
     response_data = response.json()
-    
+
     # Verify the sent data matches our vCon
     assert json.loads(response_data['data']) == json.loads(vcon.to_json())
-    
+
     # Verify headers were sent correctly
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert response_data['headers']['X-Conserver-Api-Token'] == 'test-token'

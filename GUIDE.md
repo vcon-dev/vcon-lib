@@ -186,6 +186,79 @@ is_external = dialog.is_external_data()
 is_inline = dialog.is_inline_data()
 ```
 
+### Advanced Dialog Management
+
+You can use these methods for advanced dialog handling:
+
+```python
+# Add a transfer dialog
+dialog_data = {"reason": "Call forwarded", "from": "+1234567890", "to": "+1987654321"}
+vcon.add_transfer_dialog(start="2024-07-01T10:00:00Z", transfer_data=dialog_data, parties=[0, 1])
+
+# Add an incomplete dialog
+vcon.add_incomplete_dialog(start="2024-07-01T10:05:00Z", disposition="NO_ANSWER", details={"ringDuration": 45000}, parties=[0, 1])
+
+# Find a dialog by attribute
+dialog = vcon.find_dialog("type", "text")
+
+# Find all dialogs of a type
+dialogs = vcon.find_dialogs_by_type("transfer")
+```
+
+### Video Storage and Streaming
+
+```python
+# Add video with optimal storage based on size
+with open("path/to/video.mp4", "rb") as f:
+    video_data = f.read()
+dialog = Dialog()
+dialog.add_video_with_optimal_storage(video_data, filename="video.mp4", size_threshold_mb=10)
+
+# Add a streaming video reference
+dialog.add_streaming_video_reference(
+    reference_id="unique_stream_id",
+    mimetype="video/mp4",
+    metadata={"note": "Streamed video"}
+)
+```
+
+### Video Transcoding
+
+```python
+# Transcode video to a different format
+dialog.transcode_video(target_format="webm", codec="vp9", width=640, height=360)
+```
+
+### Adding Images as Attachments
+
+```python
+# Add an image attachment to the vCon
+vcon.add_image("path/to/image.jpg", type="identification")
+```
+
+### PDF Detection in Dialogs
+
+```python
+if dialog.is_pdf():
+    print("Dialog contains a PDF")
+```
+
+### PartyHistory Example
+
+```python
+from vcon.party import PartyHistory
+from datetime import datetime, timezone
+
+party_history = [PartyHistory(party=0, event="transfer", time=datetime.now(timezone.utc))]
+dialog = Dialog(
+    type="transfer",
+    start=datetime.now(timezone.utc).isoformat(),
+    parties=[0, 1],
+    party_history=party_history
+)
+vcon.add_dialog(dialog)
+```
+
 ## Attachments and Analysis
 
 ### Attachments

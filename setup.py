@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="vcon",
-    version="0.5.0",
+    version="0.6.0",
     author="Thomas McCarthy-Howe",
     author_email="ghostofbasho@gmail.com",
     description="A package for working with vCon containers",
