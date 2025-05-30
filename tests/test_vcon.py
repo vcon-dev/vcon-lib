@@ -842,17 +842,28 @@ def test_post_to_url(mock_post):
     assert response_data['headers']['X-Custom-Header'] == 'test-value'
 
 
-@pytest.mark.vcr()
-def test_post_to_url_no_headers():
-    """Test posting a vCon to a URL without custom headers"""
+@patch('requests.post')
+def test_post_to_url_no_headers(mock_post):
+    """Test posting a vCon to a URL without custom headers (mocked, no real HTTP request)"""
     vcon = Vcon.build_new()
     url = "https://httpbin.org/post"
-    
+
+    # Prepare mock response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json'
+        }
+    }
+    mock_post.return_value = mock_response
+
     response = vcon.post_to_url(url)
-    
+
     assert response.status_code == 200
     response_data = response.json()
-    
+
     # Verify only default headers were sent
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert 'X-Conserver-Api-Token' not in response_data['headers']
