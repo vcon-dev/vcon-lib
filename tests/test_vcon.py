@@ -760,8 +760,9 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
-        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
+        # Updated to accept all parameters including strict_version
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None, strict_version=False: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None, strict_version=False: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -1249,3 +1250,73 @@ def test_integration_basic_video_workflow():
     assert len(new_vcon.dialog) == 3
     assert new_vcon.dialog[1]["type"] == "video"
     assert new_vcon.dialog[1]["mimetype"] == "video/mp4"
+
+def test_version_migration_default() -> None:
+    """Test that vCons with older versions are automatically migrated by default."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(old_vcon_json)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_strict_mode_rejects() -> None:
+    """Test that strict mode rejects vCons with older versions."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon.build_from_json(old_vcon_json, strict_version=True)
+
+
+def test_version_migration_strict_mode_accepts_current() -> None:
+    """Test that strict mode accepts vCons with current version."""
+    current_vcon_json = '{"uuid":"123","vcon":"0.3.0","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(current_vcon_json, strict_version=True)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_constructor() -> None:
+    """Test that the constructor handles version migration."""
+    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
+    vcon = Vcon(old_vcon_dict)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_constructor_strict() -> None:
+    """Test that the constructor rejects old versions in strict mode."""
+    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon(old_vcon_dict, strict_version=True)
+
+
+def test_version_migration_load_from_file(tmp_path) -> None:
+    """Test that load_from_file handles version migration."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "old_vcon.json"
+    with open(file_path, 'w') as f:
+        f.write(old_vcon_json)
+    
+    vcon = Vcon.load_from_file(str(file_path))
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_load_from_file_strict(tmp_path) -> None:
+    """Test that load_from_file rejects old versions in strict mode."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "old_vcon.json"
+    with open(file_path, 'w') as f:
+        f.write(old_vcon_json)
+    
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon.load_from_file(str(file_path), strict_version=True)
+
+
+def test_version_migration_build_new() -> None:
+    """Test that build_new creates vCons with current version."""
+    vcon = Vcon.build_new()
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_no_version_field() -> None:
+    """Test that vCons without a version field are handled gracefully."""
+    no_version_json = '{"uuid":"123","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(no_version_json)
+    # Should not raise an error, and version should be set to 0.3.0 if it gets one
+    assert vcon.uuid == "123"
