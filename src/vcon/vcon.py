@@ -238,6 +238,10 @@ class Vcon:
             else:
                 logger.info(f"Migrating vCon from version {vcon_version} to 0.3.0")
                 vcon_dict["vcon"] = "0.3.0"
+        elif vcon_version is None:
+            # Set default version if missing
+            vcon_dict["vcon"] = "0.3.0"
+            logger.debug("Set default vCon version to 0.3.0")
         
         # Handle created_at
         if vcon_dict.get("created_at"):

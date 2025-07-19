@@ -84,7 +84,7 @@ from vcon.dialog import Dialog
 vcon = Vcon.build_new()
 
 # Create from dictionary
-vcon = Vcon({"uuid": "...", "vcon": "0.0.1"})
+vcon = Vcon({"uuid": "...", "vcon": "0.3.0"})
 
 # Create from JSON
 vcon = Vcon.build_from_json(json_string)
@@ -276,14 +276,6 @@ if not is_valid:
 is_valid, errors = Vcon.validate_file("path/to/vcon.json")
 
 # Validate a vCon JSON string
-json_str = '{"uuid": "...", "vcon": "0.0.1", ...}'
+json_str = '{"uuid": "123", "vcon": "0.3.0", ...}'
 is_valid, errors = Vcon.validate_json(json_str)
 ```
-
-The validation checks include:
-- Required fields (uuid, vcon, created_at)
-- Date format validation
-- Party references in dialogs
-- MIME type validation
-- Attachment and analysis format validation
-- Encoding validation

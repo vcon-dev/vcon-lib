@@ -5,7 +5,7 @@ This document outlines the changes required to update the vCon library to be com
 
 ## 1. Version Change
 
-**Current library:** Uses version "0.0.1"  
+**Current library:** Uses version "0.3.0"  
 **New specification:** Requires version "0.3.0"  
 **Impact:** This is a breaking change that requires updating all vCon objects
 
@@ -58,13 +58,13 @@ The new specification adds several new fields that are not currently supported:
 - **Appended** class for append references
 
 ### Version Handling:
-- Update default version from "0.0.1" to "0.3.0"
+- Update default version from "0.3.0" to "0.3.0"
 - Add migration logic for existing vCon objects
 
 ## 7. Backward Compatibility
 
 The specification provides migration paths:
-- **Version 0.0.1 → 0.0.2:** `mimetype` → `mediatype`, `alg`/`signature` → `content_hash`
+- **Version 0.3.0 → 0.3.0:** `mimetype` → `mediatype`, `alg`/`signature` → `content_hash`
 - **Version 0.0.2 → 0.3.0:** `transfer-target` → `transfer_target`, `target-dialog` → `target_dialog`
 
 ## 8. Recommendations
@@ -93,7 +93,7 @@ The changes are significant but manageable, and the new specification provides b
 Based on my analysis of the new vCon core document and the current library implementation, here's a comprehensive list of changes needed to make the library compatible with the new specification:
 
 ### 1. Version Update
-- **Change:** Update version from "0.0.1" to "0.3.0"
+- **Change:** Update version from "0.3.0" to "0.3.0"
 - **Files:** `src/vcon/vcon.py`, `samples/example.vcon.json`
 - **Test:** Verify new vCons are created with version "0.3.0"
 
@@ -199,7 +199,7 @@ Based on my analysis of the new vCon core document and the current library imple
 - **Test:** Verify documentation is accurate
 
 ### 15. Add Migration Support
-- **Change:** Add methods to migrate from 0.0.1 to 0.3.0
+- **Change:** Add methods to migrate from 0.3.0 to 0.3.0
 - **Files:** `src/vcon/vcon.py`
 - **Test:** Verify old vCons can be migrated to new format
 

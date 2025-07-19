@@ -253,7 +253,7 @@ if not is_valid:
     print("File validation errors:", errors)
 
 # Validate a vCon JSON string
-json_str = '{"uuid": "123", "vcon": "0.0.1", ...}'
+json_str = '{"uuid": "123", "vcon": "0.3.0", ...}'
 is_valid, errors = Vcon.validate_json(json_str)
 if not is_valid:
     print("JSON validation errors:", errors)
