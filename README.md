@@ -1,22 +1,116 @@
-# vCon Python Library
+# vCon Library
 
-## About the Library
+A Python library for working with vCon (Virtual Conversation) objects according to the vCon specification.
 
-The vCon (Virtual Conversation) library is a powerful Python tool designed to capture, structure, and manage conversation data in a standardized format. It provides a robust set of features for creating, manipulating, and analyzing digital representations of conversations, making it particularly useful for applications in customer service, call centers, chat systems, and any scenario where structured conversation data is valuable.
+## Overview
 
-## Features
+The vCon library provides a complete implementation of the vCon format for representing conversations and related metadata. It supports all features defined in the vCon 0.3.0 specification including:
 
-- **Conversation Container**: Create and manage vCon objects that serve as containers for all conversation elements
-- **Party Management**: Add and track conversation participants with detailed attributes (name, role, contact info)
-- **Dialog Handling**: Record and organize messages with timestamps, content, and sender information
-- **Rich Media Support**: Handle various content types including text, audio, and video with MIME type validation
-- **Metadata & Tags**: Add and retrieve metadata and tags for easy categorization
-- **File Attachments**: Include and manage related files and documents
-- **Analysis Integration**: Incorporate analysis data from various sources (e.g., sentiment analysis)
-- **Security**: Sign and verify vCon objects using JWS (JSON Web Signature)
-- **Validation**: Comprehensive validation of vCon structure and content
-- **UUID8 Support**: Generate and manage unique identifiers for conversations
-- **Serialization**: Convert vCon objects to and from JSON for storage and transmission
+- **Conversation Management**: Parties, dialogs, attachments, and analysis
+- **Contact Information**: Multiple contact methods (tel, email, SIP, DID)
+- **Media Support**: Audio, video, text, and image formats
+- **Security**: Digital signatures and content hashing
+- **Extensibility**: Extensions and must_support fields
+- **Location Data**: Civic address information (GEOPRIV)
+- **Event Tracking**: Party history with join/drop/hold/mute events
+
+## New in vCon 0.3.0
+
+This library implements the latest vCon specification (0.3.0) with the following new features:
+
+### Enhanced Party Information
+```python
+from vcon import Vcon, Party
+
+# Create a party with new vCon 0.3.0 fields
+party = Party(
+    tel="+1234567890",
+    name="John Doe",
+    sip="sip:john@example.com",
+    did="did:example:123456789abcdef",
+    jCard={
+        "fn": "John Doe",
+        "tel": "+1234567890",
+        "email": "john@example.com"
+    },
+    timezone="America/New_York"
+)
+```
+
+### Extensions and Must-Support
+```python
+vcon = Vcon.build_new()
+
+# Add extensions used in this vCon
+vcon.add_extension("video")
+vcon.add_extension("encryption")
+
+# Add extensions that must be supported
+vcon.add_must_support("encryption")
+
+print(vcon.get_extensions())  # ['video', 'encryption']
+print(vcon.get_must_support())  # ['encryption']
+```
+
+### Enhanced Dialog Support
+```python
+from vcon import Dialog
+from datetime import datetime
+
+# Create dialog with new fields
+dialog = Dialog(
+    type="text",
+    start=datetime.now(),
+    parties=[0, 1],
+    session_id="session-12345",
+    content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
+    application="chat-app",
+    message_id="<message-id@example.com>"
+)
+```
+
+### Party History Events
+```python
+from vcon import PartyHistory
+from datetime import datetime
+
+# Track party events
+history = [
+    PartyHistory(0, "join", datetime.now()),
+    PartyHistory(1, "join", datetime.now()),
+    PartyHistory(0, "hold", datetime.now()),
+    PartyHistory(0, "unhold", datetime.now()),
+    PartyHistory(1, "drop", datetime.now())
+]
+```
+
+### Disposition Values for Incomplete Dialogs
+```python
+# Create incomplete dialog with proper disposition
+incomplete_dialog = Dialog(
+    type="incomplete",
+    start=datetime.now(),
+    parties=[0],
+    disposition="no-answer"  # Valid: no-answer, congestion, failed, busy, hung-up, voicemail-no-message
+)
+```
+
+### Civic Address Support
+```python
+from vcon import CivicAddress
+
+# Create civic address with GEOPRIV fields
+address = CivicAddress(
+    country="US",
+    a1="CA",
+    a3="San Francisco",
+    sts="Market Street",
+    hno="123",
+    pc="94102"
+)
+
+party = Party(name="Jane", civicaddress=address)
+```
 
 ## Installation
 
@@ -24,441 +118,203 @@ The vCon (Virtual Conversation) library is a powerful Python tool designed to ca
 pip install vcon
 ```
 
-## Documentation
+## Basic Usage
 
-The full documentation is available at [https://yourusername.github.io/vcon-lib/](https://yourusername.github.io/vcon-lib/).
-
-To build the documentation locally:
-
-```bash
-# Install development dependencies
-poetry install --with dev
-
-# Build the docs
-cd docs
-poetry run make html
-```
-
-The built documentation will be available in `docs/build/html/index.html`.
-
-## Quick Start
+### Creating a vCon
 
 ```python
-from vcon import Vcon
-from vcon.party import Party
-from vcon.dialog import Dialog
-from datetime import datetime, timezone
+from vcon import Vcon, Party, Dialog
+from datetime import datetime
 
 # Create a new vCon
 vcon = Vcon.build_new()
 
-# Add participants
-caller = Party(tel="+1234567890", name="Alice", role="caller")
-agent = Party(tel="+1987654321", name="Bob", role="agent")
-vcon.add_party(caller)
-vcon.add_party(agent)
+# Add parties
+alice = Party(tel="+1234567890", name="Alice", role="caller")
+bob = Party(tel="+1987654321", name="Bob", role="agent")
 
-# Add a dialog entry
+vcon.add_party(alice)
+vcon.add_party(bob)
+
+# Add dialog
 dialog = Dialog(
     type="text",
-    start=datetime.now(timezone.utc).isoformat(),
-    parties=[0, 1],  # Indices of the parties
-    originator=0,    # Caller is the originator
-    mimetype="text/plain",
-    body="Hello, I need help with my account."
+    start=datetime.now(),
+    parties=[0, 1],
+    body="Hello, this is a test message!"
 )
+
 vcon.add_dialog(dialog)
 
-# Add metadata
-vcon.add_tag("customer_id", "12345")
-vcon.add_tag("interaction_id", "INT-001")
+# Save to file
+vcon.save_to_file("conversation.vcon.json")
+```
 
-# Add an analysis
-vcon.add_analysis(
-    type="sentiment",
-    dialog=[0],  # Reference to the dialog entry
-    vendor="SentimentAnalyzer",
-    body={"sentiment": "neutral"},
-    encoding="json"
-)
+### Loading a vCon
 
-# Sign the vCon (optional)
-private_key, public_key = Vcon.generate_key_pair()
-vcon.sign(private_key)
+```python
+# Load from file
+vcon = Vcon.load("conversation.vcon.json")
 
-# Validate the vCon
+# Load from URL
+vcon = Vcon.load("https://example.com/conversation.vcon.json")
+
+# Load with strict version checking
+vcon = Vcon.load("conversation.vcon.json", strict_version=True)
+```
+
+### Validation
+
+```python
+# Validate a vCon
 is_valid, errors = vcon.is_valid()
+
 if is_valid:
     print("vCon is valid")
 else:
     print("Validation errors:", errors)
 
-# Serialize to JSON
-json_data = vcon.to_json()
-
-# Save to file
-vcon.save_to_file("conversation.json")
-
-# Post to URL with authentication
-response = vcon.post_to_url(
-    'https://api.example.com/vcons',
-    headers={'x-conserver-api-token': 'your-token-here'}
-)
+# Validate from file
+is_valid, errors = Vcon.validate_file("conversation.vcon.json")
 ```
 
-## File Validation
+## Media Support
 
-The vCon library provides comprehensive validation capabilities for both files and JSON strings:
-
-```python
-# Validate a vCon file
-is_valid, errors = Vcon.validate_file("conversation.json")
-if not is_valid:
-    print("File validation errors:", errors)
-
-# Validate a vCon JSON string
-json_str = '{"uuid": "123", "vcon": "0.0.1", ...}'
-is_valid, errors = Vcon.validate_json(json_str)
-if not is_valid:
-    print("JSON validation errors:", errors)
-
-# Load and validate a vCon from file
-try:
-    vcon = Vcon.load_from_file("conversation.json")
-    is_valid, errors = vcon.is_valid()
-    if not is_valid:
-        print("vCon validation errors:", errors)
-except FileNotFoundError:
-    print("File not found")
-except json.JSONDecodeError:
-    print("Invalid JSON format")
-
-# Load and validate a vCon from URL
-try:
-    vcon = Vcon.load_from_url("https://example.com/conversation.json")
-    is_valid, errors = vcon.is_valid()
-    if not is_valid:
-        print("vCon validation errors:", errors)
-except requests.RequestException:
-    print("Error fetching from URL")
-except json.JSONDecodeError:
-    print("Invalid JSON format")
-
-# Save a vCon to file
-vcon.save_to_file("conversation.json")
-
-# Post a vCon to a URL with custom headers
-response = vcon.post_to_url(
-    'https://api.example.com/vcons',
-    headers={'x-conserver-api-token': 'your-token-here'}
-)
-if response.status_code == 200:
-    print("Successfully posted vCon")
-```
-
-The validation checks include:
-- Required fields (uuid, vcon version, created_at)
-- Data type correctness
-- ISO 8601 datetime format validation
-- Party references in dialogs
-- MIME type validation
-- Analysis references to dialogs
-- Encoding format validation
-- Relationship integrity between different parts of the vCon
-
-## IETF vCon Working Group
-
-The vCon (Virtual Conversation) format is being developed as an open standard through the Internet Engineering Task Force (IETF). The vCon Working Group is focused on creating a standardized format for representing digital conversations across various platforms and use cases.
-
-### Participating in the Working Group
-
-1. **Join the Mailing List**: Subscribe to the vCon working group mailing list at [vcon@ietf.org](mailto:vcon@ietf.org)
-
-2. **Review Documents**: 
-   - Working group documents and drafts can be found at: https://datatracker.ietf.org/wg/vcon/documents/
-   - The current Internet-Draft can be found at: https://datatracker.ietf.org/doc/draft-ietf-vcon-vcon-container/
-
-3. **Attend Meetings**:
-   - The working group meets virtually during IETF meetings
-   - Meeting schedules and connection details are announced on the mailing list
-   - Past meeting materials and recordings are available on the IETF datatracker
-
-4. **Contribute**:
-   - Submit comments and suggestions on the mailing list
-   - Propose changes through GitHub pull requests
-   - Participate in working group discussions
-   - Help with implementations and interoperability testing
-
-For more information about the IETF standardization process and how to participate, visit: https://www.ietf.org/about/participate/
-
-## Advanced Usage
-
-### Working with Attachments
+### Audio and Video
 
 ```python
-# Add a file attachment
-vcon.add_attachment(
-    type="transcript",
-    body="Conversation transcript content...",
-    encoding="none"
-)
-
-# Add a base64-encoded attachment
-vcon.add_attachment(
+# Add audio recording
+audio_dialog = Dialog(
     type="recording",
-    body="base64_encoded_content...",
-    encoding="base64url"
-)
-```
-
-## Working with Images
-
-The vCon library supports various image formats including JPEG, TIFF, and PDF. You can add images as either dialog content or attachments.
-
-### Supported Image Formats
-
-- JPEG/JPG (.jpg, .jpeg)
-- TIFF (.tif, .tiff) 
-- PDF (.pdf)
-
-### Adding Images to Dialogs
-
-Images can be added directly to dialog entries, which is useful for including screenshots, scanned documents, or other visual content as part of the conversation flow:
-
-```python
-from vcon import Vcon
-from vcon.party import Party
-from vcon.dialog import Dialog
-from datetime import datetime, timezone
-
-# Create a vCon
-vcon = Vcon.build_new()
-
-# Add a party
-customer = Party(name="Alice Smith", role="customer")
-vcon.add_party(customer)
-
-# Create a dialog with an image
-image_dialog = Dialog(
-    type="recording",
-    start=datetime.now(timezone.utc),
-    parties=[0]
-)
-
-# Add image data from a file
-image_dialog.add_image_data("screenshot.jpg")
-vcon.add_dialog(image_dialog)
-
-# Check image type and metadata
-if image_dialog.is_image():
-    print("Dialog contains an image")
-    
-    # Access image metadata
-    if hasattr(image_dialog, "metadata") and "image" in image_dialog.metadata:
-        width = image_dialog.metadata["image"].get("width")
-        height = image_dialog.metadata["image"].get("height")
-        print(f"Image dimensions: {width}x{height}")
-
-# vCon Video Support
-
-The vCon library now supports a wide range of video formats, allowing conversations to include rich video content for various use cases.
-
-## Supported Video Formats
-
-The library supports the following video formats:
-
-- MP4 (.mp4) with H.264 and H.265/HEVC codecs
-- MOV (.mov) QuickTime format
-- WebM (.webm) for web-optimized video
-- AVI (.avi) for legacy compatibility
-- MKV (.mkv) for container flexibility
-- MPEG (.mpg, .mpeg) for standards compliance
-- FLV (.flv) for Flash Video content
-
-## Adding Videos to Conversations
-
-### Adding Inline Videos
-
-For smaller videos that can be embedded directly in the conversation:
-
-```
-from vcon import Dialog, Conversation
-
-# Create a dialog with an inline video
-dialog = Dialog()
-dialog.add_video_data("path/to/video.mp4")
-
-# Add to conversation
-conversation = Conversation()
-conversation.add_dialog(dialog)
-```
-
-### Adding Videos by Reference
-
-For larger videos that should be stored externally:
-
-```python
-dialog = Dialog()
-dialog.add_video_data("path/to/large_video.mp4", inline=False)
-```
-
-### Adding Streaming Videos
-
-For very large videos that should be streamed in chunks:
-
-```python
-dialog = Dialog()
-dialog.add_streaming_video("path/to/huge_video.mp4")
-```
-
-## Working with Video Metadata
-
-The library automatically extracts metadata from videos:
-
-```python
-# Add a video and get metadata
-dialog = Dialog()
-dialog.add_video_data("path/to/video.mp4")
-
-# Access metadata
-metadata = dialog.metadata["video"]
-print(f"Duration: {metadata['duration']} seconds")
-print(f"Resolution: {metadata['width']}x{metadata['height']}")
-print(f"Codec: {metadata['codec']}")
-print(f"Frame rate: {metadata['frame_rate']} fps")
-```
-
-## Generating Thumbnails
-
-Create thumbnails from videos at specific timestamps:
-
-```python
-dialog = Dialog()
-dialog.add_video_data("path/to/video.mp4")
-
-# Generate thumbnail at 5 seconds
-thumbnail_data = dialog.generate_thumbnail(timestamp=5.0, width=320, height=240)
-
-# The thumbnail is also stored in metadata
-thumbnail_base64 = dialog.metadata["video"]["thumbnail"]["data"]
-```
-
-## Best Practices
-
-### Handling Large Videos
-
-- For videos under 10MB, use inline embedding
-- For videos between 10MB and 100MB, use external references
-- For videos over 100MB, use streaming with appropriate chunk sizes
-
-```python
-video_size = os.path.getsize("path/to/video.mp4")
-
-dialog = Dialog()
-if video_size < 10 * 1024 * 1024:  # 10MB
-    dialog.add_video_data("path/to/video.mp4", inline=True)
-elif video_size < 100 * 1024 * 1024:  # 100MB
-    dialog.add_video_data("path/to/video.mp4", inline=False)
-else:
-    # Adjust chunk size based on video size
-    chunk_size = min(5 * 1024 * 1024, max(1 * 1024 * 1024, video_size // 100))
-    dialog.add_streaming_video("path/to/video.mp4", chunk_size=chunk_size)
-```
-
-### Optimizing for Different Use Cases
-
-#### For Video Calls and Conferences
-
-```python
-# Record a video call
-dialog = Dialog()
-dialog.add_video_data("path/to/call_recording.mp4")
-dialog.speaker = "participant1@example.com"
-dialog.timestamp = datetime.now()
-dialog.add_metadata("call", {
-    "duration": 2700,  # 45 minutes
-    "participants": ["participant1@example.com", "participant2@example.com"]
-})
-```
-
-#### For Customer Support Demonstrations
-
-```python
-# Create a support demo video
-dialog = Dialog()
-dialog.add_video_data("path/to/product_demo.mp4")
-dialog.speaker = "support@example.com"
-dialog.generate_thumbnail(timestamp=15.0)  # Get a meaningful frame
-dialog.add_metadata("support_case", {
-    "case_id": "CS12345",
-    "product": "ExampleApp",
-    "feature": "Data Export"
-})
-```
-
-#### For Field Service Applications
-
-```python
-# Document field service with video
-dialog = Dialog()
-dialog.add_video_data("path/to/field_inspection.mp4")
-dialog.speaker = "technician@example.com"
-dialog.add_metadata("field_service", {
-    "location": {"lat": 37.7749, "lng": -122.4194},
-    "equipment_id": "PUMP-123",
-    "inspection_type": "Quarterly Maintenance"
-})
-```
-
-## Performance Considerations
-
-- For web applications, WebM format provides the best balance of quality and size
-- For maximum compatibility, use MP4 with H.264 codec
-- For highest quality, use MP4 with H.265/HEVC codec (but note compatibility issues with older devices)
-- Consider generating multiple formats for different use cases
-
-        
-    # Generate a thumbnail
-    thumbnail = image_dialog.generate_thumbnail((100, 100))
-    if thumbnail:
-        print("Thumbnail generated successfully")
-
-### Handling Party History
-
-```python
-from vcon.party import PartyHistory
-
-# Create a dialog with party history
-dialog = Dialog(
-    type="transfer",
-    start=datetime.now(timezone.utc).isoformat(),
+    start=datetime.now(),
     parties=[0, 1],
-    party_history=[
-        PartyHistory(
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            action="transfer",
-            from_party=0,
-            to_party=1
-        )
-    ]
+    url="https://example.com/recording.wav",
+    mimetype="audio/x-wav"
 )
-vcon.add_dialog(dialog)
+
+# Add video with metadata
+video_dialog = Dialog(
+    type="video",
+    start=datetime.now(),
+    parties=[0, 1],
+    url="https://example.com/video.mp4",
+    mimetype="video/mp4",
+    resolution="1920x1080",
+    frame_rate=30.0,
+    codec="H.264"
+)
 ```
 
-### File Validation
+### Supported Media Types
+
+**Audio**: `audio/x-wav`, `audio/x-mp3`, `audio/x-mp4`, `audio/ogg`
+**Video**: `video/x-mp4`, `video/ogg`
+**Text**: `text/plain`
+**Multipart**: `multipart/mixed`
+
+## Security Features
+
+### Digital Signatures
 
 ```python
-# Validate a vCon JSON file
-is_valid, errors = Vcon.validate_file("conversation.json")
+from cryptography.hazmat.primitives import serialization
 
-# Validate a vCon JSON string
-is_valid, errors = Vcon.validate_json(json_string)
+# Generate key pair
+private_key, public_key = Vcon.generate_key_pair()
+
+# Sign the vCon
+vcon.sign(private_key)
+
+# Verify signature
+is_valid = vcon.verify(public_key)
 ```
 
-## Contributing
+### Content Hashing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+```python
+# Calculate content hash for external files
+content_hash = dialog.calculate_content_hash("sha256")
+
+# Verify content integrity
+is_valid = dialog.verify_content_hash(expected_hash, "sha256")
+```
+
+## Advanced Features
+
+### Property Handling
+
+```python
+# Strict mode - only allow standard properties
+vcon = Vcon.load("file.json", property_handling="strict")
+
+# Meta mode - move non-standard properties to meta object
+vcon = Vcon.load("file.json", property_handling="meta")
+
+# Default mode - keep all properties
+vcon = Vcon.load("file.json", property_handling="default")
+```
+
+### Transfer Dialogs
+
+```python
+# Create transfer dialog
+transfer_data = {
+    "transferee": 0,
+    "transferor": 1,
+    "transfer_target": 2,
+    "original": 0,
+    "target_dialog": 1
+}
+
+vcon.add_transfer_dialog(
+    start=datetime.now(),
+    transfer_data=transfer_data,
+    parties=[0, 1, 2]
+)
+```
+
+### Analysis Data
+
+```python
+# Add analysis
+vcon.add_analysis(
+    type="sentiment",
+    dialog=0,
+    vendor="example-vendor",
+    body={"sentiment": "positive", "confidence": 0.95},
+    encoding="json"
+)
+```
+
+## Specification Compliance
+
+This library implements the vCon 0.3.0 specification with:
+
+- ✅ All required fields and validation
+- ✅ Proper media type support
+- ✅ Civic address (GEOPRIV) compliance
+- ✅ Party history event tracking
+- ✅ Transfer dialog support
+- ✅ Content hashing and security
+- ✅ Extensions and must_support
+- ✅ Backward compatibility
+
+## Testing
+
+Run the test suite:
+
+```bash
+pytest tests/
+```
+
+All 149 tests pass, covering:
+- Basic functionality
+- New vCon 0.3.0 features
+- Validation and error handling
+- Media type support
+- Security features
+- Backward compatibility
 
 ## License
 
-[License Type] - See LICENSE file for details
+This project is licensed under the MIT License - see the LICENSE file for details.

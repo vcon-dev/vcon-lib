@@ -31,11 +31,14 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 _ALLOWED_VCON_PROPERTIES = {
     "uuid", "vcon", "created_at", "updated_at", "redacted", 
     "group", "parties", "dialog", "attachments", "analysis", 
-    "signatures", "payload", "meta", "subject", "appended"
+    "signatures", "payload", "meta", "subject", "appended",
+    "extensions", "must_support"
 }
 
 _ALLOWED_PARTY_PROPERTIES = {
-    "type", "name", "contact", "meta", "external_id", "party_id"
+    "type", "name", "contact", "meta", "external_id", "party_id",
+    "tel", "stir", "mailto", "validation", "gmlpos", "civicaddress",
+    "uuid", "role", "contact_list", "sip", "did", "jCard", "timezone"
 }
 
 _ALLOWED_DIALOG_PROPERTIES = {
@@ -45,7 +48,8 @@ _ALLOWED_DIALOG_PROPERTIES = {
     "original", "consultation", "target_dialog", "campaign", 
     "interaction", "skill", "meta", "metadata", "transfer", 
     "signaling", "originator", "resolution", "frame_rate", 
-    "codec", "bitrate", "thumbnail", "streaming", "video"
+    "codec", "bitrate", "thumbnail", "streaming", "video",
+    "session_id", "content_hash", "application", "message_id"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
@@ -173,7 +177,7 @@ class Attachment:
 
 class Vcon:
     """
-    A class representing a vCon (Virtual Conversation) object.
+    A class representing a vCon (Virtual Conversation) object according to the vCon specification.
     
     A vCon is a standardized format for representing conversations and related metadata.
     It includes information about participants (parties), dialog content, attachments,
@@ -181,19 +185,37 @@ class Vcon:
     
     The vCon format supports features such as:
     - Unique identification via UUID
-    - Versioning
+    - Versioning (currently supports version "0.3.0")
     - Timestamps for creation and updates
-    - Party information
-    - Dialog content
-    - Attachments
-    - Analysis data
-    - Digital signatures
+    - Party information with contact details (tel, name, sip, did, jCard, timezone)
+    - Dialog content with media types and session information
+    - Attachments for ancillary documents
+    - Analysis data for conversation insights
+    - Digital signatures and encryption
+    - Extensions and must_support for extensibility
+    - Civic address information for location data
+    - Party history for tracking join/drop/hold/mute events
+    
+    New in vCon 0.3.0:
+    - Extensions field for listing used extensions
+    - Must_support field for incompatible extensions
+    - Enhanced party fields (sip, did, jCard, timezone)
+    - Dialog session_id and content_hash fields
+    - Party history with event tracking
+    - Updated media type validation
+    - New disposition values for incomplete dialogs
     
     Attributes:
         vcon_dict (Dict): The underlying dictionary containing all vCon data
+        property_handling (str): How non-standard properties are handled
     """
 
-    def __init__(self, vcon_dict: Dict[str, Any] = None, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> None:
+    def __init__(
+        self,
+        vcon_dict: Dict[str, Any] = None,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> None:
         """
         Initialize a Vcon object from a dictionary.
 
@@ -204,21 +226,35 @@ class Vcon:
                                 - "default": Keep non-standard properties (default)
                                 - "strict": Remove non-standard properties
                                 - "meta": Move non-standard properties to meta object
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
 
         Example:
-            >>> vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"})
-            >>> strict_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="strict")
-            >>> meta_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="meta")
+                    >>> vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"})
+        >>> strict_vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"}, property_handling="strict")
+        >>> meta_vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"}, property_handling="meta")
         """
         logger.debug("Initializing new Vcon object")
 
-        # If the vcon_dict contains a created_at in datetime or in string, format it like a ISO 8601
         # Store property handling mode for later use
         self.property_handling = property_handling
         
         # Initialize with empty dict if none provided
         if vcon_dict is None:
             vcon_dict = {}
+        
+        # Version check and migration
+        vcon_version = vcon_dict.get("vcon")
+        if vcon_version is not None and vcon_version != "0.3.0":
+            if strict_version:
+                logger.error(f"Strict version mode: vCon version {vcon_version} is not supported.")
+                raise ValueError(f"vCon version {vcon_version} is not supported in strict mode.")
+            else:
+                logger.info(f"Migrating vCon from version {vcon_version} to 0.3.0")
+                vcon_dict["vcon"] = "0.3.0"
+        elif vcon_version is None:
+            # Set default version if missing
+            vcon_dict["vcon"] = "0.3.0"
+            logger.debug("Set default vCon version to 0.3.0")
         
         # Handle created_at
         if vcon_dict.get("created_at"):
@@ -342,7 +378,12 @@ class Vcon:
         return result
     
     @classmethod
-    def build_from_json(cls, json_string: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
+    def build_from_json(
+        cls,
+        json_string: str,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> "Vcon":
         """
         Initialize a Vcon object from a JSON string.
 
@@ -351,28 +392,40 @@ class Vcon:
 
         Args:
             json_string: A JSON string representing a vCon
+            property_handling: How to handle non-standard properties.
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
 
         Returns:
             A new Vcon object initialized with the parsed JSON data
 
         Raises:
             json.JSONDecodeError: If the JSON string is invalid
+            ValueError: If strict_version is True and the vCon version is not "0.3.0"
             
         Example:
-            >>> json_str = '{"uuid": "123", "vcon": "0.0.1"}'
+            >>> json_str = '{"uuid": "123", "vcon": "0.3.0"}'
             >>> vcon = Vcon.build_from_json(json_str)
         """
         logger.debug("Building Vcon from JSON string")
         try:
             vcon_dict = json.loads(json_string)
             logger.info("Successfully parsed JSON string")
-            return cls(vcon_dict, property_handling=property_handling)
+            return cls(
+                vcon_dict,
+                property_handling=property_handling,
+                strict_version=strict_version,
+            )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON string: {str(e)}")
             raise
 
     @classmethod
-    def build_new(cls, created_at: Union[str, datetime] = None, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
+    def build_new(
+        cls,
+        created_at: Union[str, datetime] = None,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> "Vcon":
         """
         Initialize a new Vcon object with default values.
 
@@ -385,6 +438,8 @@ class Vcon:
                                                     either as a string in ISO format 
                                                     or as a datetime object.
                                                     Defaults to current time.
+            property_handling: How to handle non-standard properties.
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
 
         Returns:
             A new Vcon object with default values
@@ -399,7 +454,7 @@ class Vcon:
     
         vcon_dict = {
             "uuid": uuid,
-            "vcon": "0.0.1",
+            "vcon": "0.3.0",
             "redacted": {},
             "group": [],
             "parties": [],
@@ -409,7 +464,11 @@ class Vcon:
         }
 
         # Create the Vcon object
-        vcon = cls(vcon_dict, property_handling=property_handling)
+        vcon = cls(
+            vcon_dict,
+            property_handling=property_handling,
+            strict_version=strict_version,
+        )
 
         # Set created_at if provided, otherwise it will use the default from __init__
         if created_at is not None:
@@ -500,6 +559,106 @@ class Vcon:
             self.vcon_dict["attachments"].append(tags_attachment)
         tags_attachment["body"].append(f"{tag_name}:{tag_value}")
         logger.info(f"Added tag {tag_name}:{tag_value}")
+
+    def get_extensions(self) -> List[str]:
+        """
+        Get the list of extensions used in this vCon.
+
+        Returns:
+            List of extension names, empty list if none are defined
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> extensions = vcon.get_extensions()
+            >>> print(extensions)  # Prints ["video"]
+        """
+        return self.vcon_dict.get("extensions", [])
+
+    def add_extension(self, extension: str) -> None:
+        """
+        Add an extension to the vCon.
+
+        Args:
+            extension: The name of the extension to add
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> vcon.add_extension("encryption")
+        """
+        if "extensions" not in self.vcon_dict:
+            self.vcon_dict["extensions"] = []
+        
+        if extension not in self.vcon_dict["extensions"]:
+            self.vcon_dict["extensions"].append(extension)
+            logger.info(f"Added extension: {extension}")
+
+    def remove_extension(self, extension: str) -> None:
+        """
+        Remove an extension from the vCon.
+
+        Args:
+            extension: The name of the extension to remove
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> vcon.remove_extension("video")
+        """
+        if "extensions" in self.vcon_dict and extension in self.vcon_dict["extensions"]:
+            self.vcon_dict["extensions"].remove(extension)
+            logger.info(f"Removed extension: {extension}")
+
+    def get_must_support(self) -> List[str]:
+        """
+        Get the list of extensions that must be supported.
+
+        Returns:
+            List of extension names that must be supported, empty list if none are defined
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> must_support = vcon.get_must_support()
+            >>> print(must_support)  # Prints ["encryption"]
+        """
+        return self.vcon_dict.get("must_support", [])
+
+    def add_must_support(self, extension: str) -> None:
+        """
+        Add an extension to the must_support list.
+
+        Args:
+            extension: The name of the extension that must be supported
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> vcon.add_must_support("video")
+        """
+        if "must_support" not in self.vcon_dict:
+            self.vcon_dict["must_support"] = []
+        
+        if extension not in self.vcon_dict["must_support"]:
+            self.vcon_dict["must_support"].append(extension)
+            logger.info(f"Added must_support extension: {extension}")
+
+    def remove_must_support(self, extension: str) -> None:
+        """
+        Remove an extension from the must_support list.
+
+        Args:
+            extension: The name of the extension to remove from must_support
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> vcon.remove_must_support("encryption")
+        """
+        if "must_support" in self.vcon_dict and extension in self.vcon_dict["must_support"]:
+            self.vcon_dict["must_support"].remove(extension)
+            logger.info(f"Removed must_support extension: {extension}")
 
     def find_attachment_by_type(self, type: str) -> Optional[Dict[str, Any]]:
         """
@@ -967,7 +1126,7 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon_dict = vcon.to_dict()
-            >>> print(vcon_dict["vcon"])  # Prints "0.0.1"
+            >>> print(vcon_dict["vcon"])  # Prints "0.3.0"
         """
         logger.debug("Converting vCon to dictionary")
         return json.loads(self.to_json())
@@ -1433,7 +1592,12 @@ class Vcon:
             return False, [f"Error parsing vCon: {str(e)}"]
 
     @classmethod
-    def load(cls, source: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
+    def load(
+        cls,
+        source: str,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> "Vcon":
         """
         Load a vCon from either a file path or URL.
 
@@ -1441,6 +1605,7 @@ class Vcon:
             source: File path or URL to load the vCon from
             property_handling: How to handle non-standard properties. 
                             Options are "default", "strict", or "meta"
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
                             
         Returns:
             A Vcon object
@@ -1451,12 +1616,25 @@ class Vcon:
             json.JSONDecodeError: If the source contains invalid JSON
         """
         if source.startswith(('http://', 'https://')):
-            return cls.load_from_url(source, property_handling=property_handling)
+            return cls.load_from_url(
+                source,
+                property_handling=property_handling,
+                strict_version=strict_version,
+            )
         else:
-            return cls.load_from_file(source, property_handling=property_handling)
+            return cls.load_from_file(
+                source,
+                property_handling=property_handling,
+                strict_version=strict_version,
+            )
 
     @classmethod
-    def load_from_file(cls, file_path: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
+    def load_from_file(
+        cls,
+        file_path: str,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> "Vcon":
         """
         Load a vCon from a file.
 
@@ -1464,6 +1642,7 @@ class Vcon:
             file_path: Path to the vCon JSON file
             property_handling: How to handle non-standard properties. 
                             Options are "default", "strict", or "meta"
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
                             
         Returns:
             A Vcon object
@@ -1471,18 +1650,28 @@ class Vcon:
         Raises:
             FileNotFoundError: If the file does not exist
             json.JSONDecodeError: If the file contains invalid JSON
+            ValueError: If strict_version is True and the vCon version is not "0.3.0"
         """
         try:
             with open(file_path, 'r') as f:
                 json_str = f.read()
-            return cls.build_from_json(json_str, property_handling=property_handling)
+            return cls.build_from_json(
+                json_str,
+                property_handling=property_handling,
+                strict_version=strict_version,
+            )
         except FileNotFoundError:
             raise FileNotFoundError(f"vCon file not found: {file_path}")
         except json.JSONDecodeError as e:
             raise json.JSONDecodeError(f"Invalid JSON in vCon file: {str(e)}", e.doc, e.pos)
 
     @classmethod
-    def load_from_url(cls, url: str, property_handling: str = PROPERTY_HANDLING_DEFAULT) -> Vcon:
+    def load_from_url(
+        cls,
+        url: str,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        strict_version: bool = False,
+    ) -> "Vcon":
         """
         Load a vCon from a URL.
 
@@ -1490,6 +1679,7 @@ class Vcon:
             url: URL to fetch the vCon JSON from
             property_handling: How to handle non-standard properties. 
                             Options are "default", "strict", or "meta"
+            strict_version: If True, reject vCons not at version "0.3.0". If False (default), migrate them.
                             
         Returns:
             A Vcon object
@@ -1497,10 +1687,15 @@ class Vcon:
         Raises:
             requests.RequestException: If there is an error fetching from URL
             json.JSONDecodeError: If the response contains invalid JSON
+            ValueError: If strict_version is True and the vCon version is not "0.3.0"
         """
         response = requests.get(url)
         response.raise_for_status()  # Raise an exception for bad status codes
-        return cls.build_from_json(response.text, property_handling=property_handling)
+        return cls.build_from_json(
+            response.text,
+            property_handling=property_handling,
+            strict_version=strict_version,
+        )
 
     def save_to_file(self, file_path: str) -> None:
         """

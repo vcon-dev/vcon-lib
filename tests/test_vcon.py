@@ -29,7 +29,7 @@ Generating a UUID8 based on a domain name
 
 
 test_vcon_string = (
-    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.0.1",'
+    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.3.0",'
     '"created_at":"2024-10-20T15:02:55.490850+00:00","parties":['
     '{"tel":"+14513886516","mailto":"david.scott@pickrandombusinesstype.com",'
     '"name":"David Scott","meta":{"role":"agent"}},'
@@ -154,14 +154,14 @@ def test_build_from_json() -> None:
     """
     vcon = Vcon.build_from_json(test_vcon_string)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
     assert vcon.created_at == "2024-10-20T15:02:55.490850+00:00"
 
 
 def test_build_new() -> None:
     vcon = Vcon.build_new()
     assert vcon.uuid is not None
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
     assert vcon.created_at is not None
 
 
@@ -719,7 +719,7 @@ def test_load_from_file(tmp_path):
     vcon = Vcon.load(str(file_path))
     assert isinstance(vcon, Vcon)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
 
 
 def test_load_from_file_not_found():
@@ -738,14 +738,24 @@ def test_load_from_file_invalid_json(tmp_path):
         Vcon.load(str(file_path))
 
 
-@pytest.mark.vcr()
-def test_load_from_url():
+@patch('requests.get')
+def test_load_from_url(mock_get):
     """Test loading a vCon from a URL"""
-    # Using a mock URL that returns a valid vCon JSON
+    # Mock the response to return a valid vCon JSON
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = test_vcon_string
+    mock_get.return_value = mock_response
+    
     url = "https://example.com/vcon.json"
-    with pytest.raises(requests.exceptions.RequestException):
-        # This will fail since the URL doesn't exist, but it tests the URL handling
-        Vcon.load(url)
+    vcon = Vcon.load_from_url(url)
+    
+    # Verify the vCon was loaded correctly
+    assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
+    assert vcon.vcon == "0.3.0"
+    
+    # Verify the mock was called correctly
+    mock_get.assert_called_once_with(url)
 
 
 def test_load_detects_file_vs_url() -> None:
@@ -760,8 +770,9 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
-        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
+        # Updated to accept all parameters including strict_version
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None, strict_version=False: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None, strict_version=False: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -804,11 +815,24 @@ def test_save_to_file_permission_error(tmp_path):
         vcon.save_to_file(str(file_path))
 
 
-@pytest.mark.vcr()
-def test_post_to_url():
+@patch('requests.post')
+def test_post_to_url(mock_post):
     """Test posting a vCon to a URL"""
     vcon = Vcon.build_new()
-    url = "https://httpbin.org/post"  # Test endpoint that echoes back the request
+    url = "https://httpbin.org/post"
+    
+    # Mock the response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json',
+            'X-Conserver-Api-Token': 'test-token',
+            'X-Custom-Header': 'test-value'
+        }
+    }
+    mock_post.return_value = mock_response
     
     # Test with custom headers
     headers = {
@@ -829,13 +853,32 @@ def test_post_to_url():
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert response_data['headers']['X-Conserver-Api-Token'] == 'test-token'
     assert response_data['headers']['X-Custom-Header'] == 'test-value'
+    
+    # Verify the mock was called correctly
+    mock_post.assert_called_once()
+    call_args = mock_post.call_args
+    assert call_args[0][0] == url
+    assert call_args[1]['headers']['Content-Type'] == 'application/json'
+    assert call_args[1]['headers']['x-conserver-api-token'] == 'test-token'
+    assert call_args[1]['headers']['x-custom-header'] == 'test-value'
 
 
-@pytest.mark.vcr()
-def test_post_to_url_no_headers():
+@patch('requests.post')
+def test_post_to_url_no_headers(mock_post):
     """Test posting a vCon to a URL without custom headers"""
     vcon = Vcon.build_new()
     url = "https://httpbin.org/post"
+    
+    # Mock the response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json'
+        }
+    }
+    mock_post.return_value = mock_response
     
     response = vcon.post_to_url(url)
     
@@ -845,16 +888,28 @@ def test_post_to_url_no_headers():
     # Verify only default headers were sent
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert 'X-Conserver-Api-Token' not in response_data['headers']
+    
+    # Verify the mock was called correctly
+    mock_post.assert_called_once()
+    call_args = mock_post.call_args
+    assert call_args[0][0] == url
+    assert call_args[1]['headers']['Content-Type'] == 'application/json'
 
 
-@pytest.mark.vcr()
-def test_post_to_url_error():
+@patch('requests.post')
+def test_post_to_url_error(mock_post):
     """Test posting to an invalid URL raises RequestException"""
     vcon = Vcon.build_new()
     url = "https://nonexistent.example.com"
     
+    # Mock the request to raise an exception
+    mock_post.side_effect = requests.RequestException("Connection failed")
+    
     with pytest.raises(requests.RequestException):
         vcon.post_to_url(url)
+    
+    # Verify the mock was called
+    mock_post.assert_called_once()
 
 # Sample URLs for video files (for testing)
 SAMPLE_VIDEOS = {
@@ -1249,3 +1304,199 @@ def test_integration_basic_video_workflow():
     assert len(new_vcon.dialog) == 3
     assert new_vcon.dialog[1]["type"] == "video"
     assert new_vcon.dialog[1]["mimetype"] == "video/mp4"
+
+def test_version_migration_default() -> None:
+    """Test that vCons with older versions are automatically migrated by default."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(old_vcon_json)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_strict_mode_rejects() -> None:
+    """Test that strict mode rejects vCons with older versions."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon.build_from_json(old_vcon_json, strict_version=True)
+
+
+def test_version_migration_strict_mode_accepts_current() -> None:
+    """Test that strict mode accepts vCons with current version."""
+    current_vcon_json = '{"uuid":"123","vcon":"0.3.0","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(current_vcon_json, strict_version=True)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_constructor() -> None:
+    """Test that the constructor handles version migration."""
+    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
+    vcon = Vcon(old_vcon_dict)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_constructor_strict() -> None:
+    """Test that the constructor rejects old versions in strict mode."""
+    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon(old_vcon_dict, strict_version=True)
+
+
+def test_version_migration_load_from_file(tmp_path) -> None:
+    """Test that load_from_file handles version migration."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "old_vcon.json"
+    with open(file_path, 'w') as f:
+        f.write(old_vcon_json)
+    
+    vcon = Vcon.load_from_file(str(file_path))
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_load_from_file_strict(tmp_path) -> None:
+    """Test that load_from_file rejects old versions in strict mode."""
+    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "old_vcon.json"
+    with open(file_path, 'w') as f:
+        f.write(old_vcon_json)
+    
+    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
+        Vcon.load_from_file(str(file_path), strict_version=True)
+
+
+def test_version_migration_build_new() -> None:
+    """Test that build_new creates vCons with current version."""
+    vcon = Vcon.build_new()
+    assert vcon.vcon == "0.3.0"
+
+
+def test_version_migration_no_version_field() -> None:
+    """Test that vCons without version field get version 0.3.0."""
+    vcon_dict = {"uuid": "123", "created_at": "2023-01-01T00:00:00Z"}
+    vcon = Vcon(vcon_dict)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_extensions_management():
+    """Test extensions field management."""
+    vcon = Vcon.build_new()
+    
+    # Initially no extensions
+    assert vcon.get_extensions() == []
+    
+    # Add extensions
+    vcon.add_extension("video")
+    vcon.add_extension("encryption")
+    assert vcon.get_extensions() == ["video", "encryption"]
+    
+    # Add duplicate extension (should not add)
+    vcon.add_extension("video")
+    assert vcon.get_extensions() == ["video", "encryption"]
+    
+    # Remove extension
+    vcon.remove_extension("video")
+    assert vcon.get_extensions() == ["encryption"]
+    
+    # Remove non-existent extension
+    vcon.remove_extension("nonexistent")
+    assert vcon.get_extensions() == ["encryption"]
+
+
+def test_must_support_management():
+    """Test must_support field management."""
+    vcon = Vcon.build_new()
+    
+    # Initially no must_support
+    assert vcon.get_must_support() == []
+    
+    # Add must_support extensions
+    vcon.add_must_support("encryption")
+    vcon.add_must_support("video")
+    assert vcon.get_must_support() == ["encryption", "video"]
+    
+    # Add duplicate extension (should not add)
+    vcon.add_must_support("encryption")
+    assert vcon.get_must_support() == ["encryption", "video"]
+    
+    # Remove extension
+    vcon.remove_must_support("encryption")
+    assert vcon.get_must_support() == ["video"]
+    
+    # Remove non-existent extension
+    vcon.remove_must_support("nonexistent")
+    assert vcon.get_must_support() == ["video"]
+
+
+def test_extensions_serialization():
+    """Test that extensions are properly serialized."""
+    vcon = Vcon.build_new()
+    vcon.add_extension("video")
+    vcon.add_extension("encryption")
+    
+    vcon_dict = vcon.to_dict()
+    assert "extensions" in vcon_dict
+    assert vcon_dict["extensions"] == ["video", "encryption"]
+    
+    # Test JSON serialization
+    json_str = vcon.to_json()
+    assert '"extensions": ["video", "encryption"]' in json_str
+
+
+def test_must_support_serialization():
+    """Test that must_support are properly serialized."""
+    vcon = Vcon.build_new()
+    vcon.add_must_support("encryption")
+    vcon.add_must_support("video")
+    
+    vcon_dict = vcon.to_dict()
+    assert "must_support" in vcon_dict
+    assert vcon_dict["must_support"] == ["encryption", "video"]
+    
+    # Test JSON serialization
+    json_str = vcon.to_json()
+    assert '"must_support": ["encryption", "video"]' in json_str
+
+
+def test_extensions_from_json():
+    """Test loading extensions from JSON."""
+    json_str = '''
+    {
+        "uuid": "123",
+        "vcon": "0.3.0",
+        "created_at": "2023-01-01T00:00:00Z",
+        "extensions": ["video", "encryption"],
+        "must_support": ["encryption"]
+    }
+    '''
+    
+    vcon = Vcon.build_from_json(json_str)
+    assert vcon.get_extensions() == ["video", "encryption"]
+    assert vcon.get_must_support() == ["encryption"]
+
+
+def test_extensions_property_handling():
+    """Test extensions with different property handling modes."""
+    vcon_dict = {
+        "uuid": "123",
+        "vcon": "0.3.0",
+        "created_at": "2023-01-01T00:00:00Z",
+        "extensions": ["video"],
+        "must_support": ["encryption"],
+        "custom_field": "value"
+    }
+    
+    # Default mode - keep custom fields
+    vcon = Vcon(vcon_dict, property_handling="default")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert "custom_field" in vcon.vcon_dict
+    
+    # Strict mode - remove custom fields
+    vcon = Vcon(vcon_dict, property_handling="strict")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert "custom_field" not in vcon.vcon_dict
+    
+    # Meta mode - move custom fields to meta
+    vcon = Vcon(vcon_dict, property_handling="meta")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.vcon_dict.get("meta", {}).get("custom_field") == "value"

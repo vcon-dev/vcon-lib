@@ -1,7 +1,39 @@
 from typing import Optional
-from typing import Optional
+
 
 class CivicAddress:
+    """
+    A class representing civic address information according to GEOPRIV specification.
+    
+    This class supports all civic address fields defined in RFC 4776 (GEOPRIV)
+    and is used within vCon Party objects to provide location information.
+    
+    Administrative areas (a1-a6):
+    - a1: Administrative area 1 (e.g., state or province)
+    - a2: Administrative area 2 (e.g., county or municipality)
+    - a3: Administrative area 3 (e.g., city or town)
+    - a4: Administrative area 4 (e.g., neighborhood or district)
+    - a5: Administrative area 5 (e.g., postal code)
+    - a6: Administrative area 6 (e.g., building or floor)
+    
+    Street and building information:
+    - sts: Street name
+    - hno: House number
+    - hns: House name
+    - prd: Premier (e.g., department or suite number)
+    - flr: Floor
+    
+    Location and identification:
+    - country: Country code (ISO 3166-1 alpha-2)
+    - pc: Postal code
+    - nam: Name of the location
+    - lmk: Landmark name
+    - loc: Location name
+    - pod: Post office box identifier
+    
+    All fields are optional and follow the GEOPRIV specification format.
+    Field names are in lowercase as required by the vCon specification.
+    """
     def __init__(self,
                  country: Optional[str] = None,
                  a1: Optional[str] = None,
