@@ -875,3 +875,31 @@ class TestDialogNewFields:
         dialog_dict = dialog.to_dict()
         assert dialog_dict["application"] == "test-app"
         assert dialog_dict["message_id"] == "<test-message-id@example.com>"
+
+
+def test_dialog_disposition_validation():
+    """Test that disposition validation works for incomplete dialogs."""
+    from datetime import datetime
+    
+    # Test valid dispositions
+    valid_dispositions = [
+        "no-answer", "congestion", "failed", "busy", 
+        "hung-up", "voicemail-no-message"
+    ]
+    
+    for disposition in valid_dispositions:
+        dialog = Dialog(
+            "incomplete", 
+            datetime.now(), 
+            [0], 
+            disposition=disposition
+        )
+        assert dialog.disposition == disposition
+    
+    # Test invalid disposition
+    with pytest.raises(ValueError, match="Invalid disposition"):
+        Dialog("incomplete", datetime.now(), [0], disposition="invalid")
+    
+    # Test that non-incomplete dialogs don't require disposition validation
+    dialog = Dialog("text", datetime.now(), [0], disposition="invalid")
+    assert dialog.disposition == "invalid"

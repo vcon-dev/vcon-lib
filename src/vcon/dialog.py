@@ -85,6 +85,16 @@ class Dialog:
         "video"
     ]
 
+    # Valid disposition values for incomplete dialogs (from specification)
+    VALID_DISPOSITIONS = [
+        "no-answer",
+        "congestion", 
+        "failed",
+        "busy",
+        "hung-up",
+        "voicemail-no-message"
+    ]
+
     def __init__(
         self,
         type: str,
@@ -240,6 +250,15 @@ class Dialog:
         # Handling for specific dialog types
         if type == "incomplete" and not hasattr(self, "disposition"):
             raise ValueError("Dialog type 'incomplete' requires a disposition")
+        
+        # Validate disposition values for incomplete dialogs
+        if (type == "incomplete" and hasattr(self, "disposition")
+                and self.disposition):
+            if self.disposition not in Dialog.VALID_DISPOSITIONS:
+                raise ValueError(
+                    f"Invalid disposition '{self.disposition}'. "
+                    f"Must be one of: {Dialog.VALID_DISPOSITIONS}"
+                )
 
         # Auto-detect mimetype for video type
         if type == "video" and not hasattr(self, "mimetype"):
