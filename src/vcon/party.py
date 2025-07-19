@@ -4,6 +4,42 @@ from datetime import datetime
 
 
 class Party:
+    """
+    A class representing a party (participant) in a vCon conversation.
+    
+    A party represents a participant in the conversation with various contact
+    and identification information. Parties can be callers, agents, or any
+    other participants in the conversation.
+    
+    Supported contact methods:
+    - tel: Telephone number
+    - mailto: Email address
+    - sip: SIP URI for VoIP communication
+    - did: Decentralized Identifier for blockchain-based identity
+    
+    Contact information:
+    - name: Display name of the party
+    - jCard: vCard format contact information (RFC 7095)
+    - timezone: Party's timezone for temporal context
+    
+    Location and validation:
+    - civicaddress: Civic address information (GEOPRIV format)
+    - gmlpos: GML position coordinates
+    - validation: Validation information for the party
+    
+    Additional metadata:
+    - uuid: Unique identifier for the party
+    - role: Role in the conversation (e.g., "caller", "agent")
+    - stir: STIR identifier for secure telephony
+    - contact_list: Reference to contact list
+    - meta: Additional metadata
+    
+    New in vCon 0.3.0:
+    - sip: SIP URI for the party
+    - did: Decentralized Identifier
+    - jCard: vCard format contact information
+    - timezone: Party's timezone
+    """
     def __init__(
         self,
         tel: Optional[str] = None,
@@ -85,6 +121,29 @@ class Party:
 
 
 class PartyHistory:
+    """
+    A class representing party history events in a vCon dialog.
+    
+    Party history tracks when parties join, leave, or change state during
+    a conversation. This is useful for understanding the flow of multi-party
+    conversations where participants may not all join and leave at the same time.
+    
+    Supported event types (vCon 0.3.0 specification):
+    - join: When the party joins the dialog
+    - drop: When the party drops out of the dialog
+    - hold: When the party is put on hold
+    - unhold: When the party is taken off hold
+    - mute: When the party is muted
+    - unmute: When the party is taken off mute
+    
+    Attributes:
+        party (int): Index of the party in the parties array
+        event (str): Type of event (must be one of VALID_EVENTS)
+        time (datetime): Time when the event occurred (serialized as ISO 8601)
+    
+    The time field is automatically serialized to ISO 8601 format when
+    converted to dictionary representation.
+    """
     # Valid event types for party history (from specification)
     VALID_EVENTS = [
         "join",      # when the party joins the dialog

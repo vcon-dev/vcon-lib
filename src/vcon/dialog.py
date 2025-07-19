@@ -42,6 +42,41 @@ MIME_TYPES = [
 
 
 class Dialog:
+    """
+    A class representing a dialog segment in a vCon conversation.
+    
+    A dialog represents a piece of conversation content, which can be:
+    - text: Text-based communication (email, chat, SMS)
+    - recording: Audio/video recording of the conversation
+    - transfer: Call transfer operation between parties
+    - incomplete: Failed or incomplete conversation setup
+    - video: Video content with metadata
+    
+    Dialog content can be stored inline or referenced externally:
+    - Inline: Content stored directly in the body field
+    - External: Content referenced via URL with content_hash for integrity
+    
+    Media support:
+    - Audio formats: WAV, MP3, MP4, OGG, WebM, AAC
+    - Video formats: MP4, WebM, AVI, MKV, MOV, FLV, 3GP
+    - Text formats: Plain text, multipart messages
+    - Images: JPEG, TIFF, PDF
+    
+    New in vCon 0.3.0:
+    - session_id: Session identifier for tracking
+    - content_hash: Hash for externally referenced files (replaces alg/signature)
+    - application: Application identifier for the dialog
+    - message_id: Message identifier for email/text dialogs
+    - Updated media type validation with specification-compliant types
+    - New disposition values for incomplete dialogs
+    - Party history with event tracking (join, drop, hold, unhold, mute, unmute)
+    
+    Transfer dialog features:
+    - transfer_target: Target party for transfers
+    - target_dialog: Target dialog reference
+    - Support for consultation and original call tracking
+    """
+
     MIME_TYPES = [
         "text/plain",
         "audio/x-wav",

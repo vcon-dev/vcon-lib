@@ -177,7 +177,7 @@ class Attachment:
 
 class Vcon:
     """
-    A class representing a vCon (Virtual Conversation) object.
+    A class representing a vCon (Virtual Conversation) object according to the vCon specification.
     
     A vCon is a standardized format for representing conversations and related metadata.
     It includes information about participants (parties), dialog content, attachments,
@@ -185,16 +185,29 @@ class Vcon:
     
     The vCon format supports features such as:
     - Unique identification via UUID
-    - Versioning
+    - Versioning (currently supports version "0.3.0")
     - Timestamps for creation and updates
-    - Party information
-    - Dialog content
-    - Attachments
-    - Analysis data
-    - Digital signatures
+    - Party information with contact details (tel, name, sip, did, jCard, timezone)
+    - Dialog content with media types and session information
+    - Attachments for ancillary documents
+    - Analysis data for conversation insights
+    - Digital signatures and encryption
+    - Extensions and must_support for extensibility
+    - Civic address information for location data
+    - Party history for tracking join/drop/hold/mute events
+    
+    New in vCon 0.3.0:
+    - Extensions field for listing used extensions
+    - Must_support field for incompatible extensions
+    - Enhanced party fields (sip, did, jCard, timezone)
+    - Dialog session_id and content_hash fields
+    - Party history with event tracking
+    - Updated media type validation
+    - New disposition values for incomplete dialogs
     
     Attributes:
         vcon_dict (Dict): The underlying dictionary containing all vCon data
+        property_handling (str): How non-standard properties are handled
     """
 
     def __init__(
