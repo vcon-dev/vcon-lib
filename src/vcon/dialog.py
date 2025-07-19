@@ -120,6 +120,9 @@ class Dialog:
         # New required fields
         session_id: Optional[str] = None,
         content_hash: Optional[str] = None,
+        # Additional fields from specification
+        application: Optional[str] = None,
+        message_id: Optional[str] = None,
         **kwargs,
     ) -> None:
         """
@@ -192,6 +195,10 @@ class Dialog:
         :type session_id: str or None
         :param content_hash: Hash for externally referenced files (replaces alg and signature)
         :type content_hash: str or None
+        :param application: Application identifier for the dialog
+        :type application: str or None
+        :param message_id: Message identifier for email/text dialogs
+        :type message_id: str or None
         :param kwargs: Additional attributes to be set on the dialog
         """
 

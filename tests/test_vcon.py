@@ -738,14 +738,24 @@ def test_load_from_file_invalid_json(tmp_path):
         Vcon.load(str(file_path))
 
 
-@pytest.mark.vcr()
-def test_load_from_url():
+@patch('requests.get')
+def test_load_from_url(mock_get):
     """Test loading a vCon from a URL"""
-    # Using a mock URL that returns a valid vCon JSON
+    # Mock the response to return a valid vCon JSON
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = test_vcon_string
+    mock_get.return_value = mock_response
+    
     url = "https://example.com/vcon.json"
-    with pytest.raises(requests.exceptions.RequestException):
-        # This will fail since the URL doesn't exist, but it tests the URL handling
-        Vcon.load(url)
+    vcon = Vcon.load_from_url(url)
+    
+    # Verify the vCon was loaded correctly
+    assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
+    assert vcon.vcon == "0.3.0"
+    
+    # Verify the mock was called correctly
+    mock_get.assert_called_once_with(url)
 
 
 def test_load_detects_file_vs_url() -> None:
@@ -805,11 +815,24 @@ def test_save_to_file_permission_error(tmp_path):
         vcon.save_to_file(str(file_path))
 
 
-@pytest.mark.vcr()
-def test_post_to_url():
+@patch('requests.post')
+def test_post_to_url(mock_post):
     """Test posting a vCon to a URL"""
     vcon = Vcon.build_new()
-    url = "https://httpbin.org/post"  # Test endpoint that echoes back the request
+    url = "https://httpbin.org/post"
+    
+    # Mock the response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json',
+            'X-Conserver-Api-Token': 'test-token',
+            'X-Custom-Header': 'test-value'
+        }
+    }
+    mock_post.return_value = mock_response
     
     # Test with custom headers
     headers = {
@@ -830,13 +853,32 @@ def test_post_to_url():
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert response_data['headers']['X-Conserver-Api-Token'] == 'test-token'
     assert response_data['headers']['X-Custom-Header'] == 'test-value'
+    
+    # Verify the mock was called correctly
+    mock_post.assert_called_once()
+    call_args = mock_post.call_args
+    assert call_args[0][0] == url
+    assert call_args[1]['headers']['Content-Type'] == 'application/json'
+    assert call_args[1]['headers']['x-conserver-api-token'] == 'test-token'
+    assert call_args[1]['headers']['x-custom-header'] == 'test-value'
 
 
-@pytest.mark.vcr()
-def test_post_to_url_no_headers():
+@patch('requests.post')
+def test_post_to_url_no_headers(mock_post):
     """Test posting a vCon to a URL without custom headers"""
     vcon = Vcon.build_new()
     url = "https://httpbin.org/post"
+    
+    # Mock the response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        'data': vcon.to_json(),
+        'headers': {
+            'Content-Type': 'application/json'
+        }
+    }
+    mock_post.return_value = mock_response
     
     response = vcon.post_to_url(url)
     
@@ -846,16 +888,28 @@ def test_post_to_url_no_headers():
     # Verify only default headers were sent
     assert response_data['headers']['Content-Type'] == 'application/json'
     assert 'X-Conserver-Api-Token' not in response_data['headers']
+    
+    # Verify the mock was called correctly
+    mock_post.assert_called_once()
+    call_args = mock_post.call_args
+    assert call_args[0][0] == url
+    assert call_args[1]['headers']['Content-Type'] == 'application/json'
 
 
-@pytest.mark.vcr()
-def test_post_to_url_error():
+@patch('requests.post')
+def test_post_to_url_error(mock_post):
     """Test posting to an invalid URL raises RequestException"""
     vcon = Vcon.build_new()
     url = "https://nonexistent.example.com"
     
+    # Mock the request to raise an exception
+    mock_post.side_effect = requests.RequestException("Connection failed")
+    
     with pytest.raises(requests.RequestException):
         vcon.post_to_url(url)
+    
+    # Verify the mock was called
+    mock_post.assert_called_once()
 
 # Sample URLs for video files (for testing)
 SAMPLE_VIDEOS = {

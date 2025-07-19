@@ -119,22 +119,22 @@ Based on my analysis of the new vCon core document and the current library imple
 - **Files:** `src/vcon/party.py`
 - **Test:** Verify timezone can be set and serialized
 
-### 4. Update Dialog Object Fields
-- **Change:** Rename mimetype to mediatype (already done in library)
+### 4. Update Dialog Object Fields ✅ COMPLETED
+- **Change:** Rename mimetype to mediatype (already done in library) ✅
 - **Files:** `src/vcon/dialog.py`
-- **Test:** Verify mediatype is used consistently
+- **Test:** Verify mediatype is used consistently ✅
 
-- **Change:** Add session_id field (String)
+- **Change:** Add session_id field (String) ✅
 - **Files:** `src/vcon/dialog.py`
-- **Test:** Verify session_id can be set and serialized
+- **Test:** Verify session_id can be set and serialized ✅
 
-- **Change:** Add application field (String)
+- **Change:** Add application field (String) ✅
 - **Files:** `src/vcon/dialog.py`
-- **Test:** Verify application field can be set
+- **Test:** Verify application field can be set ✅
 
-- **Change:** Add message_id field (String)
+- **Change:** Add message_id field (String) ✅
 - **Files:** `src/vcon/dialog.py`
-- **Test:** Verify message_id can be set for email/text dialogs
+- **Test:** Verify message_id can be set for email/text dialogs ✅
 
 ### 5. Update Party History Object
 - **Change:** Add time field (Date) to PartyHistory

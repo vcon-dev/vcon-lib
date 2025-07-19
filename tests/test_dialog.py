@@ -851,3 +851,27 @@ def test_dialog_new_fields_with_existing_fields():
     assert dialog_dict["filename"] == "recording.wav"
     assert dialog_dict["session_id"] == "session-123"
     assert dialog_dict["content_hash"] == "abc123def456"
+
+
+class TestDialogNewFields:
+    def test_new_dialog_fields(self):
+        """Test that new dialog fields (application, message_id) work correctly."""
+        from datetime import datetime
+        
+        # Create dialog with new fields
+        dialog = Dialog(
+            type="text",
+            start=datetime.now(),
+            parties=[0, 1],
+            application="test-app",
+            message_id="<test-message-id@example.com>"
+        )
+        
+        # Verify fields are set
+        assert dialog.application == "test-app"
+        assert dialog.message_id == "<test-message-id@example.com>"
+        
+        # Verify serialization
+        dialog_dict = dialog.to_dict()
+        assert dialog_dict["application"] == "test-app"
+        assert dialog_dict["message_id"] == "<test-message-id@example.com>"

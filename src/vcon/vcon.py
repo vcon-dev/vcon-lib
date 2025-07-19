@@ -49,7 +49,7 @@ _ALLOWED_DIALOG_PROPERTIES = {
     "interaction", "skill", "meta", "metadata", "transfer", 
     "signaling", "originator", "resolution", "frame_rate", 
     "codec", "bitrate", "thumbnail", "streaming", "video",
-    "session_id", "content_hash"
+    "session_id", "content_hash", "application", "message_id"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
