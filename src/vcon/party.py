@@ -97,8 +97,13 @@ class PartyHistory:
         self.time = time
 
     def to_dict(self):
+        # Handle time field which can be datetime or string
+        if hasattr(self.time, 'isoformat'):
+            time_value = self.time.isoformat()
+        else:
+            time_value = self.time
         return {
             "party": self.party, 
             "event": self.event, 
-            "time": self.time.isoformat()
+            "time": time_value
         }
