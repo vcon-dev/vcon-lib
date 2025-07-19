@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime
 from vcon.party import Party, PartyHistory
 from vcon.civic_address import CivicAddress
@@ -60,6 +59,22 @@ def test_party_history():
     assert party_history.party == 0
     assert party_history.event == "join"
     assert isinstance(party_history.time, datetime)
+
+
+def test_party_history_to_dict():
+    """Test PartyHistory to_dict method with ISO 8601 time serialization."""
+    test_time = datetime(2023, 1, 15, 14, 30, 45, 123456)
+    party_history = PartyHistory(1, "leave", test_time)
+    
+    result = party_history.to_dict()
+    expected = {
+        "party": 1,
+        "event": "leave", 
+        "time": "2023-01-15T14:30:45.123456"
+    }
+    
+    assert result == expected
+    assert isinstance(result["time"], str)
 
 
 def test_party_new_fields():
