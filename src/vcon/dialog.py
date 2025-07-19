@@ -16,6 +16,8 @@ MIME_TYPES = [
     "audio/wave",
     "audio/mpeg",
     "audio/mp3",
+    "audio/x-mp3",        # Specification required
+    "audio/x-mp4",        # Specification required
     "audio/ogg",
     "audio/webm",
     "audio/x-m4a",
@@ -47,6 +49,8 @@ class Dialog:
         "audio/wave",
         "audio/mpeg",
         "audio/mp3",
+        "audio/x-mp3",        # Specification required
+        "audio/x-mp4",        # Specification required
         "audio/ogg",
         "audio/webm",
         "audio/x-m4a",
