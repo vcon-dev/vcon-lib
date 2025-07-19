@@ -117,6 +117,9 @@ class Dialog:
         codec: Optional[str] = None,
         bitrate: Optional[int] = None,
         thumbnail: Optional[str] = None,
+        # New required fields
+        session_id: Optional[str] = None,
+        content_hash: Optional[str] = None,
         **kwargs,
     ) -> None:
         """
@@ -185,6 +188,10 @@ class Dialog:
         :type bitrate: int or None
         :param thumbnail: base64-encoded thumbnail image
         :type thumbnail: str or None
+        :param session_id: Session identifier
+        :type session_id: str or None
+        :param content_hash: Hash for externally referenced files (replaces alg and signature)
+        :type content_hash: str or None
         :param kwargs: Additional attributes to be set on the dialog
         """
 
@@ -1184,3 +1191,82 @@ class Dialog:
 
         # Remove the url since this is now inline data
         delattr(self, "url")
+
+    def set_session_id(self, session_id: str) -> None:
+        """
+        Set the session identifier for this dialog.
+
+        :param session_id: The session identifier
+        :type session_id: str
+        :return: None
+        :rtype: None
+        """
+        self.session_id = session_id
+
+    def get_session_id(self) -> Optional[str]:
+        """
+        Get the session identifier for this dialog.
+
+        :return: The session identifier if set, None otherwise
+        :rtype: str or None
+        """
+        return getattr(self, "session_id", None)
+
+    def set_content_hash(self, content_hash: str) -> None:
+        """
+        Set the content hash for externally referenced files.
+
+        :param content_hash: The content hash value
+        :type content_hash: str
+        :return: None
+        :rtype: None
+        """
+        self.content_hash = content_hash
+
+    def get_content_hash(self) -> Optional[str]:
+        """
+        Get the content hash for externally referenced files.
+
+        :return: The content hash if set, None otherwise
+        :rtype: str or None
+        """
+        return getattr(self, "content_hash", None)
+
+    def calculate_content_hash(self, algorithm: str = "sha256") -> str:
+        """
+        Calculate the content hash for the dialog body.
+
+        :param algorithm: The hash algorithm to use (default: "sha256")
+        :type algorithm: str
+        :return: The calculated hash value
+        :rtype: str
+        """
+        if not hasattr(self, "body") or not self.body:
+            raise ValueError("No body content available to hash")
+        
+        if algorithm == "sha256":
+            hash_obj = hashlib.sha256()
+            if isinstance(self.body, str):
+                hash_obj.update(self.body.encode())
+            else:
+                hash_obj.update(self.body)
+            return hash_obj.hexdigest()
+        else:
+            raise ValueError(f"Unsupported hash algorithm: {algorithm}")
+
+    def verify_content_hash(self, expected_hash: str, algorithm: str = "sha256") -> bool:
+        """
+        Verify the content hash against the expected value.
+
+        :param expected_hash: The expected hash value
+        :type expected_hash: str
+        :param algorithm: The hash algorithm to use (default: "sha256")
+        :type algorithm: str
+        :return: True if the hash matches, False otherwise
+        :rtype: bool
+        """
+        try:
+            calculated_hash = self.calculate_content_hash(algorithm)
+            return calculated_hash == expected_hash
+        except ValueError:
+            return False

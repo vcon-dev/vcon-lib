@@ -716,43 +716,138 @@ class TestDialog:
 
     @pytest.mark.skip("Performance test might be implementation-specific")
     def test_performance_large_video_file(self):
-        """Test handling large video files (simulation)."""
-        from src.vcon.dialog import Dialog
-        import time
-        
-        # Create a dialog
-        dialog = Dialog(
-            type="video",
-            start=datetime.now(),
-            parties=[0]
-        )
-        
-        # Simulate a large video file (100MB) - but don't actually allocate it
-        file_size_mb = 100
-        url = f"http://example.com/large_video_{file_size_mb}mb.mp4"
-        
-        # Mock the external call
-        with patch('requests.get') as mock_get:
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.headers = {"Content-Type": "video/mp4"}
-            mock_response.content = b'X' * 1024  # Just 1KB for testing
-            mock_get.return_value = mock_response
-            
-            # Mock head request too if needed
-            with patch('requests.head') as mock_head:
-                mock_head_response = Mock()
-                mock_head_response.status_code = 200
-                mock_head_response.headers = {
-                    "Content-Type": "video/mp4",
-                    "Content-Length": str(file_size_mb * 1024 * 1024)
-                }
-                mock_head.return_value = mock_head_response
-            
-                # Try to add external data
-                try:
-                    dialog.add_external_data(url, f"large_video_{file_size_mb}mb.mp4", "video/mp4")
-                    assert dialog.to_dict().get("url") == url
-                except Exception as e:
-                    # Just log the error, don't fail the test
-                    print(f"Could not test performance: {str(e)}")
+        """Test performance with large video files."""
+        # This test would measure performance with large files
+        # Implementation depends on specific performance requirements
+        pass
+
+
+def test_dialog_session_id():
+    """Test session_id field in Dialog."""
+    dialog = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1],
+        session_id="session-123"
+    )
+    
+    assert dialog.get_session_id() == "session-123"
+    
+    # Test setting session_id
+    dialog.set_session_id("session-456")
+    assert dialog.get_session_id() == "session-456"
+    
+    # Test to_dict includes session_id
+    dialog_dict = dialog.to_dict()
+    assert dialog_dict["session_id"] == "session-456"
+
+
+def test_dialog_content_hash():
+    """Test content_hash field in Dialog."""
+    dialog = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1],
+        content_hash="abc123def456"
+    )
+    
+    assert dialog.get_content_hash() == "abc123def456"
+    
+    # Test setting content_hash
+    dialog.set_content_hash("def456ghi789")
+    assert dialog.get_content_hash() == "def456ghi789"
+    
+    # Test to_dict includes content_hash
+    dialog_dict = dialog.to_dict()
+    assert dialog_dict["content_hash"] == "def456ghi789"
+
+
+def test_dialog_calculate_content_hash():
+    """Test content hash calculation."""
+    dialog = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1],
+        body="Hello, world!"
+    )
+    
+    # Calculate hash
+    hash_value = dialog.calculate_content_hash()
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 64  # SHA-256 hex digest length
+    
+    # Test with different algorithm
+    with pytest.raises(ValueError):
+        dialog.calculate_content_hash("md5")
+    
+    # Test with no body
+    dialog_no_body = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1]
+    )
+    
+    with pytest.raises(ValueError):
+        dialog_no_body.calculate_content_hash()
+
+
+def test_dialog_verify_content_hash():
+    """Test content hash verification."""
+    dialog = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1],
+        body="Hello, world!"
+    )
+    
+    # Calculate correct hash
+    correct_hash = dialog.calculate_content_hash()
+    
+    # Verify with correct hash
+    assert dialog.verify_content_hash(correct_hash) is True
+    
+    # Verify with incorrect hash
+    assert dialog.verify_content_hash("incorrect_hash") is False
+    
+    # Test with no body
+    dialog_no_body = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1]
+    )
+    
+    assert dialog_no_body.verify_content_hash("any_hash") is False
+
+
+def test_dialog_new_fields_optional():
+    """Test that new Dialog fields are optional."""
+    dialog = Dialog(
+        type="text",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1]
+    )
+    
+    dialog_dict = dialog.to_dict()
+    assert dialog_dict["type"] == "text"
+    assert "session_id" not in dialog_dict
+    assert "content_hash" not in dialog_dict
+
+
+def test_dialog_new_fields_with_existing_fields():
+    """Test new Dialog fields work with existing fields."""
+    dialog = Dialog(
+        type="recording",
+        start="2023-01-01T00:00:00Z",
+        parties=[0, 1],
+        mimetype="audio/wav",
+        filename="recording.wav",
+        session_id="session-123",
+        content_hash="abc123def456"
+    )
+    
+    dialog_dict = dialog.to_dict()
+    assert dialog_dict["type"] == "recording"
+    assert dialog_dict["mimetype"] == "audio/wav"
+    assert dialog_dict["filename"] == "recording.wav"
+    assert dialog_dict["session_id"] == "session-123"
+    assert dialog_dict["content_hash"] == "abc123def456"

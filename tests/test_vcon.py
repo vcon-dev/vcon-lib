@@ -1315,8 +1315,134 @@ def test_version_migration_build_new() -> None:
 
 
 def test_version_migration_no_version_field() -> None:
-    """Test that vCons without a version field are handled gracefully."""
-    no_version_json = '{"uuid":"123","created_at":"2024-01-01T00:00:00Z"}'
-    vcon = Vcon.build_from_json(no_version_json)
-    # Should not raise an error, and version should be set to 0.3.0 if it gets one
-    assert vcon.uuid == "123"
+    """Test that vCons without version field get version 0.3.0."""
+    vcon_dict = {"uuid": "123", "created_at": "2023-01-01T00:00:00Z"}
+    vcon = Vcon(vcon_dict)
+    assert vcon.vcon == "0.3.0"
+
+
+def test_extensions_management():
+    """Test extensions field management."""
+    vcon = Vcon.build_new()
+    
+    # Initially no extensions
+    assert vcon.get_extensions() == []
+    
+    # Add extensions
+    vcon.add_extension("video")
+    vcon.add_extension("encryption")
+    assert vcon.get_extensions() == ["video", "encryption"]
+    
+    # Add duplicate extension (should not add)
+    vcon.add_extension("video")
+    assert vcon.get_extensions() == ["video", "encryption"]
+    
+    # Remove extension
+    vcon.remove_extension("video")
+    assert vcon.get_extensions() == ["encryption"]
+    
+    # Remove non-existent extension
+    vcon.remove_extension("nonexistent")
+    assert vcon.get_extensions() == ["encryption"]
+
+
+def test_must_support_management():
+    """Test must_support field management."""
+    vcon = Vcon.build_new()
+    
+    # Initially no must_support
+    assert vcon.get_must_support() == []
+    
+    # Add must_support extensions
+    vcon.add_must_support("encryption")
+    vcon.add_must_support("video")
+    assert vcon.get_must_support() == ["encryption", "video"]
+    
+    # Add duplicate extension (should not add)
+    vcon.add_must_support("encryption")
+    assert vcon.get_must_support() == ["encryption", "video"]
+    
+    # Remove extension
+    vcon.remove_must_support("encryption")
+    assert vcon.get_must_support() == ["video"]
+    
+    # Remove non-existent extension
+    vcon.remove_must_support("nonexistent")
+    assert vcon.get_must_support() == ["video"]
+
+
+def test_extensions_serialization():
+    """Test that extensions are properly serialized."""
+    vcon = Vcon.build_new()
+    vcon.add_extension("video")
+    vcon.add_extension("encryption")
+    
+    vcon_dict = vcon.to_dict()
+    assert "extensions" in vcon_dict
+    assert vcon_dict["extensions"] == ["video", "encryption"]
+    
+    # Test JSON serialization
+    json_str = vcon.to_json()
+    assert '"extensions": ["video", "encryption"]' in json_str
+
+
+def test_must_support_serialization():
+    """Test that must_support are properly serialized."""
+    vcon = Vcon.build_new()
+    vcon.add_must_support("encryption")
+    vcon.add_must_support("video")
+    
+    vcon_dict = vcon.to_dict()
+    assert "must_support" in vcon_dict
+    assert vcon_dict["must_support"] == ["encryption", "video"]
+    
+    # Test JSON serialization
+    json_str = vcon.to_json()
+    assert '"must_support": ["encryption", "video"]' in json_str
+
+
+def test_extensions_from_json():
+    """Test loading extensions from JSON."""
+    json_str = '''
+    {
+        "uuid": "123",
+        "vcon": "0.3.0",
+        "created_at": "2023-01-01T00:00:00Z",
+        "extensions": ["video", "encryption"],
+        "must_support": ["encryption"]
+    }
+    '''
+    
+    vcon = Vcon.build_from_json(json_str)
+    assert vcon.get_extensions() == ["video", "encryption"]
+    assert vcon.get_must_support() == ["encryption"]
+
+
+def test_extensions_property_handling():
+    """Test extensions with different property handling modes."""
+    vcon_dict = {
+        "uuid": "123",
+        "vcon": "0.3.0",
+        "created_at": "2023-01-01T00:00:00Z",
+        "extensions": ["video"],
+        "must_support": ["encryption"],
+        "custom_field": "value"
+    }
+    
+    # Default mode - keep custom fields
+    vcon = Vcon(vcon_dict, property_handling="default")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert "custom_field" in vcon.vcon_dict
+    
+    # Strict mode - remove custom fields
+    vcon = Vcon(vcon_dict, property_handling="strict")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert "custom_field" not in vcon.vcon_dict
+    
+    # Meta mode - move custom fields to meta
+    vcon = Vcon(vcon_dict, property_handling="meta")
+    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.vcon_dict.get("meta", {}).get("custom_field") == "value"

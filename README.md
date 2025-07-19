@@ -7,8 +7,9 @@ The vCon (Virtual Conversation) library is a powerful Python tool designed to ca
 ## Features
 
 - **Conversation Container**: Create and manage vCon objects that serve as containers for all conversation elements
-- **Party Management**: Add and track conversation participants with detailed attributes (name, role, contact info)
-- **Dialog Handling**: Record and organize messages with timestamps, content, and sender information
+- **Party Management**: Add and track conversation participants with detailed attributes (name, role, contact info, SIP URI, DID, vCard, timezone)
+- **Dialog Handling**: Record and organize messages with timestamps, content, sender information, session IDs, and content hashes
+- **Extension Support**: Manage extensions and must-support requirements for enhanced functionality
 - **Rich Media Support**: Handle various content types including text, audio, and video with MIME type validation
 - **Metadata & Tags**: Add and retrieve metadata and tags for easy categorization
 - **File Attachments**: Include and manage related files and documents
@@ -52,21 +53,58 @@ from datetime import datetime, timezone
 # Create a new vCon
 vcon = Vcon.build_new()
 
-# Add participants
-caller = Party(tel="+1234567890", name="Alice", role="caller")
-agent = Party(tel="+1987654321", name="Bob", role="agent")
+# Add extensions and must-support requirements
+vcon.add_extension("video")
+vcon.add_extension("encryption")
+vcon.add_must_support("encryption")
+
+# Add participants with enhanced contact information
+caller = Party(
+    tel="+1234567890", 
+    name="Alice", 
+    role="caller",
+    sip="sip:alice@example.com",
+    did="did:example:123456789abcdef",
+    jCard={
+        "fn": "Alice Johnson",
+        "tel": "+1234567890",
+        "email": "alice@example.com"
+    },
+    timezone="America/New_York"
+)
+
+agent = Party(
+    tel="+1987654321", 
+    name="Bob", 
+    role="agent",
+    sip="sip:bob@example.com",
+    did="did:example:abcdef123456789",
+    jCard={
+        "fn": "Bob Smith",
+        "tel": "+1987654321",
+        "email": "bob@example.com"
+    },
+    timezone="America/Los_Angeles"
+)
+
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add a dialog entry
+# Add a dialog entry with session tracking and content integrity
 dialog = Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],  # Indices of the parties
     originator=0,    # Caller is the originator
     mimetype="text/plain",
-    body="Hello, I need help with my account."
+    body="Hello, I need help with my account.",
+    session_id="session-12345"
 )
+
+# Calculate and set content hash for integrity verification
+calculated_hash = dialog.calculate_content_hash()
+dialog.set_content_hash(calculated_hash)
+
 vcon.add_dialog(dialog)
 
 # Add metadata
@@ -104,6 +142,104 @@ response = vcon.post_to_url(
     'https://api.example.com/vcons',
     headers={'x-conserver-api-token': 'your-token-here'}
 )
+```
+
+## New Required Fields (IETF vCon Specification)
+
+The vCon library now supports the latest IETF vCon specification requirements, including new fields for enhanced functionality and interoperability.
+
+### vCon Object Level Extensions
+
+```python
+# Add extensions used in this vCon
+vcon.add_extension("video")
+vcon.add_extension("encryption")
+vcon.add_extension("analytics")
+
+# Specify extensions that must be supported
+vcon.add_must_support("encryption")
+vcon.add_must_support("video")
+
+# Get current extensions
+extensions = vcon.get_extensions()  # ["video", "encryption", "analytics"]
+must_support = vcon.get_must_support()  # ["encryption", "video"]
+
+# Remove extensions if needed
+vcon.remove_extension("analytics")
+vcon.remove_must_support("video")
+```
+
+### Enhanced Party Information
+
+Parties now support additional contact and identification methods:
+
+```python
+# Create a party with enhanced contact information
+party = Party(
+    name="John Doe",
+    tel="+1234567890",
+    # SIP URI for VoIP communication
+    sip="sip:john@example.com",
+    # Decentralized Identifier for blockchain-based identity
+    did="did:example:123456789abcdef",
+    # vCard format contact information
+    jCard={
+        "fn": "John Doe",
+        "tel": "+1234567890",
+        "email": "john@example.com",
+        "org": "Example Corp"
+    },
+    # Party's timezone for proper time handling
+    timezone="America/New_York"
+)
+```
+
+### Dialog Session Management and Content Integrity
+
+Dialogs now support session tracking and content integrity verification:
+
+```python
+# Create a dialog with session tracking
+dialog = Dialog(
+    type="text",
+    start=datetime.now(timezone.utc),
+    parties=[0, 1],
+    body="Hello, this is a test message!",
+    # Session identifier for tracking conversation sessions
+    session_id="session-12345"
+)
+
+# Calculate content hash for integrity verification
+content_hash = dialog.calculate_content_hash()
+dialog.set_content_hash(content_hash)
+
+# Verify content integrity
+is_valid = dialog.verify_content_hash(content_hash)
+print(f"Content integrity: {is_valid}")
+
+# Access session and hash information
+session_id = dialog.get_session_id()
+current_hash = dialog.get_content_hash()
+```
+
+### Working with Extensions and Must-Support
+
+Extensions allow vCon implementations to declare additional capabilities, while must-support ensures compatibility:
+
+```python
+# Check if required extensions are supported
+required_extensions = vcon.get_must_support()
+available_extensions = vcon.get_extensions()
+
+for ext in required_extensions:
+    if ext not in available_extensions:
+        print(f"Warning: Required extension '{ext}' not available")
+
+# Serialize with extension information
+json_data = vcon.to_json()
+# The JSON will include:
+# "extensions": ["video", "encryption"]
+# "must_support": ["encryption"]
 ```
 
 ## File Validation

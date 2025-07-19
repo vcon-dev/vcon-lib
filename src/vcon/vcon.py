@@ -31,11 +31,14 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 _ALLOWED_VCON_PROPERTIES = {
     "uuid", "vcon", "created_at", "updated_at", "redacted", 
     "group", "parties", "dialog", "attachments", "analysis", 
-    "signatures", "payload", "meta", "subject", "appended"
+    "signatures", "payload", "meta", "subject", "appended",
+    "extensions", "must_support"
 }
 
 _ALLOWED_PARTY_PROPERTIES = {
-    "type", "name", "contact", "meta", "external_id", "party_id"
+    "type", "name", "contact", "meta", "external_id", "party_id",
+    "tel", "stir", "mailto", "validation", "gmlpos", "civicaddress",
+    "uuid", "role", "contact_list", "sip", "did", "jCard", "timezone"
 }
 
 _ALLOWED_DIALOG_PROPERTIES = {
@@ -45,7 +48,8 @@ _ALLOWED_DIALOG_PROPERTIES = {
     "original", "consultation", "target_dialog", "campaign", 
     "interaction", "skill", "meta", "metadata", "transfer", 
     "signaling", "originator", "resolution", "frame_rate", 
-    "codec", "bitrate", "thumbnail", "streaming", "video"
+    "codec", "bitrate", "thumbnail", "streaming", "video",
+    "session_id", "content_hash"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
@@ -538,6 +542,106 @@ class Vcon:
             self.vcon_dict["attachments"].append(tags_attachment)
         tags_attachment["body"].append(f"{tag_name}:{tag_value}")
         logger.info(f"Added tag {tag_name}:{tag_value}")
+
+    def get_extensions(self) -> List[str]:
+        """
+        Get the list of extensions used in this vCon.
+
+        Returns:
+            List of extension names, empty list if none are defined
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> extensions = vcon.get_extensions()
+            >>> print(extensions)  # Prints ["video"]
+        """
+        return self.vcon_dict.get("extensions", [])
+
+    def add_extension(self, extension: str) -> None:
+        """
+        Add an extension to the vCon.
+
+        Args:
+            extension: The name of the extension to add
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> vcon.add_extension("encryption")
+        """
+        if "extensions" not in self.vcon_dict:
+            self.vcon_dict["extensions"] = []
+        
+        if extension not in self.vcon_dict["extensions"]:
+            self.vcon_dict["extensions"].append(extension)
+            logger.info(f"Added extension: {extension}")
+
+    def remove_extension(self, extension: str) -> None:
+        """
+        Remove an extension from the vCon.
+
+        Args:
+            extension: The name of the extension to remove
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_extension("video")
+            >>> vcon.remove_extension("video")
+        """
+        if "extensions" in self.vcon_dict and extension in self.vcon_dict["extensions"]:
+            self.vcon_dict["extensions"].remove(extension)
+            logger.info(f"Removed extension: {extension}")
+
+    def get_must_support(self) -> List[str]:
+        """
+        Get the list of extensions that must be supported.
+
+        Returns:
+            List of extension names that must be supported, empty list if none are defined
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> must_support = vcon.get_must_support()
+            >>> print(must_support)  # Prints ["encryption"]
+        """
+        return self.vcon_dict.get("must_support", [])
+
+    def add_must_support(self, extension: str) -> None:
+        """
+        Add an extension to the must_support list.
+
+        Args:
+            extension: The name of the extension that must be supported
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> vcon.add_must_support("video")
+        """
+        if "must_support" not in self.vcon_dict:
+            self.vcon_dict["must_support"] = []
+        
+        if extension not in self.vcon_dict["must_support"]:
+            self.vcon_dict["must_support"].append(extension)
+            logger.info(f"Added must_support extension: {extension}")
+
+    def remove_must_support(self, extension: str) -> None:
+        """
+        Remove an extension from the must_support list.
+
+        Args:
+            extension: The name of the extension to remove from must_support
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_must_support("encryption")
+            >>> vcon.remove_must_support("encryption")
+        """
+        if "must_support" in self.vcon_dict and extension in self.vcon_dict["must_support"]:
+            self.vcon_dict["must_support"].remove(extension)
+            logger.info(f"Removed must_support extension: {extension}")
 
     def find_attachment_by_type(self, type: str) -> Optional[Dict[str, Any]]:
         """

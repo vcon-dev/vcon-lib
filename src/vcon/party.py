@@ -17,6 +17,10 @@ class Party:
         role: Optional[str] = None,
         contact_list: Optional[str] = None,
         meta: Optional[dict] = None,
+        sip: Optional[str] = None,
+        did: Optional[str] = None,
+        jCard: Optional[dict] = None,
+        timezone: Optional[str] = None,
         **kwargs
     ) -> None:
         """
@@ -42,6 +46,14 @@ class Party:
         :type role: str | None
         :param contact_list: Contact list of the party
         :type contact_list: str | None
+        :param sip: SIP URI for the party
+        :type sip: str | None
+        :param did: Decentralized Identifier
+        :type did: str | None
+        :param jCard: vCard format contact information
+        :type jCard: dict | None
+        :param timezone: Party's timezone
+        :type timezone: str | None
         :param kwargs: Additional attributes to be set on the party
         """
         # copy the named parameters that are not None
