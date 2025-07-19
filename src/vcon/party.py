@@ -85,17 +85,35 @@ class Party:
 
 
 class PartyHistory:
+    # Valid event types for party history (from specification)
+    VALID_EVENTS = [
+        "join",      # when the party joins the dialog
+        "drop",      # when the party drops out of the dialog
+        "hold",      # when the party is put on hold
+        "unhold",    # when the party is taken off hold
+        "mute",      # when the party is muted
+        "unmute"     # when the party is taken off mute
+    ]
+
     def __init__(self, party: int, event: str, time: datetime):
         """
         Initialize a new PartyHistory object.
 
         :param party: Index of the party
         :type party: int
-        :param event: Event type (e.g. "join", "leave")
+        :param event: Event type (e.g. "join", "drop", "hold", "unhold", 
+                     "mute", "unmute")
         :type event: str
         :param time: Time of the event
         :type time: datetime
         """
+        # Validate event type
+        if event not in PartyHistory.VALID_EVENTS:
+            raise ValueError(
+                f"Invalid event '{event}'. "
+                f"Must be one of: {PartyHistory.VALID_EVENTS}"
+            )
+        
         self.party = party
         self.event = event
         self.time = time
