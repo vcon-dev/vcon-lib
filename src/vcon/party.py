@@ -76,7 +76,11 @@ class Party:
         for key, value in self.__dict__.items():
             # Don't include self in the dict
             if value is not None and key != "self":
-                party_dict[key] = value
+                # Handle CivicAddress objects by calling their to_dict method
+                if hasattr(value, 'to_dict') and callable(value.to_dict):
+                    party_dict[key] = value.to_dict()
+                else:
+                    party_dict[key] = value
         return party_dict
 
 
