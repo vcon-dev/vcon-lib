@@ -29,7 +29,7 @@ Generating a UUID8 based on a domain name
 
 
 test_vcon_string = (
-    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.0.1",'
+    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.3.0",'
     '"created_at":"2024-10-20T15:02:55.490850+00:00","parties":['
     '{"tel":"+14513886516","mailto":"david.scott@pickrandombusinesstype.com",'
     '"name":"David Scott","meta":{"role":"agent"}},'
@@ -154,14 +154,14 @@ def test_build_from_json() -> None:
     """
     vcon = Vcon.build_from_json(test_vcon_string)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
     assert vcon.created_at == "2024-10-20T15:02:55.490850+00:00"
 
 
 def test_build_new() -> None:
     vcon = Vcon.build_new()
     assert vcon.uuid is not None
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
     assert vcon.created_at is not None
 
 
@@ -719,7 +719,7 @@ def test_load_from_file(tmp_path):
     vcon = Vcon.load(str(file_path))
     assert isinstance(vcon, Vcon)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.0.1"
+    assert vcon.vcon == "0.3.0"
 
 
 def test_load_from_file_not_found():

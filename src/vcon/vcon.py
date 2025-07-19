@@ -206,9 +206,9 @@ class Vcon:
                                 - "meta": Move non-standard properties to meta object
 
         Example:
-            >>> vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"})
-            >>> strict_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="strict")
-            >>> meta_vcon = Vcon({"uuid": "123", "vcon": "0.0.1", "custom_field": "value"}, property_handling="meta")
+                    >>> vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"})
+        >>> strict_vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"}, property_handling="strict")
+        >>> meta_vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "custom_field": "value"}, property_handling="meta")
         """
         logger.debug("Initializing new Vcon object")
 
@@ -359,7 +359,7 @@ class Vcon:
             json.JSONDecodeError: If the JSON string is invalid
             
         Example:
-            >>> json_str = '{"uuid": "123", "vcon": "0.0.1"}'
+            >>> json_str = '{"uuid": "123", "vcon": "0.3.0"}'
             >>> vcon = Vcon.build_from_json(json_str)
         """
         logger.debug("Building Vcon from JSON string")
@@ -399,7 +399,7 @@ class Vcon:
     
         vcon_dict = {
             "uuid": uuid,
-            "vcon": "0.0.1",
+            "vcon": "0.3.0",
             "redacted": {},
             "group": [],
             "parties": [],
@@ -967,7 +967,7 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon_dict = vcon.to_dict()
-            >>> print(vcon_dict["vcon"])  # Prints "0.0.1"
+            >>> print(vcon_dict["vcon"])  # Prints "0.3.0"
         """
         logger.debug("Converting vCon to dictionary")
         return json.loads(self.to_json())
