@@ -78,6 +78,14 @@ To read an existing vCon container:
     # Get participants with enhanced information
     parties = vcon.parties
     for party in parties:
+        print(f"Name: {party['name']}")
+        print(f"SIP: {party.get('sip', 'Not set')}")
+        print(f"DID: {party.get('did', 'Not set')}")
+        print(f"Timezone: {party.get('timezone', 'Not set')}")
+    
+    # Alternative: Use get_party_objects() for Party object access
+    party_objects = vcon.get_party_objects()
+    for party in party_objects:
         print(f"Name: {party.name}")
         print(f"SIP: {getattr(party, 'sip', 'Not set')}")
         print(f"DID: {getattr(party, 'did', 'Not set')}")
