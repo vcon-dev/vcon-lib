@@ -283,13 +283,13 @@ def test_properties() -> None:
     assert vcon.created_at == "2024-10-20T15:02:55.490850+00:00"
     assert len(vcon.parties) == 2
 
-    assert vcon.parties[0].to_dict() == {
+    assert vcon.parties[0] == {
         "tel": "+14513886516",
         "mailto": "david.scott@pickrandombusinesstype.com",
         "name": "David Scott",
         "meta": {"role": "agent"},
     }
-    assert vcon.parties[1].to_dict() == {
+    assert vcon.parties[1] == {
         "tel": "+16171557264",
         "mailto": "diane.allen@gmail.com",
         "name": "Diane Allen",

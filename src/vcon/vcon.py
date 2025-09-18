@@ -1150,18 +1150,39 @@ class Vcon:
         return self.to_json()
 
     @property
-    def parties(self) -> List[Party]:
+    def parties(self) -> List[Dict[str, Any]]:
         """
         Get the list of parties in the vCon.
 
         Returns:
-            A list of Party objects representing all participants in the conversation
+            A list of party dictionaries representing all participants in the conversation.
+            These are mutable references to the internal data structure, allowing in-place modifications.
 
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_party(Party(type="person", name="John Doe"))
             >>> parties = vcon.parties
-            >>> print(parties[0].name)  # Prints "John Doe"
+            >>> print(parties[0]["name"])  # Prints "John Doe"
+            >>> parties[0]["name"] = "Jane Doe"  # In-place modification works
+            >>> print(vcon.parties[0]["name"])  # Prints "Jane Doe"
+        """
+        return self.vcon_dict.get("parties", [])
+
+    def get_party_objects(self) -> List[Party]:
+        """
+        Get the list of parties as Party objects.
+        
+        This method creates Party objects from the underlying dictionary data.
+        Use this when you need Party objects instead of raw dictionaries.
+        
+        Returns:
+            A list of Party objects representing all participants in the conversation
+            
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(type="person", name="John Doe"))
+            >>> party_objects = vcon.get_party_objects()
+            >>> print(party_objects[0].name)  # Prints "John Doe"
         """
         return [Party(**party) for party in self.vcon_dict.get("parties", [])]
 
@@ -1171,13 +1192,16 @@ class Vcon:
         Get the list of dialog entries in the vCon.
 
         Returns:
-            A list of dialog entries representing the conversation content
+            A list of dialog dictionaries representing the conversation content.
+            These are mutable references to the internal data structure, allowing in-place modifications.
 
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_dialog(Dialog(type="text", start="2023-01-01T00:00:00Z", parties=[0]))
             >>> dialog = vcon.dialog
             >>> print(dialog[0]["type"])  # Prints "text"
+            >>> dialog[0]["body"] = "Modified content"  # In-place modification works
+            >>> print(vcon.dialog[0]["body"])  # Prints "Modified content"
         """
         return self.vcon_dict.get("dialog", [])
 
