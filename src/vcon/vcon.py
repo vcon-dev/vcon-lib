@@ -1217,8 +1217,8 @@ class Vcon:
         return self.vcon_dict["uuid"]
 
     @property
-    def vcon(self) -> str:
-        return self.vcon_dict["vcon"]
+    def vcon(self) -> Optional[str]:
+        return self.vcon_dict.get("vcon")
 
     @property
     def subject(self) -> Optional[str]:

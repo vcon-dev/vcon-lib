@@ -159,7 +159,7 @@ def test_build_from_json() -> None:
 def test_build_new() -> None:
     vcon = Vcon.build_new()
     assert vcon.uuid is not None
-    assert vcon.vcon == "0.3.0"
+    assert vcon.vcon is None  # vcon field is now optional and not set by default
     assert vcon.created_at is not None
 
 
@@ -570,9 +570,8 @@ def test_is_valid_with_missing_required_fields():
     vcon.vcon_dict = {}  # Empty vCon
     is_valid, errors = vcon.is_valid()
     assert not is_valid
-    assert len(errors) == 3  # uuid, vcon, created_at
+    assert len(errors) == 2  # uuid, created_at (vcon field is now optional)
     assert "Missing required field: uuid" in errors
-    assert "Missing required field: vcon" in errors
     assert "Missing required field: created_at" in errors
 
 
