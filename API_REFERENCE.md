@@ -67,6 +67,7 @@ vcon = Vcon.build_from_json('{"uuid": "123", "created_at": "2024-01-01T00:00:00Z
 ```
 
 ##### `load(file_path_or_url: str, property_handling: str = "default") -> Vcon`
+
 Load a vCon from file or URL.
 
 ```python
@@ -81,6 +82,7 @@ vcon = Vcon.load("https://example.com/conversation.vcon.json")
 Load a vCon from a local file.
 
 ##### `load_from_url(url: str, property_handling: str = "default") -> Vcon`
+
 Load a vCon from a URL.
 
 ##### `validate_file(file_path: str) -> Tuple[bool, List[str]]`
