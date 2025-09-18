@@ -24,7 +24,7 @@ from vcon import Vcon
 
 #### Properties
 - `uuid`: Unique identifier
-- `vcon`: Version number
+- `vcon`: Version number (optional)
 - `created_at`: Creation timestamp
 - `updated_at`: Last update timestamp
 - `parties`: List of participants
@@ -84,7 +84,7 @@ from vcon.dialog import Dialog
 vcon = Vcon.build_new()
 
 # Create from dictionary
-vcon = Vcon({"uuid": "...", "vcon": "0.3.0"})
+vcon = Vcon({"uuid": "...", "created_at": "2024-01-01T00:00:00Z"})
 
 # Create from JSON
 vcon = Vcon.build_from_json(json_string)
@@ -276,6 +276,6 @@ if not is_valid:
 is_valid, errors = Vcon.validate_file("path/to/vcon.json")
 
 # Validate a vCon JSON string
-json_str = '{"uuid": "123", "vcon": "0.3.0", ...}'
+json_str = '{"uuid": "123", "created_at": "2024-01-01T00:00:00Z", ...}'
 is_valid, errors = Vcon.validate_json(json_str)
 ```

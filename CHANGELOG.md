@@ -1,5 +1,75 @@
 # Changelog
 
+## [0.8.0] - 2025-01-26
+
+### 🎉 Major Release: Version Management Simplification
+
+This release aligns with the upcoming vCon draft specification by removing mandatory version management and enforcement, making the version field optional while maintaining full backward compatibility.
+
+### ✨ Added
+
+#### **Flexible Versioning**
+- **Optional Version Field**: The `vcon` field is now optional in vCon objects
+- **Version Preservation**: Existing vCons with version fields continue to work unchanged
+- **Simplified Creation**: New vCons can be created without version fields
+
+### 🔄 Changed
+
+#### **Version Management Simplification**
+- **Removed `strict_version` Parameter**: Eliminated from all Vcon methods (`__init__`, `build_from_json`, `build_new`, `load`, `load_from_file`, `load_from_url`)
+- **No Automatic Version Assignment**: vCon objects no longer automatically get a version field
+- **No Version Migration**: Removed automatic migration from older versions
+- **Updated Validation**: The `is_valid()` method no longer requires the version field
+
+#### **Method Signatures Updated**
+- `Vcon(vcon_dict=None, property_handling="default")` - removed `strict_version` parameter
+- `build_from_json(json_str, property_handling="default")` - removed `strict_version` parameter
+- `build_new(created_at=None, property_handling="default")` - removed `strict_version` parameter
+- `load(source, property_handling="default")` - removed `strict_version` parameter
+- `load_from_file(file_path, property_handling="default")` - removed `strict_version` parameter
+- `load_from_url(url, property_handling="default")` - removed `strict_version` parameter
+
+### 🧪 Testing
+
+#### **Updated Test Suite**
+- **Replaced Version Migration Tests**: Updated tests to cover optional version field behavior
+- **New Test Cases**: Added comprehensive tests for versionless vCon creation and preservation
+- **Backward Compatibility Tests**: Ensured existing vCons with version fields continue to work
+
+### 📄 Documentation
+
+#### **Updated Documentation**
+- **README.md**: Updated to reflect version field being optional
+- **API_REFERENCE.md**: Removed `strict_version` parameter from all method signatures
+- **GUIDE.md**: Updated examples to show versionless vCon creation
+- **MIGRATION_GUIDE.md**: Added migration steps for version management changes
+
+#### **Updated Sample Files**
+- **Removed Version Fields**: All sample vCon JSON files updated to demonstrate versionless vCons
+- **Backward Compatibility**: Existing vCons with version fields continue to work
+
+### 🔧 Technical Details
+
+#### **Implementation Changes**
+- **Removed Version Logic**: Eliminated version checking, migration, and enforcement code
+- **Simplified Initialization**: Streamlined vCon object creation process
+- **Preserved Functionality**: All other features remain unchanged
+
+#### **Backward Compatibility**
+- **Existing vCons**: Continue to work without any changes
+- **Version Fields**: Preserved when present, not added when absent
+- **API Compatibility**: All other methods and properties remain unchanged
+
+### 🎯 Benefits
+
+1. **Enhanced Flexibility**: vCon objects can now exist without mandatory versioning
+2. **Simplified Implementation**: Reduced complexity in version management
+3. **Better Privacy Support**: Enables creation of redacted versions without version conflicts
+4. **Multiple Version Support**: Allows different versions of the same vCon to coexist
+5. **Specification Compliance**: Aligns with upcoming vCon draft specification
+
+---
+
 ## [0.7.0] - 2025-07-19
 
 ### 🎉 Major Release: Complete vCon 0.3.0 Specification Compliance

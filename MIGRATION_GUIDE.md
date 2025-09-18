@@ -1,10 +1,23 @@
-# Migration Guide: New Required Fields
+# Migration Guide: Version Management Changes
 
-This guide helps you migrate your existing vCon code to use the new required fields introduced in the latest version.
+This guide helps you migrate your existing vCon code to work with the updated version management system.
 
 ## Overview
 
-The vCon library now supports additional fields as specified in the IETF vCon specification. All new fields are **optional** and **backward compatible**, so existing code will continue to work without changes.
+The vCon library has been updated to align with the latest vCon specification changes. The most significant change is that the **version field is now optional** and version management has been simplified. All changes are **backward compatible**, so existing code will continue to work without changes.
+
+## Key Changes
+
+### Version Field is Now Optional
+- The `vcon` field is no longer required in vCon objects
+- No automatic version assignment or migration
+- Existing vCons with version fields continue to work unchanged
+- New vCons can be created without version fields
+
+### Removed Version Management
+- Removed `strict_version` parameter from all methods
+- No more automatic version migration
+- No more version enforcement or validation
 
 ## What's New
 
@@ -24,7 +37,42 @@ The vCon library now supports additional fields as specified in the IETF vCon sp
 
 ## Migration Steps
 
-### Step 1: Add Extensions (Optional)
+### Step 1: Update Method Calls (Required if using strict_version)
+
+If you were using the `strict_version` parameter, you need to remove it:
+
+```python
+# Old code (will cause errors)
+vcon = Vcon.load("file.json", strict_version=True)
+vcon = Vcon.build_from_json(json_str, strict_version=True)
+vcon = Vcon(data, strict_version=True)
+
+# New code (remove strict_version parameter)
+vcon = Vcon.load("file.json")
+vcon = Vcon.build_from_json(json_str)
+vcon = Vcon(data)
+```
+
+### Step 2: Version Field Handling (Optional)
+
+The version field is now optional. You can choose to:
+
+**Option A: Remove version fields from new vCons**
+```python
+# Old code
+vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "created_at": "2024-01-01T00:00:00Z"})
+
+# New code (version field optional)
+vcon = Vcon({"uuid": "123", "created_at": "2024-01-01T00:00:00Z"})
+```
+
+**Option B: Keep existing version fields**
+```python
+# This still works - no changes needed
+vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "created_at": "2024-01-01T00:00:00Z"})
+```
+
+### Step 3: Add Extensions (Optional)
 
 If you want to declare extension capabilities:
 
