@@ -767,9 +767,9 @@ def test_load_detects_file_vs_url() -> None:
     
     try:
         # Replace methods with mocks as class methods so they bind correctly
-        # Updated to accept all parameters including strict_version
-        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None, strict_version=False: path)
-        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None, strict_version=False: url)
+        # Updated to accept all parameters
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -1302,74 +1302,88 @@ def test_integration_basic_video_workflow():
     assert new_vcon.dialog[1]["type"] == "video"
     assert new_vcon.dialog[1]["mimetype"] == "video/mp4"
 
-def test_version_migration_default() -> None:
-    """Test that vCons with older versions are automatically migrated by default."""
-    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
-    vcon = Vcon.build_from_json(old_vcon_json)
-    assert vcon.vcon == "0.3.0"
+def test_version_field_optional() -> None:
+    """Test that vCons can be created without version field."""
+    vcon_json = '{"uuid":"123","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(vcon_json)
+    # Version field should not be automatically added
+    assert "vcon" not in vcon.vcon_dict
 
 
-def test_version_migration_strict_mode_rejects() -> None:
-    """Test that strict mode rejects vCons with older versions."""
-    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
-    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
-        Vcon.build_from_json(old_vcon_json, strict_version=True)
+def test_version_field_preserved_when_present() -> None:
+    """Test that version field is preserved when present."""
+    vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    vcon = Vcon.build_from_json(vcon_json)
+    # Version field should be preserved as-is
+    assert vcon.vcon == "0.0.1"
 
 
-def test_version_migration_strict_mode_accepts_current() -> None:
-    """Test that strict mode accepts vCons with current version."""
-    current_vcon_json = '{"uuid":"123","vcon":"0.3.0","created_at":"2024-01-01T00:00:00Z"}'
-    vcon = Vcon.build_from_json(current_vcon_json, strict_version=True)
-    assert vcon.vcon == "0.3.0"
+def test_version_field_optional_in_constructor() -> None:
+    """Test that version field is optional in constructor."""
+    vcon_dict = {"uuid": "123", "created_at": "2024-01-01T00:00:00Z"}
+    vcon = Vcon(vcon_dict)
+    # Version field should not be automatically added
+    assert "vcon" not in vcon.vcon_dict
 
 
-def test_version_migration_constructor() -> None:
-    """Test that the constructor handles version migration."""
-    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
-    vcon = Vcon(old_vcon_dict)
-    assert vcon.vcon == "0.3.0"
+def test_version_field_preserved_in_constructor() -> None:
+    """Test that version field is preserved in constructor."""
+    vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
+    vcon = Vcon(vcon_dict)
+    # Version field should be preserved as-is
+    assert vcon.vcon == "0.0.1"
 
 
-def test_version_migration_constructor_strict() -> None:
-    """Test that the constructor rejects old versions in strict mode."""
-    old_vcon_dict = {"uuid": "123", "vcon": "0.0.1", "created_at": "2024-01-01T00:00:00Z"}
-    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
-        Vcon(old_vcon_dict, strict_version=True)
+def test_version_field_optional_with_property_handling() -> None:
+    """Test that version field is optional with different property handling modes."""
+    vcon_dict = {"uuid": "123", "created_at": "2024-01-01T00:00:00Z"}
+    
+    # Test with default property handling
+    vcon_default = Vcon(vcon_dict, property_handling="default")
+    assert "vcon" not in vcon_default.vcon_dict
+    
+    # Test with strict property handling
+    vcon_strict = Vcon(vcon_dict, property_handling="strict")
+    assert "vcon" not in vcon_strict.vcon_dict
 
 
-def test_version_migration_load_from_file(tmp_path) -> None:
-    """Test that load_from_file handles version migration."""
-    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
-    file_path = tmp_path / "old_vcon.json"
+def test_version_field_preserved_load_from_file(tmp_path) -> None:
+    """Test that load_from_file preserves version field when present."""
+    vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "vcon.json"
     with open(file_path, 'w') as f:
-        f.write(old_vcon_json)
+        f.write(vcon_json)
     
     vcon = Vcon.load_from_file(str(file_path))
-    assert vcon.vcon == "0.3.0"
+    # Version field should be preserved as-is
+    assert vcon.vcon == "0.0.1"
 
 
-def test_version_migration_load_from_file_strict(tmp_path) -> None:
-    """Test that load_from_file rejects old versions in strict mode."""
-    old_vcon_json = '{"uuid":"123","vcon":"0.0.1","created_at":"2024-01-01T00:00:00Z"}'
-    file_path = tmp_path / "old_vcon.json"
+def test_version_field_optional_load_from_file(tmp_path) -> None:
+    """Test that load_from_file works without version field."""
+    vcon_json = '{"uuid":"123","created_at":"2024-01-01T00:00:00Z"}'
+    file_path = tmp_path / "vcon.json"
     with open(file_path, 'w') as f:
-        f.write(old_vcon_json)
+        f.write(vcon_json)
     
-    with pytest.raises(ValueError, match="vCon version 0.0.1 is not supported in strict mode"):
-        Vcon.load_from_file(str(file_path), strict_version=True)
+    vcon = Vcon.load_from_file(str(file_path))
+    # Version field should not be automatically added
+    assert "vcon" not in vcon.vcon_dict
 
 
-def test_version_migration_build_new() -> None:
-    """Test that build_new creates vCons with current version."""
+def test_build_new_no_version_field() -> None:
+    """Test that build_new creates vCons without version field."""
     vcon = Vcon.build_new()
-    assert vcon.vcon == "0.3.0"
+    # Version field should not be automatically added
+    assert "vcon" not in vcon.vcon_dict
 
 
-def test_version_migration_no_version_field() -> None:
-    """Test that vCons without version field get version 0.3.0."""
+def test_no_version_field_remains_absent() -> None:
+    """Test that vCons without version field remain without version field."""
     vcon_dict = {"uuid": "123", "created_at": "2023-01-01T00:00:00Z"}
     vcon = Vcon(vcon_dict)
-    assert vcon.vcon == "0.3.0"
+    # Version field should not be automatically added
+    assert "vcon" not in vcon.vcon_dict
 
 
 def test_extensions_management():
