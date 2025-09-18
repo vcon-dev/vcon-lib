@@ -1,6 +1,4 @@
-from vcon import Vcon
 from vcon.civic_address import CivicAddress
-import pytest
 
 # Initialize CivicAddress with all parameters set to valid strings
 def test_initialize_with_valid_strings() -> None:
