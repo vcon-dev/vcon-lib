@@ -4,7 +4,6 @@ from vcon.party import Party
 from vcon.dialog import Dialog
 from datetime import datetime, timezone
 from mutagen.mp3 import MP3
-import json
 
 
 # Create a new vCon

@@ -17,8 +17,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import requests
 import logging
-import pypdf
-import PIL
 from .party import Party
 from .dialog import Dialog
 

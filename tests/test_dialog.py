@@ -2,11 +2,8 @@ import pytest
 from src.vcon.dialog import Dialog
 import hashlib
 import base64
-import requests
 from unittest.mock import Mock, patch
 from datetime import datetime
-import os
-import tempfile
 
 class TestDialog:
     # Initialization of Dialog object with all parameters
@@ -370,7 +367,6 @@ class TestDialog:
 
     # Converts start time to ISO 8601 string if provided as string
     def test_convert_string_to_iso_string(self):
-        from datetime import datetime
         from src.vcon.dialog import Dialog
         from unittest.mock import patch
 
@@ -663,7 +659,6 @@ class TestDialog:
     def test_extract_video_metadata(self):
         """Test extracting metadata from video using FFmpeg."""
         from src.vcon.dialog import Dialog
-        import tempfile
         
         # Create a dialog
         dialog = Dialog(

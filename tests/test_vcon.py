@@ -5,9 +5,7 @@ from typing import Union
 
 import pytest
 import json
-import time
 import base64
-import tempfile
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 import requests
@@ -419,7 +417,6 @@ def test_initializes_with_datetime_created_at() -> None:
 
 def test_initializes_with_created_at_string() -> None:
     from src.vcon.vcon import Vcon
-    import datetime
 
     vcon_dict = {"created_at": "2022-01-01T12:00:00Z"}
     vcon = Vcon(vcon_dict)
