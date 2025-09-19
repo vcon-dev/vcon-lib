@@ -258,7 +258,6 @@ The resulting JSON will include:
 
     {
         "uuid": "...",
-        "vcon": "0.3.0",
         "extensions": ["video"],
         "must_support": ["encryption"],
         "parties": [{

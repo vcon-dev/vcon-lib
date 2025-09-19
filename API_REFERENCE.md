@@ -1,6 +1,6 @@
 # vCon Library API Reference
 
-Complete API documentation for the vCon library - a Python implementation of the vCon 0.3.0 specification for Virtual Conversation objects.
+Complete API documentation for the vCon library - a Python implementation of the latest vCon specification for Virtual Conversation objects.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ Complete API documentation for the vCon library - a Python implementation of the
 
 ## Overview
 
-The vCon library provides a complete Python implementation of the vCon 0.3.0 specification for representing virtual conversations. It supports all features including parties, dialogs, attachments, analysis, digital signatures, and extensibility.
+The vCon library provides a complete Python implementation of the latest vCon specification for representing virtual conversations. It supports all features including parties, dialogs, attachments, analysis, digital signatures, and extensibility.
 
 ## Installation
 
@@ -40,7 +40,7 @@ The main class for working with vCon objects.
 #### Constructor
 
 ```python
-Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default", strict_version: bool = False)
+Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default")
 ```
 
 **Parameters:**
@@ -49,7 +49,6 @@ Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default", stric
   - `"default"`: Keep non-standard properties (default)
   - `"strict"`: Remove non-standard properties
   - `"meta"`: Move non-standard properties to meta object
-- `strict_version` (bool): If True, reject vCons not at version "0.3.0". Defaults to False.
 
 #### Class Methods
 
@@ -60,14 +59,15 @@ Create a new vCon object with default values.
 vcon = Vcon.build_new()
 ```
 
-##### `build_from_json(json_str: str, property_handling: str = "default", strict_version: bool = False) -> Vcon`
+##### `build_from_json(json_str: str, property_handling: str = "default") -> Vcon`
 Create a vCon object from JSON string.
 
 ```python
-vcon = Vcon.build_from_json('{"uuid": "123", "vcon": "0.3.0"}')
+vcon = Vcon.build_from_json('{"uuid": "123", "created_at": "2024-01-01T00:00:00Z"}')
 ```
 
-##### `load(file_path_or_url: str, property_handling: str = "default", strict_version: bool = False) -> Vcon`
+##### `load(file_path_or_url: str, property_handling: str = "default") -> Vcon`
+
 Load a vCon from file or URL.
 
 ```python
@@ -78,10 +78,11 @@ vcon = Vcon.load("conversation.vcon.json")
 vcon = Vcon.load("https://example.com/conversation.vcon.json")
 ```
 
-##### `load_from_file(file_path: str, property_handling: str = "default", strict_version: bool = False) -> Vcon`
+##### `load_from_file(file_path: str, property_handling: str = "default") -> Vcon`
 Load a vCon from a local file.
 
-##### `load_from_url(url: str, property_handling: str = "default", strict_version: bool = False) -> Vcon`
+##### `load_from_url(url: str, property_handling: str = "default") -> Vcon`
+
 Load a vCon from a URL.
 
 ##### `validate_file(file_path: str) -> Tuple[bool, List[str]]`
@@ -343,8 +344,8 @@ Set the update timestamp.
 ##### `uuid -> str`
 Get the vCon UUID.
 
-##### `vcon -> str`
-Get the vCon version.
+##### `vcon -> Optional[str]`
+Get the vCon version (optional field).
 
 ##### `subject -> Optional[str]`
 Get the vCon subject.

@@ -4,7 +4,7 @@ A Python library for working with vCon (Virtual Conversation) objects according 
 
 ## Overview
 
-The vCon library provides a complete implementation of the vCon format for representing conversations and related metadata. It supports all features defined in the vCon 0.3.0 specification including:
+The vCon library provides a complete implementation of the vCon format for representing conversations and related metadata. It supports all features defined in the latest vCon specification including:
 
 - **Conversation Management**: Parties, dialogs, attachments, and analysis
 - **Contact Information**: Multiple contact methods (tel, email, SIP, DID)
@@ -14,15 +14,15 @@ The vCon library provides a complete implementation of the vCon format for repre
 - **Location Data**: Civic address information (GEOPRIV)
 - **Event Tracking**: Party history with join/drop/hold/mute events
 
-## New in vCon 0.3.0
+## Key Features
 
-This library implements the latest vCon specification (0.3.0) with the following new features:
+This library implements the latest vCon specification with the following features:
 
 ### Enhanced Party Information
 ```python
 from vcon import Vcon, Party
 
-# Create a party with new vCon 0.3.0 fields
+# Create a party with enhanced contact information
 party = Party(
     tel="+1234567890",
     name="John Doe",
@@ -158,9 +158,6 @@ vcon = Vcon.load("conversation.vcon.json")
 
 # Load from URL
 vcon = Vcon.load("https://example.com/conversation.vcon.json")
-
-# Load with strict version checking
-vcon = Vcon.load("conversation.vcon.json", strict_version=True)
 ```
 
 ### Validation
@@ -288,7 +285,7 @@ vcon.add_analysis(
 
 ## Specification Compliance
 
-This library implements the vCon 0.3.0 specification with:
+This library implements the latest vCon specification with:
 
 - ✅ All required fields and validation
 - ✅ Proper media type support
@@ -297,6 +294,7 @@ This library implements the vCon 0.3.0 specification with:
 - ✅ Transfer dialog support
 - ✅ Content hashing and security
 - ✅ Extensions and must_support
+- ✅ Flexible versioning (version field is optional)
 - ✅ Backward compatibility
 
 ## Testing
@@ -307,12 +305,13 @@ Run the test suite:
 pytest tests/
 ```
 
-All 149 tests pass, covering:
+All tests pass, covering:
 - Basic functionality
-- New vCon 0.3.0 features
+- Enhanced vCon features
 - Validation and error handling
 - Media type support
 - Security features
+- Flexible versioning
 - Backward compatibility
 
 ## License

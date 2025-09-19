@@ -15,6 +15,7 @@ vcon is a Python library for working with vCon (Video Conference) containers, wh
    installation
    usage
    new_required_fields
+   version_management
    api/modules
 
 Installation
