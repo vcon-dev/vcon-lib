@@ -6,7 +6,11 @@
 3. [Working with Parties](#working-with-parties)
 4. [Managing Dialog](#managing-dialog)
 5. [Attachments and Analysis](#attachments-and-analysis)
-6. [Security and Validation](#security-and-validation)
+6. [Extensions](#extensions)
+   - [Extension Framework](#extension-framework)
+   - [Lawful Basis Extension](#lawful-basis-extension)
+   - [WTF Extension](#wtf-extension)
+7. [Security and Validation](#security-and-validation)
 
 ## Core Classes
 
@@ -35,6 +39,8 @@ from vcon import Vcon
 - `group`: Group information
 - `meta`: Metadata
 - `tags`: Tags attachment
+- `extensions`: List of extensions used
+- `must_support`: List of must-support extensions
 
 ### Party
 Represents a participant in the conversation.
@@ -138,6 +144,27 @@ value = vcon.get_tag("category")
 tags = vcon.tags
 ```
 
+### Extension Management
+
+```python
+# Add extensions
+vcon.add_extension("lawful_basis")
+vcon.add_extension("wtf_transcription")
+
+# Get list of extensions
+extensions = vcon.get_extensions()
+
+# Add must-support extensions
+vcon.add_must_support("encryption")
+
+# Get must-support extensions
+must_support = vcon.get_must_support()
+
+# Remove extensions
+vcon.remove_extension("video")
+vcon.remove_must_support("encryption")
+```
+
 ## Working with Parties
 
 ### Adding Parties
@@ -214,6 +241,463 @@ vcon.add_analysis(
 
 # Find analysis
 analysis = vcon.find_analysis_by_type("sentiment")
+```
+
+## Extensions
+
+The vCon library includes a comprehensive extension framework that allows for standardized implementation of additional functionality. Two major extensions are currently implemented: the Lawful Basis extension for privacy compliance and the WTF (World Transcription Format) extension for standardized transcription data.
+
+### Extension Framework
+
+The extension framework provides a standardized way to add new functionality to vCon objects while maintaining compatibility and validation.
+
+#### Core Extension Classes
+
+```python
+from vcon.extensions import get_extension_registry
+
+# Get the global registry
+registry = get_extension_registry()
+
+# List all registered extensions
+extensions = registry.list_extensions()
+```
+
+#### Extension Types
+- `COMPATIBLE`: Safe to ignore, no breaking changes
+- `INCOMPATIBLE`: Must be supported, breaking changes  
+- `EXPERIMENTAL`: Development/testing only
+
+### Lawful Basis Extension
+
+The Lawful Basis extension provides comprehensive support for privacy compliance and consent management according to GDPR and other privacy regulations.
+
+#### Key Features
+- **Multiple Lawful Basis Types**: consent, contract, legal_obligation, vital_interests, public_task, legitimate_interests
+- **Purpose-Specific Permissions**: Granular permission grants with conditions
+- **Cryptographic Proof Mechanisms**: Verbal confirmation, signed documents, cryptographic signatures, external systems
+- **Temporal Validity**: Expiration dates and status intervals
+- **Content Integrity**: Hash validation and canonicalization
+- **External Registry Integration**: SCITT (Supply Chain Integrity, Transparency, and Trust) support
+
+#### Adding Lawful Basis Attachments
+
+```python
+from datetime import datetime, timezone, timedelta
+
+# Add lawful basis attachment
+vcon.add_lawful_basis_attachment(
+    lawful_basis="consent",
+    expiration=(datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+    purpose_grants=[
+        {
+            "purpose": "recording",
+            "granted": True,
+            "granted_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "purpose": "analysis",
+            "granted": True,
+            "granted_at": datetime.now(timezone.utc).isoformat(),
+            "conditions": ["anonymized_data_only"]
+        }
+    ],
+    party_index=0,
+    dialog_index=0
+)
+```
+
+#### Checking Permissions
+
+```python
+# Check if permission is granted for a specific purpose
+recording_permission = vcon.check_lawful_basis_permission("recording", party_index=0)
+marketing_permission = vcon.check_lawful_basis_permission("marketing", party_index=0)
+
+print(f"Recording permission: {recording_permission}")
+print(f"Marketing permission: {marketing_permission}")
+```
+
+#### Finding Lawful Basis Attachments
+
+```python
+# Find all lawful basis attachments
+attachments = vcon.find_lawful_basis_attachments()
+
+# Find attachments for a specific party
+party_attachments = vcon.find_lawful_basis_attachments(party_index=0)
+```
+
+#### Advanced Lawful Basis Features
+
+```python
+from vcon.extensions.lawful_basis import (
+    LawfulBasisAttachment, 
+    PurposeGrant, 
+    ContentHash,
+    ProofMechanism,
+    LawfulBasisType,
+    ProofType,
+    HashAlgorithm
+)
+
+# Create purpose grants with conditions
+purpose_grants = [
+    PurposeGrant(
+        purpose="recording",
+        granted=True,
+        granted_at=datetime.now(timezone.utc).isoformat()
+    ),
+    PurposeGrant(
+        purpose="analysis",
+        granted=True,
+        granted_at=datetime.now(timezone.utc).isoformat(),
+        conditions=["anonymized_data_only", "retention_30_days"]
+    )
+]
+
+# Create content hash for integrity
+content_hash = ContentHash(
+    algorithm=HashAlgorithm.SHA_256,
+    canonicalization="JCS",
+    value="computed_hash_value"
+)
+
+# Create proof mechanism
+proof = ProofMechanism(
+    proof_type=ProofType.VERBAL_CONFIRMATION,
+    timestamp=datetime.now(timezone.utc).isoformat(),
+    proof_data={
+        "dialog_reference": 0,
+        "confirmation_text": "I consent to recording"
+    }
+)
+
+# Create comprehensive lawful basis attachment
+attachment = LawfulBasisAttachment(
+    lawful_basis=LawfulBasisType.CONSENT,
+    expiration=(datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+    purpose_grants=purpose_grants,
+    content_hash=content_hash,
+    proof_mechanisms=[proof]
+)
+```
+
+### WTF Extension
+
+The WTF (World Transcription Format) extension provides standardized representation of speech-to-text transcription data from multiple providers.
+
+#### Key Features
+- **Multi-Provider Support**: Whisper, Deepgram, AssemblyAI, Google, Amazon, Azure, and more
+- **Standardized Format**: Hierarchical structure with transcripts, segments, words, and speakers
+- **Quality Metrics**: Audio quality assessment and confidence scoring
+- **Export Capabilities**: SRT and WebVTT subtitle formats
+- **Provider Adapters**: Automatic conversion from provider-specific formats
+- **Analysis Tools**: Keyword extraction, confidence analysis, and transcription comparison
+
+#### Adding WTF Transcription Attachments
+
+```python
+# Add WTF transcription attachment
+vcon.add_wtf_transcription_attachment(
+    transcript={
+        "text": "Hello, this is a test transcription.",
+        "language": "en",
+        "duration": 3.5,
+        "confidence": 0.95
+    },
+    segments=[
+        {
+            "id": 0,
+            "start": 0.0,
+            "end": 1.5,
+            "text": "Hello, this is",
+            "confidence": 0.95,
+            "speaker": 0
+        },
+        {
+            "id": 1,
+            "start": 1.5,
+            "end": 3.5,
+            "text": "a test transcription.",
+            "confidence": 0.94,
+            "speaker": 0
+        }
+    ],
+    metadata={
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "provider": "whisper",
+        "model": "whisper-1",
+        "audio_quality": "high",
+        "background_noise": 0.1
+    },
+    party_index=0,
+    dialog_index=0
+)
+```
+
+#### Finding WTF Attachments
+
+```python
+# Find all WTF attachments
+attachments = vcon.find_wtf_attachments()
+
+# Find attachments for a specific party
+party_attachments = vcon.find_wtf_attachments(party_index=0)
+```
+
+#### Exporting Transcriptions
+
+```python
+# Find WTF attachments and export to SRT
+attachments = vcon.find_wtf_attachments(party_index=0)
+if attachments:
+    from vcon.extensions.wtf import WTFAttachment
+    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    
+    # Export to SRT format
+    srt_content = wtf_attachment.export_to_srt()
+    print("SRT Export:")
+    print(srt_content)
+    
+    # Export to WebVTT format
+    vtt_content = wtf_attachment.export_to_vtt()
+    print("WebVTT Export:")
+    print(vtt_content)
+```
+
+#### Provider Data Conversion
+
+```python
+from vcon.extensions.wtf import WhisperAdapter, DeepgramAdapter
+
+# Convert Whisper data to WTF format
+whisper_data = {
+    "text": "Hello world from Whisper",
+    "segments": [
+        {
+            "start": 0.0,
+            "end": 2.0,
+            "text": "Hello world from Whisper"
+        }
+    ]
+}
+
+whisper_adapter = WhisperAdapter()
+wtf_attachment = whisper_adapter.convert(whisper_data)
+
+# Add to vCon
+vcon.add_wtf_transcription_attachment(
+    transcript=wtf_attachment.transcript.to_dict(),
+    segments=[segment.to_dict() for segment in wtf_attachment.segments],
+    metadata=wtf_attachment.metadata.to_dict()
+)
+```
+
+#### Advanced WTF Features
+
+```python
+from vcon.extensions.wtf import (
+    WTFAttachment, 
+    Transcript, 
+    Segment, 
+    Word, 
+    Speaker,
+    Quality,
+    Metadata
+)
+
+# Create detailed transcript
+transcript = Transcript(
+    text="Hello world",
+    language="en",
+    duration=2.0,
+    confidence=0.95
+)
+
+# Create segments with words
+segments = [
+    Segment(
+        id=0,
+        start=0.0,
+        end=2.0,
+        text="Hello world",
+        confidence=0.95,
+        speaker=0,
+        words=[
+            Word(id=0, start=0.0, end=1.0, text="Hello", confidence=0.95, speaker=0),
+            Word(id=1, start=1.0, end=2.0, text="world", confidence=0.95, speaker=0)
+        ]
+    )
+]
+
+# Create speaker information
+speakers = [
+    Speaker(
+        id=0,
+        label="Speaker 1",
+        segments=[0],
+        total_time=2.0,
+        confidence=0.9
+    )
+]
+
+# Create quality metrics
+quality = Quality(
+    audio_quality="high",
+    background_noise=0.1,
+    multiple_speakers=False,
+    overlapping_speech=False,
+    silence_ratio=0.2,
+    average_confidence=0.95,
+    low_confidence_words=0,
+    processing_warnings=[]
+)
+
+# Create metadata
+metadata = Metadata(
+    created_at=datetime.now(timezone.utc).isoformat(),
+    processed_at=datetime.now(timezone.utc).isoformat(),
+    provider="whisper",
+    model="whisper-1",
+    audio_quality="high",
+    background_noise=0.1
+)
+
+# Create comprehensive WTF attachment
+attachment = WTFAttachment(
+    transcript=transcript,
+    segments=segments,
+    metadata=metadata,
+    words=[word for segment in segments for word in segment.words],
+    speakers=speakers,
+    quality=quality
+)
+```
+
+#### Analysis Tools
+
+```python
+# Extract keywords from high-confidence words
+keywords = attachment.extract_keywords(min_confidence=0.8)
+
+# Find segments with low confidence
+low_confidence_segments = attachment.find_low_confidence_segments(threshold=0.5)
+
+# Calculate speaking time for each speaker
+speaking_times = attachment.get_speaking_time()
+```
+
+### Extension Validation and Processing
+
+```python
+# Validate all extensions
+validation_results = vcon.validate_extensions()
+print("Extension validation results:")
+for extension, result in validation_results.items():
+    if extension != "attachments":
+        status = "✓ Valid" if result["is_valid"] else "✗ Invalid"
+        print(f"  {extension}: {status}")
+        if result["errors"]:
+            for error in result["errors"]:
+                print(f"    Error: {error}")
+        if result["warnings"]:
+            for warning in result["warnings"]:
+                print(f"    Warning: {warning}")
+
+# Process all extensions
+processing_results = vcon.process_extensions()
+print("Extension processing completed")
+```
+
+### Complete Extension Workflow
+
+```python
+from vcon import Vcon
+from vcon.party import Party
+from vcon.dialog import Dialog
+from datetime import datetime, timezone, timedelta
+
+# Create comprehensive vCon with extensions
+vcon = Vcon.build_new()
+
+# Add parties
+caller = Party(tel="+1234567890", name="Alice", role="caller")
+agent = Party(tel="+1987654321", name="Bob", role="agent")
+vcon.add_party(caller)
+vcon.add_party(agent)
+
+# Add dialog
+dialog = Dialog(
+    type="recording",
+    start=datetime.now(timezone.utc),
+    parties=[0, 1],
+    mimetype="audio/mp3"
+)
+vcon.add_dialog(dialog)
+
+# Add lawful basis for consent
+vcon.add_lawful_basis_attachment(
+    lawful_basis="consent",
+    expiration=(datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
+    purpose_grants=[
+        {
+            "purpose": "recording",
+            "granted": True,
+            "granted_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "purpose": "transcription",
+            "granted": True,
+            "granted_at": datetime.now(timezone.utc).isoformat()
+        }
+    ],
+    party_index=0
+)
+
+# Add transcription
+vcon.add_wtf_transcription_attachment(
+    transcript={
+        "text": "Hello, I need help with my account.",
+        "language": "en",
+        "duration": 4.2,
+        "confidence": 0.92
+    },
+    segments=[
+        {
+            "id": 0,
+            "start": 0.0,
+            "end": 4.2,
+            "text": "Hello, I need help with my account.",
+            "confidence": 0.92,
+            "speaker": 0
+        }
+    ],
+    metadata={
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "provider": "whisper",
+        "model": "whisper-1"
+    },
+    party_index=0,
+    dialog_index=0
+)
+
+# Validate and process
+validation_results = vcon.validate_extensions()
+processing_results = vcon.process_extensions()
+
+# Check permissions
+can_record = vcon.check_lawful_basis_permission("recording", party_index=0)
+can_transcribe = vcon.check_lawful_basis_permission("transcription", party_index=0)
+
+print(f"Can record: {can_record}")
+print(f"Can transcribe: {can_transcribe}")
+
+# Save vCon
+vcon.save_to_file("conversation_with_extensions.vcon.json")
+print("Saved vCon with extensions")
 ```
 
 ## Security and Validation
