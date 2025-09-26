@@ -1,0 +1,15 @@
+# Disable Jekyll processing completely
+# This repository uses Sphinx-generated static HTML files
+plugins: []
+markdown: kramdown
+highlighter: rouge
+safe: true
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+# Disable all Jekyll processing
+exclude: ["*"]
+include: []
+# Disable Jekyll completely
+baseurl: ""
+url: ""
