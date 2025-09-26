@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage Guide &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+      <script src="_static/jquery.js"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+      <script src="_static/doctools.js"></script>
+      <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="New Required Fields" href="new_required_fields.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-vcon-container">Creating a vCon Container</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reading-a-vcon-container">Reading a vCon Container</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-extensions">Working with Extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-enhanced-party-information">Working with Enhanced Party Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-dialog-session-management">Working with Dialog Session Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-media-files">Working with Media Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="version_management.html">Version Management Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">vcon</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage-guide">
+<h1>Usage Guide<a class="headerlink" href="#usage-guide" title="Permalink to this heading"></a></h1>
+<p>This guide will help you get started with using the vcon library.</p>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading"></a></h2>
+<section id="creating-a-vcon-container">
+<h3>Creating a vCon Container<a class="headerlink" href="#creating-a-vcon-container" title="Permalink to this heading"></a></h3>
+<p>Here’s a simple example of creating a vCon container:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcon.party</span><span class="w"> </span><span class="kn">import</span> <span class="n">Party</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcon.dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dialog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="c1"># Create a new vCon container</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+
+<span class="c1"># Add extensions and must-support requirements</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add participants with enhanced contact information</span>
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+    <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
+    <span class="n">did</span><span class="o">=</span><span class="s2">&quot;did:example:123456789abcdef&quot;</span><span class="p">,</span>
+    <span class="n">jCard</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;fn&quot;</span><span class="p">:</span> <span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tel&quot;</span><span class="p">:</span> <span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;john@example.com&quot;</span>
+    <span class="p">},</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_party</span><span class="p">(</span><span class="n">party</span><span class="p">)</span>
+
+<span class="c1"># Create a dialog with session tracking and content integrity</span>
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate and set content hash for integrity verification</span>
+<span class="n">content_hash</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">()</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_dialog</span><span class="p">(</span><span class="n">dialog</span><span class="p">)</span>
+
+<span class="c1"># Save the container</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">save_to_file</span><span class="p">(</span><span class="s2">&quot;my_conference.vcon&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="reading-a-vcon-container">
+<h3>Reading a vCon Container<a class="headerlink" href="#reading-a-vcon-container" title="Permalink to this heading"></a></h3>
+<p>To read an existing vCon container:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+
+<span class="c1"># Load a vCon container</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span><span class="s2">&quot;my_conference.vcon&quot;</span><span class="p">)</span>
+
+<span class="c1"># Access extensions</span>
+<span class="n">extensions</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
+<span class="n">must_support</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+
+<span class="c1"># Get participants with enhanced information</span>
+<span class="n">parties</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">parties</span>
+<span class="k">for</span> <span class="n">party</span> <span class="ow">in</span> <span class="n">parties</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">party</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SIP: </span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sip&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DID: </span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;did&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timezone: </span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;timezone&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Alternative: Use get_party_objects() for Party object access</span>
+<span class="n">party_objects</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_party_objects</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">party</span> <span class="ow">in</span> <span class="n">party_objects</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">party</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SIP: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">party</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sip&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DID: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">party</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;did&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timezone: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">party</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;timezone&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Get dialogs with session information</span>
+<span class="n">dialogs</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">dialog</span>
+<span class="k">for</span> <span class="n">dialog</span> <span class="ow">in</span> <span class="n">dialogs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Session ID: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">dialog</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content Hash: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">dialog</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;content_hash&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Not set&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="advanced-usage">
+<h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permalink to this heading"></a></h2>
+<section id="working-with-extensions">
+<h3>Working with Extensions<a class="headerlink" href="#working-with-extensions" title="Permalink to this heading"></a></h3>
+<p>Extensions allow vCon implementations to declare additional capabilities:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+
+<span class="c1"># Add extensions used in this vCon</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
+
+<span class="c1"># Specify extensions that must be supported</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check extension compatibility</span>
+<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+<span class="n">available</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Required extension &#39;</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&#39; not available&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-enhanced-party-information">
+<h3>Working with Enhanced Party Information<a class="headerlink" href="#working-with-enhanced-party-information" title="Permalink to this heading"></a></h3>
+<p>Parties now support additional contact and identification methods:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon.party</span><span class="w"> </span><span class="kn">import</span> <span class="n">Party</span>
+
+<span class="c1"># Create a party with SIP URI for VoIP communication</span>
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alice Johnson&quot;</span><span class="p">,</span>
+    <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:alice@example.com&quot;</span><span class="p">,</span>
+    <span class="n">did</span><span class="o">=</span><span class="s2">&quot;did:example:123456789abcdef&quot;</span><span class="p">,</span>
+    <span class="n">jCard</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;fn&quot;</span><span class="p">:</span> <span class="s2">&quot;Alice Johnson&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tel&quot;</span><span class="p">:</span> <span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;org&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Corp&quot;</span>
+    <span class="p">},</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-dialog-session-management">
+<h3>Working with Dialog Session Management<a class="headerlink" href="#working-with-dialog-session-management" title="Permalink to this heading"></a></h3>
+<p>Dialogs now support session tracking and content integrity verification:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon.dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dialog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="c1"># Create a dialog with session tracking</span>
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate content hash for integrity verification</span>
+<span class="n">content_hash</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">()</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+
+<span class="c1"># Verify content integrity</span>
+<span class="n">is_valid</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">verify_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content integrity: </span><span class="si">{</span><span class="n">is_valid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-media-files">
+<h3>Working with Media Files<a class="headerlink" href="#working-with-media-files" title="Permalink to this heading"></a></h3>
+<p>You can attach and manage media files in a vCon container:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="p">()</span>
+
+<span class="c1"># Add a video recording</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_media</span><span class="p">(</span><span class="s2">&quot;recording.mp4&quot;</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;video/mp4&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add a transcript</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_media</span><span class="p">(</span><span class="s2">&quot;transcript.txt&quot;</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;text/plain&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="api-reference">
+<span id="id1"></span><h2>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
+<p>For more detailed information about the API, please refer to the sections below.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="new_required_fields.html" class="btn btn-neutral float-right" title="New Required Fields" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

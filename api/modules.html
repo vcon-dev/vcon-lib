@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vcon &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+
+  
+      <script src="../_static/jquery.js"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+      <script src="../_static/doctools.js"></script>
+      <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="vcon package" href="vcon.html" />
+    <link rel="prev" title="Version Management Changes" href="../version_management.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../version_management.html">Version Management Changes</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">vcon</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html">vcon package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">vcon</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="vcon">
+<h1>vcon<a class="headerlink" href="#vcon" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="vcon.html">vcon package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#module-vcon.civic_address">vcon.civic_address module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.civic_address.CivicAddress"><code class="docutils literal notranslate"><span class="pre">CivicAddress</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.civic_address.CivicAddress.__init__"><code class="docutils literal notranslate"><span class="pre">CivicAddress.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.civic_address.CivicAddress.to_dict"><code class="docutils literal notranslate"><span class="pre">CivicAddress.to_dict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#module-vcon.dialog">vcon.dialog module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog"><code class="docutils literal notranslate"><span class="pre">Dialog</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.MIME_TYPES"><code class="docutils literal notranslate"><span class="pre">Dialog.MIME_TYPES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.VALID_DISPOSITIONS"><code class="docutils literal notranslate"><span class="pre">Dialog.VALID_DISPOSITIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.VALID_TYPES"><code class="docutils literal notranslate"><span class="pre">Dialog.VALID_TYPES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.__init__"><code class="docutils literal notranslate"><span class="pre">Dialog.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_external_data"><code class="docutils literal notranslate"><span class="pre">Dialog.add_external_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_image_data"><code class="docutils literal notranslate"><span class="pre">Dialog.add_image_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_inline_data"><code class="docutils literal notranslate"><span class="pre">Dialog.add_inline_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_streaming_video_reference"><code class="docutils literal notranslate"><span class="pre">Dialog.add_streaming_video_reference()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_video_data"><code class="docutils literal notranslate"><span class="pre">Dialog.add_video_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.add_video_with_optimal_storage"><code class="docutils literal notranslate"><span class="pre">Dialog.add_video_with_optimal_storage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.calculate_content_hash"><code class="docutils literal notranslate"><span class="pre">Dialog.calculate_content_hash()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.extract_image_metadata"><code class="docutils literal notranslate"><span class="pre">Dialog.extract_image_metadata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.extract_video_metadata"><code class="docutils literal notranslate"><span class="pre">Dialog.extract_video_metadata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.generate_thumbnail"><code class="docutils literal notranslate"><span class="pre">Dialog.generate_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.get_content_hash"><code class="docutils literal notranslate"><span class="pre">Dialog.get_content_hash()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.get_session_id"><code class="docutils literal notranslate"><span class="pre">Dialog.get_session_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.get_video_format_from_mimetype"><code class="docutils literal notranslate"><span class="pre">Dialog.get_video_format_from_mimetype()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.has_thumbnail"><code class="docutils literal notranslate"><span class="pre">Dialog.has_thumbnail()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_audio"><code class="docutils literal notranslate"><span class="pre">Dialog.is_audio()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_email"><code class="docutils literal notranslate"><span class="pre">Dialog.is_email()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_external_data"><code class="docutils literal notranslate"><span class="pre">Dialog.is_external_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_external_data_changed"><code class="docutils literal notranslate"><span class="pre">Dialog.is_external_data_changed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_image"><code class="docutils literal notranslate"><span class="pre">Dialog.is_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_incomplete"><code class="docutils literal notranslate"><span class="pre">Dialog.is_incomplete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_inline_data"><code class="docutils literal notranslate"><span class="pre">Dialog.is_inline_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_pdf"><code class="docutils literal notranslate"><span class="pre">Dialog.is_pdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_recording"><code class="docutils literal notranslate"><span class="pre">Dialog.is_recording()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_text"><code class="docutils literal notranslate"><span class="pre">Dialog.is_text()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_transfer"><code class="docutils literal notranslate"><span class="pre">Dialog.is_transfer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.is_video"><code class="docutils literal notranslate"><span class="pre">Dialog.is_video()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.set_content_hash"><code class="docutils literal notranslate"><span class="pre">Dialog.set_content_hash()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.set_session_id"><code class="docutils literal notranslate"><span class="pre">Dialog.set_session_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.to_dict"><code class="docutils literal notranslate"><span class="pre">Dialog.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.to_inline_data"><code class="docutils literal notranslate"><span class="pre">Dialog.to_inline_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.transcode_video"><code class="docutils literal notranslate"><span class="pre">Dialog.transcode_video()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.dialog.Dialog.verify_content_hash"><code class="docutils literal notranslate"><span class="pre">Dialog.verify_content_hash()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#module-vcon.party">vcon.party module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.party.Party"><code class="docutils literal notranslate"><span class="pre">Party</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.Party.__init__"><code class="docutils literal notranslate"><span class="pre">Party.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.Party.to_dict"><code class="docutils literal notranslate"><span class="pre">Party.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory"><code class="docutils literal notranslate"><span class="pre">PartyHistory</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.party"><code class="docutils literal notranslate"><span class="pre">PartyHistory.party</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.event"><code class="docutils literal notranslate"><span class="pre">PartyHistory.event</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.time"><code class="docutils literal notranslate"><span class="pre">PartyHistory.time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.VALID_EVENTS"><code class="docutils literal notranslate"><span class="pre">PartyHistory.VALID_EVENTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.__init__"><code class="docutils literal notranslate"><span class="pre">PartyHistory.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.party.PartyHistory.to_dict"><code class="docutils literal notranslate"><span class="pre">PartyHistory.to_dict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#module-vcon.vcon">vcon.vcon module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment"><code class="docutils literal notranslate"><span class="pre">Attachment</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.type"><code class="docutils literal notranslate"><span class="pre">Attachment.type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.body"><code class="docutils literal notranslate"><span class="pre">Attachment.body</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.encoding"><code class="docutils literal notranslate"><span class="pre">Attachment.encoding</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.VALID_ENCODINGS"><code class="docutils literal notranslate"><span class="pre">Attachment.VALID_ENCODINGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.__init__"><code class="docutils literal notranslate"><span class="pre">Attachment.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.from_image"><code class="docutils literal notranslate"><span class="pre">Attachment.from_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Attachment.to_dict"><code class="docutils literal notranslate"><span class="pre">Attachment.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon"><code class="docutils literal notranslate"><span class="pre">Vcon</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.vcon_dict"><code class="docutils literal notranslate"><span class="pre">Vcon.vcon_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.property_handling"><code class="docutils literal notranslate"><span class="pre">Vcon.property_handling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.__init__"><code class="docutils literal notranslate"><span class="pre">Vcon.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_analysis"><code class="docutils literal notranslate"><span class="pre">Vcon.add_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_extension"><code class="docutils literal notranslate"><span class="pre">Vcon.add_extension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_image"><code class="docutils literal notranslate"><span class="pre">Vcon.add_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_incomplete_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_incomplete_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_lawful_basis_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_lawful_basis_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.add_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_party"><code class="docutils literal notranslate"><span class="pre">Vcon.add_party()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_tag"><code class="docutils literal notranslate"><span class="pre">Vcon.add_tag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_transfer_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_transfer_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.add_wtf_transcription_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_wtf_transcription_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.analysis"><code class="docutils literal notranslate"><span class="pre">Vcon.analysis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.appended"><code class="docutils literal notranslate"><span class="pre">Vcon.appended</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.attachments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.build_from_json"><code class="docutils literal notranslate"><span class="pre">Vcon.build_from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.build_new"><code class="docutils literal notranslate"><span class="pre">Vcon.build_new()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.check_lawful_basis_permission"><code class="docutils literal notranslate"><span class="pre">Vcon.check_lawful_basis_permission()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.created_at"><code class="docutils literal notranslate"><span class="pre">Vcon.created_at</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.dialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.dumps"><code class="docutils literal notranslate"><span class="pre">Vcon.dumps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_analysis_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_analysis_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_attachment_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_attachment_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.find_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_dialogs_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_dialogs_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_lawful_basis_attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.find_lawful_basis_attachments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_party_index"><code class="docutils literal notranslate"><span class="pre">Vcon.find_party_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.find_wtf_attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.find_wtf_attachments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.generate_key_pair"><code class="docutils literal notranslate"><span class="pre">Vcon.generate_key_pair()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.get_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.get_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.get_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.get_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.get_party_objects"><code class="docutils literal notranslate"><span class="pre">Vcon.get_party_objects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.get_tag"><code class="docutils literal notranslate"><span class="pre">Vcon.get_tag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.group"><code class="docutils literal notranslate"><span class="pre">Vcon.group</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.is_valid"><code class="docutils literal notranslate"><span class="pre">Vcon.is_valid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.load"><code class="docutils literal notranslate"><span class="pre">Vcon.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.load_from_file"><code class="docutils literal notranslate"><span class="pre">Vcon.load_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.load_from_url"><code class="docutils literal notranslate"><span class="pre">Vcon.load_from_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.meta"><code class="docutils literal notranslate"><span class="pre">Vcon.meta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.parties"><code class="docutils literal notranslate"><span class="pre">Vcon.parties</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.post_to_url"><code class="docutils literal notranslate"><span class="pre">Vcon.post_to_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.process_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.process_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.redacted"><code class="docutils literal notranslate"><span class="pre">Vcon.redacted</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.remove_extension"><code class="docutils literal notranslate"><span class="pre">Vcon.remove_extension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.remove_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.remove_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.save_to_file"><code class="docutils literal notranslate"><span class="pre">Vcon.save_to_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.set_created_at"><code class="docutils literal notranslate"><span class="pre">Vcon.set_created_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.set_updated_at"><code class="docutils literal notranslate"><span class="pre">Vcon.set_updated_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.sign"><code class="docutils literal notranslate"><span class="pre">Vcon.sign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.subject"><code class="docutils literal notranslate"><span class="pre">Vcon.subject</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.tags"><code class="docutils literal notranslate"><span class="pre">Vcon.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.to_dict"><code class="docutils literal notranslate"><span class="pre">Vcon.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.to_json"><code class="docutils literal notranslate"><span class="pre">Vcon.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.updated_at"><code class="docutils literal notranslate"><span class="pre">Vcon.updated_at</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.uuid"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.uuid8_domain_name"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid8_domain_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.uuid8_time"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid8_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.validate_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.validate_file"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.validate_json"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.vcon"><code class="docutils literal notranslate"><span class="pre">Vcon.vcon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.vcon.Vcon.verify"><code class="docutils literal notranslate"><span class="pre">Vcon.verify()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vcon.html#module-vcon">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vcon.html#vcon.Vcon"><code class="docutils literal notranslate"><span class="pre">Vcon</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.vcon_dict"><code class="docutils literal notranslate"><span class="pre">Vcon.vcon_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.property_handling"><code class="docutils literal notranslate"><span class="pre">Vcon.property_handling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.__init__"><code class="docutils literal notranslate"><span class="pre">Vcon.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_analysis"><code class="docutils literal notranslate"><span class="pre">Vcon.add_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_extension"><code class="docutils literal notranslate"><span class="pre">Vcon.add_extension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_image"><code class="docutils literal notranslate"><span class="pre">Vcon.add_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_incomplete_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_incomplete_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_lawful_basis_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_lawful_basis_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.add_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_party"><code class="docutils literal notranslate"><span class="pre">Vcon.add_party()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_tag"><code class="docutils literal notranslate"><span class="pre">Vcon.add_tag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_transfer_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.add_transfer_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.add_wtf_transcription_attachment"><code class="docutils literal notranslate"><span class="pre">Vcon.add_wtf_transcription_attachment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.analysis"><code class="docutils literal notranslate"><span class="pre">Vcon.analysis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.appended"><code class="docutils literal notranslate"><span class="pre">Vcon.appended</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.attachments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.build_from_json"><code class="docutils literal notranslate"><span class="pre">Vcon.build_from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.build_new"><code class="docutils literal notranslate"><span class="pre">Vcon.build_new()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.check_lawful_basis_permission"><code class="docutils literal notranslate"><span class="pre">Vcon.check_lawful_basis_permission()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.created_at"><code class="docutils literal notranslate"><span class="pre">Vcon.created_at</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.dialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.dumps"><code class="docutils literal notranslate"><span class="pre">Vcon.dumps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_analysis_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_analysis_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_attachment_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_attachment_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_dialog"><code class="docutils literal notranslate"><span class="pre">Vcon.find_dialog()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_dialogs_by_type"><code class="docutils literal notranslate"><span class="pre">Vcon.find_dialogs_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_lawful_basis_attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.find_lawful_basis_attachments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_party_index"><code class="docutils literal notranslate"><span class="pre">Vcon.find_party_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.find_wtf_attachments"><code class="docutils literal notranslate"><span class="pre">Vcon.find_wtf_attachments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.generate_key_pair"><code class="docutils literal notranslate"><span class="pre">Vcon.generate_key_pair()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.get_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.get_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.get_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.get_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.get_party_objects"><code class="docutils literal notranslate"><span class="pre">Vcon.get_party_objects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.get_tag"><code class="docutils literal notranslate"><span class="pre">Vcon.get_tag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.group"><code class="docutils literal notranslate"><span class="pre">Vcon.group</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.is_valid"><code class="docutils literal notranslate"><span class="pre">Vcon.is_valid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.load"><code class="docutils literal notranslate"><span class="pre">Vcon.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.load_from_file"><code class="docutils literal notranslate"><span class="pre">Vcon.load_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.load_from_url"><code class="docutils literal notranslate"><span class="pre">Vcon.load_from_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.meta"><code class="docutils literal notranslate"><span class="pre">Vcon.meta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.parties"><code class="docutils literal notranslate"><span class="pre">Vcon.parties</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.post_to_url"><code class="docutils literal notranslate"><span class="pre">Vcon.post_to_url()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.process_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.process_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.redacted"><code class="docutils literal notranslate"><span class="pre">Vcon.redacted</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.remove_extension"><code class="docutils literal notranslate"><span class="pre">Vcon.remove_extension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.remove_must_support"><code class="docutils literal notranslate"><span class="pre">Vcon.remove_must_support()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.save_to_file"><code class="docutils literal notranslate"><span class="pre">Vcon.save_to_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.set_created_at"><code class="docutils literal notranslate"><span class="pre">Vcon.set_created_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.set_updated_at"><code class="docutils literal notranslate"><span class="pre">Vcon.set_updated_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.sign"><code class="docutils literal notranslate"><span class="pre">Vcon.sign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.subject"><code class="docutils literal notranslate"><span class="pre">Vcon.subject</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.tags"><code class="docutils literal notranslate"><span class="pre">Vcon.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.to_dict"><code class="docutils literal notranslate"><span class="pre">Vcon.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.to_json"><code class="docutils literal notranslate"><span class="pre">Vcon.to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.updated_at"><code class="docutils literal notranslate"><span class="pre">Vcon.updated_at</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.uuid"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.uuid8_domain_name"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid8_domain_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.uuid8_time"><code class="docutils literal notranslate"><span class="pre">Vcon.uuid8_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.validate_extensions"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_extensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.validate_file"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.validate_json"><code class="docutils literal notranslate"><span class="pre">Vcon.validate_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.vcon"><code class="docutils literal notranslate"><span class="pre">Vcon.vcon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcon.html#vcon.Vcon.verify"><code class="docutils literal notranslate"><span class="pre">Vcon.verify()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../version_management.html" class="btn btn-neutral float-left" title="Version Management Changes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="vcon.html" class="btn btn-neutral float-right" title="vcon package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

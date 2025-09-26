@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vcon.party &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+      <script src="../../_static/jquery.js"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+      <script src="../../_static/doctools.js"></script>
+      <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../version_management.html">Version Management Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">vcon</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">vcon.party</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for vcon.party</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcon.civic_address</span><span class="w"> </span><span class="kn">import</span> <span class="n">CivicAddress</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+
+<div class="viewcode-block" id="Party"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.Party">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">Party</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class representing a party (participant) in a vCon conversation.</span>
+<span class="sd">    </span>
+<span class="sd">    A party represents a participant in the conversation with various contact</span>
+<span class="sd">    and identification information. Parties can be callers, agents, or any</span>
+<span class="sd">    other participants in the conversation.</span>
+<span class="sd">    </span>
+<span class="sd">    Supported contact methods:</span>
+<span class="sd">    - tel: Telephone number</span>
+<span class="sd">    - mailto: Email address</span>
+<span class="sd">    - sip: SIP URI for VoIP communication</span>
+<span class="sd">    - did: Decentralized Identifier for blockchain-based identity</span>
+<span class="sd">    </span>
+<span class="sd">    Contact information:</span>
+<span class="sd">    - name: Display name of the party</span>
+<span class="sd">    - jCard: vCard format contact information (RFC 7095)</span>
+<span class="sd">    - timezone: Party&#39;s timezone for temporal context</span>
+<span class="sd">    </span>
+<span class="sd">    Location and validation:</span>
+<span class="sd">    - civicaddress: Civic address information (GEOPRIV format)</span>
+<span class="sd">    - gmlpos: GML position coordinates</span>
+<span class="sd">    - validation: Validation information for the party</span>
+<span class="sd">    </span>
+<span class="sd">    Additional metadata:</span>
+<span class="sd">    - uuid: Unique identifier for the party</span>
+<span class="sd">    - role: Role in the conversation (e.g., &quot;caller&quot;, &quot;agent&quot;)</span>
+<span class="sd">    - stir: STIR identifier for secure telephony</span>
+<span class="sd">    - contact_list: Reference to contact list</span>
+<span class="sd">    - meta: Additional metadata</span>
+<span class="sd">    </span>
+<span class="sd">    New in vCon 0.3.0:</span>
+<span class="sd">    - sip: SIP URI for the party</span>
+<span class="sd">    - did: Decentralized Identifier</span>
+<span class="sd">    - jCard: vCard format contact information</span>
+<span class="sd">    - timezone: Party&#39;s timezone</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Party.__init__"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.Party.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mailto</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">validation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gmlpos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">civicaddress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CivicAddress</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">uuid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">role</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">contact_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">meta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sip</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">did</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">jCard</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timezone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a new Party object.</span>
+
+<span class="sd">        :param tel: Telephone number of the party</span>
+<span class="sd">        :type tel: str | None</span>
+<span class="sd">        :param stir: STIR identifier of the party</span>
+<span class="sd">        :type stir: str | None</span>
+<span class="sd">        :param mailto: Email address of the party</span>
+<span class="sd">        :type mailto: str | None</span>
+<span class="sd">        :param name: Display name of the party</span>
+<span class="sd">        :type name: str | None</span>
+<span class="sd">        :param validation: Validation information of the party</span>
+<span class="sd">        :type validation: str | None</span>
+<span class="sd">        :param gmlpos: GML position of the party</span>
+<span class="sd">        :type gmlpos: str | None</span>
+<span class="sd">        :param civicaddress: Civic address of the party</span>
+<span class="sd">        :type civicaddress: CivicAddress | None</span>
+<span class="sd">        :param uuid: UUID of the party</span>
+<span class="sd">        :type uuid: str | None</span>
+<span class="sd">        :param role: Role of the party</span>
+<span class="sd">        :type role: str | None</span>
+<span class="sd">        :param contact_list: Contact list of the party</span>
+<span class="sd">        :type contact_list: str | None</span>
+<span class="sd">        :param sip: SIP URI for the party</span>
+<span class="sd">        :type sip: str | None</span>
+<span class="sd">        :param did: Decentralized Identifier</span>
+<span class="sd">        :type did: str | None</span>
+<span class="sd">        :param jCard: vCard format contact information</span>
+<span class="sd">        :type jCard: dict | None</span>
+<span class="sd">        :param timezone: Party&#39;s timezone</span>
+<span class="sd">        :type timezone: str | None</span>
+<span class="sd">        :param kwargs: Additional attributes to be set on the party</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># copy the named parameters that are not None</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="s2">&quot;kwargs&quot;</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># copy any additional kwargs</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Party.to_dict"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.Party.to_dict">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># copy the attributes that are not None</span>
+        <span class="c1"># TODO: should we allow changing the values of the object?</span>
+        <span class="c1">#       for now, we just use the values that are not None</span>
+        <span class="c1">#       and ignore the other values</span>
+        <span class="c1">#       (this is also how the old code worked)</span>
+        <span class="n">party_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Don&#39;t include self in the dict</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;self&quot;</span><span class="p">:</span>
+                <span class="c1"># Handle CivicAddress objects by calling their to_dict method</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;to_dict&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">to_dict</span><span class="p">):</span>
+                    <span class="n">party_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">party_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">party_dict</span></div></div>
+
+
+<div class="viewcode-block" id="PartyHistory"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.PartyHistory">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">PartyHistory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class representing party history events in a vCon dialog.</span>
+<span class="sd">    </span>
+<span class="sd">    Party history tracks when parties join, leave, or change state during</span>
+<span class="sd">    a conversation. This is useful for understanding the flow of multi-party</span>
+<span class="sd">    conversations where participants may not all join and leave at the same time.</span>
+<span class="sd">    </span>
+<span class="sd">    Supported event types (vCon 0.3.0 specification):</span>
+<span class="sd">    - join: When the party joins the dialog</span>
+<span class="sd">    - drop: When the party drops out of the dialog</span>
+<span class="sd">    - hold: When the party is put on hold</span>
+<span class="sd">    - unhold: When the party is taken off hold</span>
+<span class="sd">    - mute: When the party is muted</span>
+<span class="sd">    - unmute: When the party is taken off mute</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        party (int): Index of the party in the parties array</span>
+<span class="sd">        event (str): Type of event (must be one of VALID_EVENTS)</span>
+<span class="sd">        time (datetime): Time when the event occurred (serialized as ISO 8601)</span>
+<span class="sd">    </span>
+<span class="sd">    The time field is automatically serialized to ISO 8601 format when</span>
+<span class="sd">    converted to dictionary representation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Valid event types for party history (from specification)</span>
+    <span class="n">VALID_EVENTS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;join&quot;</span><span class="p">,</span>      <span class="c1"># when the party joins the dialog</span>
+        <span class="s2">&quot;drop&quot;</span><span class="p">,</span>      <span class="c1"># when the party drops out of the dialog</span>
+        <span class="s2">&quot;hold&quot;</span><span class="p">,</span>      <span class="c1"># when the party is put on hold</span>
+        <span class="s2">&quot;unhold&quot;</span><span class="p">,</span>    <span class="c1"># when the party is taken off hold</span>
+        <span class="s2">&quot;mute&quot;</span><span class="p">,</span>      <span class="c1"># when the party is muted</span>
+        <span class="s2">&quot;unmute&quot;</span>     <span class="c1"># when the party is taken off mute</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="PartyHistory.__init__"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.PartyHistory.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">party</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a new PartyHistory object.</span>
+
+<span class="sd">        :param party: Index of the party</span>
+<span class="sd">        :type party: int</span>
+<span class="sd">        :param event: Event type (e.g. &quot;join&quot;, &quot;drop&quot;, &quot;hold&quot;, &quot;unhold&quot;, </span>
+<span class="sd">                     &quot;mute&quot;, &quot;unmute&quot;)</span>
+<span class="sd">        :type event: str</span>
+<span class="sd">        :param time: Time of the event</span>
+<span class="sd">        :type time: datetime</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate event type</span>
+        <span class="k">if</span> <span class="n">event</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PartyHistory</span><span class="o">.</span><span class="n">VALID_EVENTS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid event &#39;</span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Must be one of: </span><span class="si">{</span><span class="n">PartyHistory</span><span class="o">.</span><span class="n">VALID_EVENTS</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">party</span> <span class="o">=</span> <span class="n">party</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span></div>
+
+<div class="viewcode-block" id="PartyHistory.to_dict"><a class="viewcode-back" href="../../api/vcon.html#vcon.party.PartyHistory.to_dict">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Handle time field which can be datetime or string</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s1">&#39;isoformat&#39;</span><span class="p">):</span>
+            <span class="n">time_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;party&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">party</span><span class="p">,</span> 
+            <span class="s2">&quot;event&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">,</span> 
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time_value</span>
+        <span class="p">}</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vcon.civic_address &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+      <script src="../../_static/jquery.js"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+      <script src="../../_static/doctools.js"></script>
+      <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../version_management.html">Version Management Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">vcon</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">vcon.civic_address</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for vcon.civic_address</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="CivicAddress"><a class="viewcode-back" href="../../api/vcon.html#vcon.civic_address.CivicAddress">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">CivicAddress</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class representing civic address information according to GEOPRIV specification.</span>
+<span class="sd">    </span>
+<span class="sd">    This class supports all civic address fields defined in RFC 4776 (GEOPRIV)</span>
+<span class="sd">    and is used within vCon Party objects to provide location information.</span>
+<span class="sd">    </span>
+<span class="sd">    Administrative areas (a1-a6):</span>
+<span class="sd">    - a1: Administrative area 1 (e.g., state or province)</span>
+<span class="sd">    - a2: Administrative area 2 (e.g., county or municipality)</span>
+<span class="sd">    - a3: Administrative area 3 (e.g., city or town)</span>
+<span class="sd">    - a4: Administrative area 4 (e.g., neighborhood or district)</span>
+<span class="sd">    - a5: Administrative area 5 (e.g., postal code)</span>
+<span class="sd">    - a6: Administrative area 6 (e.g., building or floor)</span>
+<span class="sd">    </span>
+<span class="sd">    Street and building information:</span>
+<span class="sd">    - sts: Street name</span>
+<span class="sd">    - hno: House number</span>
+<span class="sd">    - hns: House name</span>
+<span class="sd">    - prd: Premier (e.g., department or suite number)</span>
+<span class="sd">    - flr: Floor</span>
+<span class="sd">    </span>
+<span class="sd">    Location and identification:</span>
+<span class="sd">    - country: Country code (ISO 3166-1 alpha-2)</span>
+<span class="sd">    - pc: Postal code</span>
+<span class="sd">    - nam: Name of the location</span>
+<span class="sd">    - lmk: Landmark name</span>
+<span class="sd">    - loc: Location name</span>
+<span class="sd">    - pod: Post office box identifier</span>
+<span class="sd">    </span>
+<span class="sd">    All fields are optional and follow the GEOPRIV specification format.</span>
+<span class="sd">    Field names are in lowercase as required by the vCon specification.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="CivicAddress.__init__"><a class="viewcode-back" href="../../api/vcon.html#vcon.civic_address.CivicAddress.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a3</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a4</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a5</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">a6</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">prd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">pod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">sts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">hno</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">hns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">lmk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">loc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">flr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">nam</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">pc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a new CivicAddress object.</span>
+
+<span class="sd">        :param country: Country code (ISO 3166-1 alpha-2)</span>
+<span class="sd">        :type country: str</span>
+<span class="sd">        :param a1: Administrative area 1 (e.g. state or province)</span>
+<span class="sd">        :type a1: str</span>
+<span class="sd">        :param a2: Administrative area 2 (e.g. county or municipality)</span>
+<span class="sd">        :type a2: str</span>
+<span class="sd">        :param a3: Administrative area 3 (e.g. city or town)</span>
+<span class="sd">        :type a3: str</span>
+<span class="sd">        :param a4: Administrative area 4 (e.g. neighborhood or district)</span>
+<span class="sd">        :type a4: str</span>
+<span class="sd">        :param a5: Administrative area 5 (e.g. postal code)</span>
+<span class="sd">        :type a5: str</span>
+<span class="sd">        :param a6: Administrative area 6 (e.g. building or floor)</span>
+<span class="sd">        :type a6: str</span>
+<span class="sd">        :param prd: Premier (e.g. department or suite number)</span>
+<span class="sd">        :type prd: str</span>
+<span class="sd">        :param pod: Post office box identifier</span>
+<span class="sd">        :type pod: str</span>
+<span class="sd">        :param sts: Street name</span>
+<span class="sd">        :type sts: str</span>
+<span class="sd">        :param hno: House number</span>
+<span class="sd">        :type hno: str</span>
+<span class="sd">        :param hns: House name</span>
+<span class="sd">        :type hns: str</span>
+<span class="sd">        :param lmk: Landmark name</span>
+<span class="sd">        :type lmk: str</span>
+<span class="sd">        :param loc: Location name</span>
+<span class="sd">        :type loc: str</span>
+<span class="sd">        :param flr: Floor</span>
+<span class="sd">        :type flr: str</span>
+<span class="sd">        :param nam: Name of the location</span>
+<span class="sd">        :type nam: str</span>
+<span class="sd">        :param pc: Postal code</span>
+<span class="sd">        :type pc: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">country</span> <span class="o">=</span> <span class="n">country</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a1</span> <span class="o">=</span> <span class="n">a1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a2</span> <span class="o">=</span> <span class="n">a2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a3</span> <span class="o">=</span> <span class="n">a3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a4</span> <span class="o">=</span> <span class="n">a4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a5</span> <span class="o">=</span> <span class="n">a5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a6</span> <span class="o">=</span> <span class="n">a6</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prd</span> <span class="o">=</span> <span class="n">prd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pod</span> <span class="o">=</span> <span class="n">pod</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sts</span> <span class="o">=</span> <span class="n">sts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hno</span> <span class="o">=</span> <span class="n">hno</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hns</span> <span class="o">=</span> <span class="n">hns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmk</span> <span class="o">=</span> <span class="n">lmk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loc</span> <span class="o">=</span> <span class="n">loc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flr</span> <span class="o">=</span> <span class="n">flr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nam</span> <span class="o">=</span> <span class="n">nam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pc</span> <span class="o">=</span> <span class="n">pc</span></div>
+
+<div class="viewcode-block" id="CivicAddress.to_dict"><a class="viewcode-back" href="../../api/vcon.html#vcon.civic_address.CivicAddress.to_dict">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the CivicAddress object to a dictionary.</span>
+
+<span class="sd">        The dictionary keys are the attribute names of the object, and the</span>
+<span class="sd">        values are the attribute values.</span>
+
+<span class="sd">        :return: A dictionary of the object&#39;s attributes</span>
+<span class="sd">        :rtype: dict[str, Optional[str]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">attr</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">))}</span></div></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
