@@ -20,6 +20,15 @@ import logging
 from .party import Party
 from .dialog import Dialog
 
+# Import extension framework
+try:
+    from .extensions.registry import get_extension_registry
+    from .extensions.base import ValidationResult
+    EXTENSIONS_AVAILABLE = True
+except ImportError:
+    EXTENSIONS_AVAILABLE = False
+    logger.warning("Extensions not available - install required dependencies")
+
 # Define constants for property handling modes
 PROPERTY_HANDLING_DEFAULT = "default"  # Keep non-standard properties
 PROPERTY_HANDLING_STRICT = "strict"    # Remove non-standard properties
@@ -51,7 +60,7 @@ _ALLOWED_DIALOG_PROPERTIES = {
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
-    "type", "body", "encoding", "meta"
+    "type", "body", "encoding", "meta", "start", "party", "dialog"
 }
 
 _ALLOWED_ANALYSIS_PROPERTIES = {
@@ -634,6 +643,244 @@ class Vcon:
         if "must_support" in self.vcon_dict and extension in self.vcon_dict["must_support"]:
             self.vcon_dict["must_support"].remove(extension)
             logger.info(f"Removed must_support extension: {extension}")
+
+    # Extension-specific methods
+    def add_lawful_basis_attachment(
+        self,
+        lawful_basis: str,
+        expiration: str,
+        purpose_grants: list,
+        party_index: Optional[int] = None,
+        dialog_index: Optional[int] = None,
+        **kwargs
+    ) -> None:
+        """
+        Add a lawful basis attachment to the vCon.
+
+        Args:
+            lawful_basis: The lawful basis type (consent, contract, etc.)
+            expiration: ISO 8601 timestamp when the lawful basis expires
+            purpose_grants: List of purpose grant dictionaries
+            party_index: Index of the party this applies to (optional)
+            dialog_index: Index of the dialog this applies to (optional)
+            **kwargs: Additional lawful basis parameters
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_lawful_basis_attachment(
+            ...     lawful_basis="consent",
+            ...     expiration="2026-01-01T00:00:00Z",
+            ...     purpose_grants=[
+            ...         {"purpose": "recording", "granted": True, "granted_at": "2025-01-01T00:00:00Z"}
+            ...     ]
+            ... )
+        """
+        if not EXTENSIONS_AVAILABLE:
+            raise RuntimeError("Extensions not available")
+        
+        try:
+            from .extensions.lawful_basis import LawfulBasisExtension
+            extension = LawfulBasisExtension()
+            attachment = extension.create_lawful_basis_attachment(
+                lawful_basis=lawful_basis,
+                expiration=expiration,
+                purpose_grants=purpose_grants,
+                **kwargs
+            )
+            
+            # Add party and dialog references if provided
+            if party_index is not None:
+                attachment["party"] = party_index
+            if dialog_index is not None:
+                attachment["dialog"] = dialog_index
+            
+            self.vcon_dict["attachments"].append(attachment)
+            
+            # Add extension to extensions list if not already present
+            if "lawful_basis" not in self.get_extensions():
+                self.add_extension("lawful_basis")
+            
+            logger.info("Added lawful basis attachment")
+            
+        except ImportError:
+            raise RuntimeError("Lawful basis extension not available")
+
+    def add_wtf_transcription_attachment(
+        self,
+        transcript: Dict[str, Any],
+        segments: List[Dict[str, Any]],
+        metadata: Dict[str, Any],
+        party_index: Optional[int] = None,
+        dialog_index: Optional[int] = None,
+        **kwargs
+    ) -> None:
+        """
+        Add a WTF transcription attachment to the vCon.
+
+        Args:
+            transcript: Transcript information dictionary
+            segments: List of segment dictionaries
+            metadata: Metadata dictionary
+            party_index: Index of the party this applies to (optional)
+            dialog_index: Index of the dialog this applies to (optional)
+            **kwargs: Additional WTF parameters
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_wtf_transcription_attachment(
+            ...     transcript={"text": "Hello world", "language": "en", "duration": 2.0, "confidence": 0.95},
+            ...     segments=[{"id": 0, "start": 0.0, "end": 2.0, "text": "Hello world", "confidence": 0.95}],
+            ...     metadata={"created_at": "2025-01-01T00:00:00Z", "processed_at": "2025-01-01T00:00:01Z", 
+            ...              "provider": "whisper", "model": "whisper-1"}
+            ... )
+        """
+        if not EXTENSIONS_AVAILABLE:
+            raise RuntimeError("Extensions not available")
+        
+        try:
+            from .extensions.wtf import WTFExtension
+            extension = WTFExtension()
+            attachment = extension.create_wtf_attachment(
+                transcript=transcript,
+                segments=segments,
+                metadata=metadata,
+                **kwargs
+            )
+            
+            # Add party and dialog references if provided
+            if party_index is not None:
+                attachment["party"] = party_index
+            if dialog_index is not None:
+                attachment["dialog"] = dialog_index
+            
+            self.vcon_dict["attachments"].append(attachment)
+            
+            # Add extension to extensions list if not already present
+            if "wtf_transcription" not in self.get_extensions():
+                self.add_extension("wtf_transcription")
+            
+            logger.info("Added WTF transcription attachment")
+            
+        except ImportError:
+            raise RuntimeError("WTF extension not available")
+
+    def find_lawful_basis_attachments(self, party_index: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Find lawful basis attachments in the vCon.
+
+        Args:
+            party_index: Filter by party index (optional)
+
+        Returns:
+            List of lawful basis attachment dictionaries
+        """
+        attachments = []
+        for attachment in self.vcon_dict.get("attachments", []):
+            if attachment.get("type") == "lawful_basis":
+                if party_index is None or attachment.get("party") == party_index:
+                    attachments.append(attachment)
+        return attachments
+
+    def find_wtf_attachments(self, party_index: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Find WTF transcription attachments in the vCon.
+
+        Args:
+            party_index: Filter by party index (optional)
+
+        Returns:
+            List of WTF attachment dictionaries
+        """
+        attachments = []
+        for attachment in self.vcon_dict.get("attachments", []):
+            if attachment.get("type") == "wtf_transcription":
+                if party_index is None or attachment.get("party") == party_index:
+                    attachments.append(attachment)
+        return attachments
+
+    def check_lawful_basis_permission(
+        self,
+        purpose: str,
+        party_index: Optional[int] = None
+    ) -> bool:
+        """
+        Check if permission is granted for a specific purpose.
+
+        Args:
+            purpose: The purpose to check permission for
+            party_index: Index of the party to check (optional)
+
+        Returns:
+            True if permission is granted, False otherwise
+        """
+        if not EXTENSIONS_AVAILABLE:
+            return False
+        
+        try:
+            from .extensions.lawful_basis import LawfulBasisExtension
+            extension = LawfulBasisExtension()
+            return extension.check_permission(self.vcon_dict, purpose, party_index)
+        except ImportError:
+            return False
+
+    def validate_extensions(self) -> Dict[str, Any]:
+        """
+        Validate all extensions in the vCon.
+
+        Returns:
+            Dictionary with validation results for each extension
+        """
+        if not EXTENSIONS_AVAILABLE:
+            return {"error": "Extensions not available"}
+        
+        try:
+            registry = get_extension_registry()
+            results = {}
+            
+            # Validate each extension
+            for extension_name in self.get_extensions():
+                result = registry.validate_extension(extension_name, self.vcon_dict)
+                results[extension_name] = {
+                    "is_valid": result.is_valid,
+                    "errors": result.errors,
+                    "warnings": result.warnings
+                }
+            
+            # Validate all attachments
+            attachment_results = []
+            for attachment in self.vcon_dict.get("attachments", []):
+                result = registry.validate_attachment(attachment)
+                attachment_results.append({
+                    "type": attachment.get("type"),
+                    "is_valid": result.is_valid,
+                    "errors": result.errors,
+                    "warnings": result.warnings
+                })
+            
+            results["attachments"] = attachment_results
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error validating extensions: {str(e)}")
+            return {"error": str(e)}
+
+    def process_extensions(self) -> Dict[str, Any]:
+        """
+        Process all extensions in the vCon.
+
+        Returns:
+            Dictionary with processing results for each extension
+        """
+        if not EXTENSIONS_AVAILABLE:
+            return {"error": "Extensions not available"}
+        
+        try:
+            registry = get_extension_registry()
+            return registry.process_extensions(self.vcon_dict)
+        except Exception as e:
+            logger.error(f"Error processing extensions: {str(e)}")
+            return {"error": str(e)}
 
     def find_attachment_by_type(self, type: str) -> Optional[Dict[str, Any]]:
         """

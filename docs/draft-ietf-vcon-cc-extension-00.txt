@@ -1,0 +1,504 @@
+
+
+
+
+Virtualized Conversations                                    D. G Petrie
+Internet-Draft                                                 SIPez LLC
+Intended status: Standards Track                             7 July 2025
+Expires: 8 January 2026
+
+
+                The JSON vCon - Contact Center Extension
+                    draft-ietf-vcon-cc-extension-00
+
+Abstract
+
+   A vCon is container for data and information relating to a human
+   conversation.  This document defines an extension for the JSON vCon
+   schema in support of call, support or contact center application of
+   the vCon conversational data exchange format.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at https://ietf-wg-
+   vcon.github.io/draft-ietf-vcon-cc-extension/draft-ietf-vcon-cc-
+   extension.html.  Status information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-ietf-vcon-cc-extension/.
+
+   Discussion of this document takes place on the Virtualized
+   Conversations Working Group mailing list (mailto:vcon@ietf.org),
+   which is archived at https://mailarchive.ietf.org/arch/browse/vcon/.
+   Subscribe at https://www.ietf.org/mailman/listinfo/vcon/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/ietf-wg-vcon/draft-ietf-vcon-cc-extension.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 1]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+   This Internet-Draft will expire on 8 January 2026.
+
+Copyright Notice
+
+   Copyright (c) 2025 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.  Conventions and Definitions . . . . . . . . . . . . . . . . .   3
+     2.1.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   3
+     2.2.  JSON Notation . . . . . . . . . . . . . . . . . . . . . .   4
+   3.  vCon JSON Object  . . . . . . . . . . . . . . . . . . . . . .   4
+     3.1.  Party Object  . . . . . . . . . . . . . . . . . . . . . .   5
+       3.1.1.  role  . . . . . . . . . . . . . . . . . . . . . . . .   5
+       3.1.2.  contact_list  . . . . . . . . . . . . . . . . . . . .   5
+     3.2.  Dialog Object . . . . . . . . . . . . . . . . . . . . . .   5
+       3.2.1.  campaign  . . . . . . . . . . . . . . . . . . . . . .   6
+       3.2.2.  interaction_type  . . . . . . . . . . . . . . . . . .   6
+       3.2.3.  interaction_id  . . . . . . . . . . . . . . . . . . .   6
+       3.2.4.  skill . . . . . . . . . . . . . . . . . . . . . . . .   6
+   4.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
+   5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
+     5.1.  vCon JSON Registry Additions  . . . . . . . . . . . . . .   7
+       5.1.1.  vCon Extensions Names Registry  . . . . . . . . . . .   7
+       5.1.2.  Parties Object Parameter Names Registry . . . . . . .   7
+       5.1.3.  Dialog Object Parameter Names Registry  . . . . . . .   7
+   6.  Contact Center Use Cases  . . . . . . . . . . . . . . . . . .   8
+   7.  Example vCons . . . . . . . . . . . . . . . . . . . . . . . .   8
+   Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . .   8
+   References  . . . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     Normative References  . . . . . . . . . . . . . . . . . . . . .   9
+     Informative References  . . . . . . . . . . . . . . . . . . . .   9
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   9
+
+
+
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 2]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+1.  Introduction
+
+   This document adds a number of new parameters to the Party Object and
+   the Dialog Object defined as part of the JSON vCon schema in
+   [VCON-CORE].  The vCon parameters defined in this document have been
+   determined to be need and are specific to the contact center uses of
+   vCon.  The general framework and requirements for defining an
+   extension to the JSON vCon schema are defined in [VCON-CORE].
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+2.1.  Terminology
+
+   *  analysis - analysis, transformations, summary, sentiment, or
+      translation typically of the dialog data
+
+   *  conversation - an exchange of communication using text, audio or
+      video medium between at least one human and one or more bots or
+      humans
+
+   *  de-identification - removal of all information that could identify
+      a party in a conversation.  This includes PII as well as audio and
+      video recordings.  Voice recordings might be re-vocalized with a
+      different speaker.
+
+   *  dialog - the captured conversation in its original form (e.g.
+      text, audio or video)
+
+   *  encrypted form - encrypted JWE document with the JWS signed vCon
+      form contained in the ciphertext
+
+   *  file - a data block either included or referenced in a vCon
+
+   *  object - JSON object containing key and value pairs
+
+   *  parameter - JSON key and value pair
+
+   *  party - an observer or participant to the conversation, either
+      passive or active
+
+   *  payload - the contents or bytes that make up a file
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 3]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+   *  PII - Personal Identifiable Information
+
+   *  PII masked - may include voice recordings, but PII is removed from
+      transcripts and recordings (audio and video).
+
+   *  vCon - container for conversational information
+
+   *  vCon instance - a vCon populated with data for a specific
+      conversation
+
+   *  vCon instance version - a single version of an instance of a
+      conversation, which may be modified to redact or append additional
+      information forming a subsequent vCon instance version
+
+   *  vCon syntax version - the version for the data syntax used for
+      form a vCon
+
+   *  signed form - JWS signed document with the unsigned vCon form
+      contained in the payload
+
+2.2.  JSON Notation
+
+   This document uses the same JSON notation that is used in
+   [VCON-CORE].  For the ease of documentation, the convention for JSON
+   notation used in this document is copied from section 2.2 of
+   [VCON-CORE].
+
+   *  "String" - a JSON string type
+
+   *  "A[]" and array of values of type A.
+
+   All parameters are assumed to be mandatory unless other wise noted.
+
+   Objects or arrays with no or null values MAY be excluded from the
+   vCon.
+
+3.  vCon JSON Object
+
+   This vCon extension adds a new extensions parameter name value token.
+   The string token "CC" should be included in the extensions array of
+   the vCon Object.  It is not required that consumers of vCons with the
+   *CC* extension content support this extension.  It does not change
+   the semantics or remove any parameters form the core vCon schema.
+   There is no need to list the CC extension name in the *must_support*
+   parameter.
+
+
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 4]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+3.1.  Party Object
+
+   This vCon extension adds the following new parameters to the Party
+   Object in support of Contact Center use cases.
+
+3.1.1.  role
+
+   The role that the participant played in the conversation.  In a call
+   center there are roles: such as: agents, customer, supervisor and
+   specialist.  In conferences there are roles: host, cohost, speaker,
+   panelist, participant and other roles.  The role parameter provides
+   the ability to label the role that the part played in the
+   conversation.
+
+   *  role: "String" (optional)
+
+   The following values for the role parameter MAY be used:
+
+   *  "agent"
+
+   *  "customer"
+
+   *  "supervisor"
+
+   *  "sme" (for subject mater expert)
+
+   *  "thirdparty"
+
+   Other values for the role parameter MAY also be used.
+
+3.1.2.  contact_list
+
+   In a contact center scenario, the conversation with this party may be
+   part of a larger effort of contacting a group of parties,
+   individually or perhaps in groups.  It is sometimes useful to
+   reference the list from which this party was included.  The
+   contact_list may be used as a label for foreign key reference to the
+   contact list that this party was on.
+
+   *  contact_list "String" (optional)
+
+3.2.  Dialog Object
+
+   This vCon extension adds the following new parameters to the Dialog
+   Object in support of Contact Center use cases.
+
+
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 5]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+3.2.1.  campaign
+
+   In a contact center scenario, a dialog may be initiated as part of a
+   campaign or set of dialogs initiated with a common goal or focus or
+   to be handled or treated in a specific way.  The campaign parameter
+   is string that may be used as a label or foreign key in reference to
+   an external specification for how the communication is to be
+   initiated, handled or treated.  In some case it may be appropriate to
+   attached the campaign data as an Attachment Object.
+
+   *  campaign: "String" (optional)
+
+3.2.2.  interaction_type
+
+   *  interaction_type "String" (optional)
+
+   TODO: add enumerated values from JDR
+
+3.2.3.  interaction_id
+
+   TODO: Is this different from RFC7989 session ID (session_id in core)?
+
+   In a contact center scenario, interactions with a party are often
+   labeled with an identifier.  In some case the interaction is
+   contained in a single dialog.  In others there may be multiple
+   dialogs (e.g. messages or calls) that are all part of a single
+   interaction.  There may also be many interactions for a single
+   conversation or vCon.  The interaction parameter is used as a label
+   or foreign key in reference to the interaction ID.
+
+   *  interaction_id "String" (optional)
+
+3.2.4.  skill
+
+   A contact center may service multiple purposes or customers.  In this
+   scenario it is important to label the conversation segment or dialog.
+   The agent or automata which services the dialog are required to have
+   a specific skill.  To facilitate this in a vCon dialog, the skill
+   parameter is provided.  The string values of the skill parameter are
+   contact center specific.
+
+   *  skill "String" (optional)
+
+4.  Security Considerations
+
+   Security considerations are covered in the [VCON-CORE] document.
+   This extension to vCon adds no additional security concerns.
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 6]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+5.  IANA Considerations
+
+5.1.  vCon JSON Registry Additions
+
+5.1.1.  vCon Extensions Names Registry
+
+   The following extension name is added to the vCon Extensions Names
+   Registry.
+
+       +================+=============+============+===============+
+       | Extension Name | Extension   | Change     | Specification |
+       |                | Description | Controller | Document(s):  |
+       +================+=============+============+===============+
+       | CC             | Contact     | IESG       | Section 3 RFC |
+       |                | Center      |            | XXXX          |
+       +----------------+-------------+------------+---------------+
+
+                                  Table 1
+
+5.1.2.  Parties Object Parameter Names Registry
+
+   The following defines additional values for the vCon Parties Object
+   Parameter Names Registry.
+
+   +==============+======================+============+===============+
+   | Parameter    | Parameter            | Change     | Specification |
+   | Name         | Description          | Controller | Document(s)   |
+   +==============+======================+============+===============+
+   | role         | agent party role     | IESG       | Section 3.1.1 |
+   |              |                      |            | RFC XXXX      |
+   +--------------+----------------------+------------+---------------+
+   | contact_list | contact_list         | IESG       | Section 3.1.2 |
+   |              | including this party |            | RFC XXXX      |
+   +--------------+----------------------+------------+---------------+
+
+                                 Table 2
+
+5.1.3.  Dialog Object Parameter Names Registry
+
+   The following defines the initial values for the vCon Dialog Object
+   Parameter Names Registry.
+
+
+
+
+
+
+
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 7]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+   +==================+===================+============+===============+
+   | Parameter Name   | Parameter         | Change     | Specification |
+   |                  | Description       | Controller | Document(s)   |
+   +==================+===================+============+===============+
+   | campaign         | campaign to       | IESG       | Section 3.2.1 |
+   |                  | which dialog      |            | RFC XXXX      |
+   |                  | is part of        |            |               |
+   +------------------+-------------------+------------+---------------+
+   | interaction_type | dialog            | IESG       | Section 3.2.2 |
+   |                  | interaction       |            | RFC XXXX      |
+   |                  | type              |            |               |
+   +------------------+-------------------+------------+---------------+
+   | interaction_id   | dialog            | IESG       | Section 3.2.3 |
+   |                  | interaction       |            | RFC XXXX      |
+   |                  | id                |            |               |
+   +------------------+-------------------+------------+---------------+
+   | skill            | required          | IESG       | Section 3.2.4 |
+   |                  | skill             |            | RFC XXXX      |
+   +------------------+-------------------+------------+---------------+
+
+                                  Table 3
+
+6.  Contact Center Use Cases
+
+   TODO: insert draft-rosenberg-vcon-cc-usecases here
+
+7.  Example vCons
+
+   TODO
+
+Acknowledgments
+
+   *  Thank you to Thomas McCarthy-Howe for inventing the concept of a
+      vCon and the many discussions that we had while this concept was
+      developed into reality.
+
+   *  Thank you to Jonathan Rosenberg and Andrew Siciliano for their
+      input to the vCon container requirements in the form of I-D:
+      draft-rosenberg-vcon-cc-usecases.
+
+   *  Thank you to Rohan Mahy for his help in exploring the CDDL schema
+      and CBOR format for vCon.
+
+   *  The examples in this document were generated using the command
+      line interface (CLI) from the py-vcon [PY-VCON] python open source
+      project.
+
+   *  Thank you to Steve Lasker for formatting and spelling edits.
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 8]
+
+Internet-Draft              vCon CC Extension                  July 2025
+
+
+References
+
+Normative References
+
+   [JSON]     Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
+              Interchange Format", STD 90, RFC 8259,
+              DOI 10.17487/RFC8259, December 2017,
+              <https://www.rfc-editor.org/rfc/rfc8259>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+   [UUID]     Peabody, B. and K. R. Davis, "New UUID Formats", Work in
+              Progress, Internet-Draft, draft-peabody-dispatch-new-uuid-
+              format-04, 23 June 2022,
+              <https://datatracker.ietf.org/doc/html/draft-peabody-
+              dispatch-new-uuid-format-04>.
+
+   [VCON-CORE]
+              "*** BROKEN REFERENCE ***".
+
+Informative References
+
+   [CDR]      ITU, "Recommendation Q.825: Specification of TMN
+              applications at the Q3 interface: Call detail recording",
+              n.d., <https://www.itu.int/rec/T-REC-Q.825>.
+
+   [PY-VCON]  "Python open source vCon command line interface, library
+              and workflow server", n.d.,
+              <https://github.com/py-vcon/py-vcon>.
+
+   [vCon-white-paper]
+              Howe, T., Petrie, D., Lieberman, M., and A. Quayle, "vCon:
+              an Open Standard for Conversation Data", n.d.,
+              <https://github.com/vcon-dev/vcon/blob/main/docs/vCons_%20
+              an%20Open%20Standard%20for%20Conversation%20Data.pdf>.
+
+Author's Address
+
+   Daniel G Petrie
+   SIPez LLC
+   Email: dan.ietf@sipez.com
+
+
+
+Petrie                   Expires 8 January 2026                 [Page 9]

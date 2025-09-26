@@ -35,6 +35,25 @@ class ExtensionRegistry:
         """List all registered extension names."""
         return list(self._extensions.keys())
     
+    def initialize_default_extensions(self) -> None:
+        """Initialize default extensions."""
+        try:
+            from .lawful_basis import LawfulBasisExtension
+            from .wtf import WTFExtension
+            
+            # Register lawful basis extension
+            lawful_basis_ext = LawfulBasisExtension()
+            self.register_extension(lawful_basis_ext.get_extension_info())
+            
+            # Register WTF extension
+            wtf_ext = WTFExtension()
+            self.register_extension(wtf_ext.get_extension_info())
+            
+            logger.info("Default extensions initialized")
+            
+        except ImportError as e:
+            logger.warning(f"Could not initialize default extensions: {str(e)}")
+    
     def is_extension_registered(self, name: str) -> bool:
         """Check if an extension is registered."""
         return name in self._extensions
