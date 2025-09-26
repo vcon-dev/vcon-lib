@@ -1203,4 +1203,4 @@ image = ["pillow", "pypdf"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "235e9eba7abfb6b796180cf838c122a5836d75c823116a0fadaa831e1ba06699"
+content-hash = "da944fea381fdd3b3641c0b8a48c95461139f37f23b646ddd1e8adaae9f08629"
