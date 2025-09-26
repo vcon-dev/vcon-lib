@@ -20,6 +20,9 @@ import logging
 from .party import Party
 from .dialog import Dialog
 
+# Set up logger
+logger = logging.getLogger(__name__)
+
 # Import extension framework
 try:
     from .extensions.registry import get_extension_registry
