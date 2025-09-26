@@ -244,11 +244,19 @@ class TestLawfulBasisProcessor:
         
         # Check granted permission
         result = processor.check_permission(vcon_dict, "recording")
+        print(f"Result: {result}")
+        print(f"Success: {result.success}")
+        print(f"Errors: {result.errors}")
+        print(f"Data: {result.data}")
         assert result.success
         assert result.data["permission"] is True
         
         # Check denied permission
         result = processor.check_permission(vcon_dict, "marketing")
+        print(f"Marketing Result: {result}")
+        print(f"Marketing Success: {result.success}")
+        print(f"Marketing Errors: {result.errors}")
+        print(f"Marketing Data: {result.data}")
         assert result.success
         assert result.data["permission"] is False
 

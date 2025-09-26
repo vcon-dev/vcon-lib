@@ -152,8 +152,13 @@ class PermissionEvaluator:
             
             if not applicable_attachments:
                 return ProcessingResult(
-                    False,
-                    errors=[f"No lawful basis found for purpose: {purpose}"]
+                    True,
+                    data={
+                        "permission": False,
+                        "purpose": purpose,
+                        "party_index": party_index,
+                        "attachments_checked": 0
+                    }
                 )
             
             # Evaluate permissions from all applicable attachments
