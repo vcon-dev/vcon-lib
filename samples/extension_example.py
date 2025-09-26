@@ -25,19 +25,26 @@ def main():
     
     # Create a new vCon
     vcon = Vcon.build_new()
-    print(f"Created vCon with UUID: {vcon.get_uuid()}")
+    print(f"Created vCon with UUID: {vcon.uuid}")
     
     # Add a party
-    vcon.add_party("tel:+1234567890", "caller")
+    from vcon.party import Party
+    party = Party("tel:+1234567890", "caller")
+    vcon.add_party(party)
     print("Added party")
     
     # Add a dialog
-    vcon.add_dialog_inline(
-        "recording",
-        "audio/mp3",
-        "base64",
-        "dGVzdCBhdWRpbyBkYXRh"  # "test audio data" in base64
+    from vcon.dialog import Dialog
+    from datetime import datetime, timezone
+    dialog = Dialog(
+        type="recording",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        mimetype="audio/mp3",
+        body="dGVzdCBhdWRpbyBkYXRh",  # "test audio data" in base64
+        encoding="base64"
     )
+    vcon.add_dialog(dialog)
     print("Added dialog")
     
     # Example 1: Lawful Basis Extension
