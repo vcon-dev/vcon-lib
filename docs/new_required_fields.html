@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Required Fields &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+      <script src="_static/jquery.js"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+      <script src="_static/doctools.js"></script>
+      <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Version Management Changes" href="version_management.html" />
+    <link rel="prev" title="Usage Guide" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">New Required Fields</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vcon-object-level-extensions">vCon Object Level Extensions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#adding-extensions">Adding Extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#managing-extensions">Managing Extensions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enhanced-party-information">Enhanced Party Information</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sip-uri-support">SIP URI Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#decentralized-identifier-did-support">Decentralized Identifier (DID) Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vcard-format-support">vCard Format Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timezone-support">Timezone Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#complete-party-example">Complete Party Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dialog-session-management-and-content-integrity">Dialog Session Management and Content Integrity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#session-identifier">Session Identifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#content-hash-for-integrity-verification">Content Hash for Integrity Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#complete-dialog-example">Complete Dialog Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#json-serialization">JSON Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#backward-compatibility">Backward Compatibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="version_management.html">Version Management Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">vcon</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">New Required Fields</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/new_required_fields.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="new-required-fields">
+<h1>New Required Fields<a class="headerlink" href="#new-required-fields" title="Permalink to this heading"></a></h1>
+<p>This document describes the new required fields added to the vCon library to support the latest IETF vCon specification requirements.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>The vCon library has been updated to include new fields that enhance functionality and interoperability:</p>
+<ul class="simple">
+<li><p><strong>vCon Object Level</strong>: Extensions and must-support requirements</p></li>
+<li><p><strong>Party Object</strong>: SIP URI, Decentralized Identifier (DID), vCard format, and timezone</p></li>
+<li><p><strong>Dialog Object</strong>: Session identifier and content hash for integrity verification</p></li>
+</ul>
+</section>
+<section id="vcon-object-level-extensions">
+<h2>vCon Object Level Extensions<a class="headerlink" href="#vcon-object-level-extensions" title="Permalink to this heading"></a></h2>
+<p>Extensions allow vCon implementations to declare additional capabilities and requirements.</p>
+<section id="adding-extensions">
+<h3>Adding Extensions<a class="headerlink" href="#adding-extensions" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+
+<span class="c1"># Add extensions used in this vCon</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
+
+<span class="c1"># Specify extensions that must be supported</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="managing-extensions">
+<h3>Managing Extensions<a class="headerlink" href="#managing-extensions" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get current extensions</span>
+<span class="n">extensions</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>  <span class="c1"># [&quot;video&quot;, &quot;encryption&quot;, &quot;analytics&quot;]</span>
+<span class="n">must_support</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>  <span class="c1"># [&quot;encryption&quot;, &quot;video&quot;]</span>
+
+<span class="c1"># Remove extensions if needed</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">remove_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">remove_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check extension compatibility</span>
+<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+<span class="n">available</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Required extension &#39;</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&#39; not available&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="enhanced-party-information">
+<h2>Enhanced Party Information<a class="headerlink" href="#enhanced-party-information" title="Permalink to this heading"></a></h2>
+<p>Parties now support additional contact and identification methods for better interoperability.</p>
+<section id="sip-uri-support">
+<h3>SIP URI Support<a class="headerlink" href="#sip-uri-support" title="Permalink to this heading"></a></h3>
+<p>SIP (Session Initiation Protocol) URIs allow parties to be contacted via VoIP:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon.party</span><span class="w"> </span><span class="kn">import</span> <span class="n">Party</span>
+
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+    <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:john@example.com&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a></p>
+</section>
+<section id="decentralized-identifier-did-support">
+<h3>Decentralized Identifier (DID) Support<a class="headerlink" href="#decentralized-identifier-did-support" title="Permalink to this heading"></a></h3>
+<p>DIDs provide blockchain-based identity management:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Alice Smith&quot;</span><span class="p">,</span>
+    <span class="n">did</span><span class="o">=</span><span class="s2">&quot;did:example:123456789abcdef&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
+</section>
+<section id="vcard-format-support">
+<h3>vCard Format Support<a class="headerlink" href="#vcard-format-support" title="Permalink to this heading"></a></h3>
+<p>vCard format provides standardized contact information:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Bob Johnson&quot;</span><span class="p">,</span>
+    <span class="n">jCard</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;fn&quot;</span><span class="p">:</span> <span class="s2">&quot;Bob Johnson&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tel&quot;</span><span class="p">:</span> <span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;bob@example.com&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;org&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Corp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Software Engineer&quot;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id9"><span class="problematic" id="id10">``</span></a><a href="#id11"><span class="problematic" id="id12">`</span></a></p>
+</section>
+<section id="timezone-support">
+<h3>Timezone Support<a class="headerlink" href="#timezone-support" title="Permalink to this heading"></a></h3>
+<p>Timezone information helps with proper time handling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Carol Wilson&quot;</span><span class="p">,</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id13"><span class="problematic" id="id14">``</span></a><a href="#id15"><span class="problematic" id="id16">`</span></a></p>
+</section>
+<section id="complete-party-example">
+<h3>Complete Party Example<a class="headerlink" href="#complete-party-example" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+    <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
+    <span class="n">did</span><span class="o">=</span><span class="s2">&quot;did:example:123456789abcdef&quot;</span><span class="p">,</span>
+    <span class="n">jCard</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;fn&quot;</span><span class="p">:</span> <span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tel&quot;</span><span class="p">:</span> <span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;john@example.com&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;org&quot;</span><span class="p">:</span> <span class="s2">&quot;Example Corp&quot;</span>
+    <span class="p">},</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id17"><span class="problematic" id="id18">``</span></a><a href="#id19"><span class="problematic" id="id20">`</span></a></p>
+</section>
+</section>
+<section id="dialog-session-management-and-content-integrity">
+<h2>Dialog Session Management and Content Integrity<a class="headerlink" href="#dialog-session-management-and-content-integrity" title="Permalink to this heading"></a></h2>
+<p>Dialogs now support session tracking and content integrity verification.</p>
+<section id="session-identifier">
+<h3>Session Identifier<a class="headerlink" href="#session-identifier" title="Permalink to this heading"></a></h3>
+<p>Session IDs help track conversation sessions across multiple dialogs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon.dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dialog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Get session ID</span>
+<span class="n">session_id</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">get_session_id</span><span class="p">()</span>
+
+<span class="c1"># Set session ID</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_session_id</span><span class="p">(</span><span class="s2">&quot;session-67890&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id21"><span class="problematic" id="id22">``</span></a><a href="#id23"><span class="problematic" id="id24">`</span></a></p>
+</section>
+<section id="content-hash-for-integrity-verification">
+<h3>Content Hash for Integrity Verification<a class="headerlink" href="#content-hash-for-integrity-verification" title="Permalink to this heading"></a></h3>
+<p>Content hashes ensure data integrity and can replace the older alg/signature fields:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Calculate content hash</span>
+<span class="n">content_hash</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">()</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+
+<span class="c1"># Verify content integrity</span>
+<span class="n">is_valid</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">verify_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content integrity: </span><span class="si">{</span><span class="n">is_valid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Get current hash</span>
+<span class="n">current_hash</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">get_content_hash</span><span class="p">()</span>
+
+<span class="c1"># Set hash manually</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="s2">&quot;abc123def456&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id25"><span class="problematic" id="id26">``</span></a><a href="#id27"><span class="problematic" id="id28">`</span></a></p>
+</section>
+<section id="complete-dialog-example">
+<h3>Complete Dialog Example<a class="headerlink" href="#complete-dialog-example" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate and set content hash for integrity verification</span>
+<span class="n">content_hash</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">()</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+
+<span class="c1"># Verify content integrity</span>
+<span class="n">is_valid</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">verify_content_hash</span><span class="p">(</span><span class="n">content_hash</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content integrity: </span><span class="si">{</span><span class="n">is_valid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id29"><span class="problematic" id="id30">``</span></a><a href="#id31"><span class="problematic" id="id32">`</span></a></p>
+</section>
+</section>
+<section id="json-serialization">
+<h2>JSON Serialization<a class="headerlink" href="#json-serialization" title="Permalink to this heading"></a></h2>
+<p>The new fields are properly serialized to JSON:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a vCon with new fields</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
+    <span class="n">did</span><span class="o">=</span><span class="s2">&quot;did:example:123456789abcdef&quot;</span><span class="p">,</span>
+    <span class="n">jCard</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fn&quot;</span><span class="p">:</span> <span class="s2">&quot;John Doe&quot;</span><span class="p">},</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_party</span><span class="p">(</span><span class="n">party</span><span class="p">)</span>
+
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello!&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">())</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_dialog</span><span class="p">(</span><span class="n">dialog</span><span class="p">)</span>
+
+<span class="c1"># Serialize to JSON</span>
+<span class="n">json_data</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#id33"><span class="problematic" id="id34">``</span></a><a href="#id35"><span class="problematic" id="id36">`</span></a></p>
+<p>The resulting JSON will include:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;extensions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;must_support&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;encryption&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;parties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sip&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;did&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;did:example:123456789abcdef&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;jCard&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;fn&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="w">    </span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">&quot;dialog&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;parties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello!&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;session-12345&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;content_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
+<span class="w">    </span><span class="p">}]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><a href="#id37"><span class="problematic" id="id38">``</span></a><a href="#id39"><span class="problematic" id="id40">`</span></a></p>
+</section>
+<section id="backward-compatibility">
+<h2>Backward Compatibility<a class="headerlink" href="#backward-compatibility" title="Permalink to this heading"></a></h2>
+<p>All new fields are optional and backward compatible:</p>
+<ul class="simple">
+<li><p>Existing vCon objects without the new fields will continue to work</p></li>
+<li><p>New fields only appear in JSON output when they have values</p></li>
+<li><p>The library maintains compatibility with older vCon versions</p></li>
+</ul>
+</section>
+<section id="migration-guide">
+<h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Permalink to this heading"></a></h2>
+<p>To migrate existing code to use the new fields:</p>
+<ol class="arabic simple">
+<li><p><strong>Add Extensions</strong>: Use <cite>add_extension()</cite> and <cite>add_must_support()</cite> to declare capabilities</p></li>
+<li><p><strong>Enhance Parties</strong>: Add SIP, DID, jCard, and timezone information to Party objects</p></li>
+<li><p><strong>Track Sessions</strong>: Add session_id to Dialog objects for better session management</p></li>
+<li><p><strong>Verify Integrity</strong>: Use content_hash for data integrity verification instead of alg/signature</p></li>
+</ol>
+<p>Example migration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Old code</span>
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;John&quot;</span><span class="p">,</span> <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">)</span>
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+
+<span class="c1"># New code</span>
+<span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John&quot;</span><span class="p">,</span>
+    <span class="n">tel</span><span class="o">=</span><span class="s2">&quot;+1234567890&quot;</span><span class="p">,</span>
+    <span class="n">sip</span><span class="o">=</span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
+    <span class="n">timezone</span><span class="o">=</span><span class="s2">&quot;America/New_York&quot;</span>
+<span class="p">)</span>
+
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+<span class="p">)</span>
+<span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><a href="#id41"><span class="problematic" id="id42">``</span></a><a href="#id43"><span class="problematic" id="id44">`</span></a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="version_management.html" class="btn btn-neutral float-right" title="Version Management Changes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

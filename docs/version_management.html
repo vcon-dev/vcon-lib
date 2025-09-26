@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Version Management Changes &mdash; vcon 0.7.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+      <script src="_static/jquery.js"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+      <script src="_static/doctools.js"></script>
+      <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="vcon" href="api/modules.html" />
+    <link rel="prev" title="New Required Fields" href="new_required_fields.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            vcon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Version Management Changes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-changes">Key Changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#benefits">Benefits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">vcon</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">vcon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Version Management Changes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/version_management.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="version-management-changes">
+<h1>Version Management Changes<a class="headerlink" href="#version-management-changes" title="Permalink to this heading"></a></h1>
+<p>This document describes the changes to version management in the vCon library, including the removal of mandatory version enforcement and the optional nature of the version field.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<p>Starting with version 0.7.0, the vCon library has simplified version management by making the version field optional and removing automatic version enforcement. This aligns with the latest vCon specification changes and provides more flexibility for users.</p>
+</section>
+<section id="key-changes">
+<h2>Key Changes<a class="headerlink" href="#key-changes" title="Permalink to this heading"></a></h2>
+<p>### Version Field is Now Optional</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">vcon</span></code> field in vCon objects is no longer required:</p>
+<ul class="simple">
+<li><p>New vCon objects created with <code class="docutils literal notranslate"><span class="pre">Vcon.build_new()</span></code> do not include a version field by default</p></li>
+<li><p>Existing vCon objects with version fields continue to work unchanged</p></li>
+<li><p>The version field can be manually added if needed</p></li>
+</ul>
+<p>### Removed Version Management Parameters</p>
+<p>The following parameters have been removed from all Vcon methods:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter removed from:
+- <code class="docutils literal notranslate"><span class="pre">Vcon.__init__()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">Vcon.build_from_json()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">Vcon.build_new()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">Vcon.load()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">Vcon.load_from_file()</span></code>
+- <code class="docutils literal notranslate"><span class="pre">Vcon.load_from_url()</span></code></p></li>
+</ul>
+<p>### Updated Method Signatures</p>
+<p>All method signatures have been updated to remove version management:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Old signatures (no longer supported)</span>
+<span class="n">Vcon</span><span class="p">(</span><span class="n">vcon_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">(</span><span class="n">created_at</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">build_from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># New signatures</span>
+<span class="n">Vcon</span><span class="p">(</span><span class="n">vcon_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">property_handling</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">(</span><span class="n">created_at</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">property_handling</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">build_from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="n">property_handling</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+<span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">property_handling</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="migration-guide">
+<h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Permalink to this heading"></a></h2>
+<p>### For Existing Code</p>
+<p>If you were using the <code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter, simply remove it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Old code (will cause errors)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;file.json&quot;</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># New code (remove strict_version parameter)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;file.json&quot;</span><span class="p">)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>### For Version Field Handling</p>
+<p>The version field is now optional. You can choose to:</p>
+<ol class="arabic simple">
+<li><p><strong>Ignore version fields</strong> (recommended for new code):
+- Simply don’t set or check version fields
+- The library will work without them</p></li>
+<li><p><strong>Manually manage version fields</strong> (if needed):
+- Add version fields manually when creating vCon objects
+- Check version fields in your application logic</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Option 1: Ignore version fields (recommended)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+<span class="c1"># vcon.vcon will be None</span>
+
+<span class="c1"># Option 2: Manually add version field if needed</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.3.0&quot;</span>
+<span class="c1"># vcon.vcon will be &quot;0.3.0&quot;</span>
+</pre></div>
+</div>
+<p>### Backward Compatibility</p>
+<p>All changes are backward compatible:</p>
+<ul class="simple">
+<li><p>Existing vCon objects with version fields continue to work</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">vcon</span></code> property returns the version field if present, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not</p></li>
+<li><p>No breaking changes to existing functionality</p></li>
+</ul>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p>### Creating Versionless vCons</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+
+<span class="c1"># Create a new vCon without version field</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">)</span>  <span class="c1"># None</span>
+
+<span class="c1"># Add version field manually if needed</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.3.0&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">)</span>  <span class="c1"># &quot;0.3.0&quot;</span>
+</pre></div>
+</div>
+<p>### Working with Existing vCons</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load existing vCon (with or without version field)</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;existing.vcon.json&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check if version field exists</span>
+<span class="k">if</span> <span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Version: </span><span class="si">{</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No version field&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>### Validation Changes</p>
+<p>The validation logic has been updated to reflect the optional nature of the version field:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Validation no longer requires version field</span>
+<span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+
+<span class="c1"># Only uuid and created_at are required fields</span>
+<span class="c1"># Version field is optional and not validated</span>
+</pre></div>
+</div>
+</section>
+<section id="benefits">
+<h2>Benefits<a class="headerlink" href="#benefits" title="Permalink to this heading"></a></h2>
+<p>The simplified version management provides several benefits:</p>
+<ol class="arabic simple">
+<li><p><strong>Reduced Complexity</strong>: No need to manage version parameters</p></li>
+<li><p><strong>More Flexibility</strong>: Version fields are optional and can be added as needed</p></li>
+<li><p><strong>Better Interoperability</strong>: Works with vCon objects from different sources</p></li>
+<li><p><strong>Simplified API</strong>: Cleaner method signatures without version management</p></li>
+<li><p><strong>Future-Proof</strong>: Aligns with evolving vCon specification</p></li>
+</ol>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
+<p>### Common Issues</p>
+<ol class="arabic simple">
+<li><p><strong>“strict_version” parameter errors</strong>:
+- Remove the <code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter from all method calls
+- Update method signatures to use <code class="docutils literal notranslate"><span class="pre">property_handling</span></code> instead</p></li>
+<li><p><strong>Version field not found</strong>:
+- Check if the vCon object has a version field: <code class="docutils literal notranslate"><span class="pre">vcon.vcon</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">None</span></code>
+- Add version field manually if needed: <code class="docutils literal notranslate"><span class="pre">vcon.vcon_dict[&quot;vcon&quot;]</span> <span class="pre">=</span> <span class="pre">&quot;0.3.0&quot;</span></code></p></li>
+<li><p><strong>Validation errors</strong>:
+- Ensure required fields (uuid, created_at) are present
+- Version field is no longer required for validation</p></li>
+</ol>
+<p>### Getting Help</p>
+<p>If you encounter issues with the version management changes:</p>
+<ol class="arabic simple">
+<li><p>Check the migration guide above</p></li>
+<li><p>Review the changelog for detailed changes</p></li>
+<li><p>Test with the updated method signatures</p></li>
+<li><p>Ensure backward compatibility with existing vCon objects</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="new_required_fields.html" class="btn btn-neutral float-left" title="New Required Fields" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/modules.html" class="btn btn-neutral float-right" title="vcon" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Thomas McCarthy-Howe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
