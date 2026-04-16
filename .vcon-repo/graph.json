@@ -1,0 +1,543 @@
+{
+  "schema_version": "1.0.0",
+  "repo": "vcon-lib",
+  "repo_version": "0.9.0",
+  "archetype": "python-library",
+  "generated_at": "2026-04-16T15:15:46.025228+00:00",
+  "stats": {
+    "node_count": 59,
+    "edge_count": 23
+  },
+  "nodes": [
+    {
+      "id": "class:CivicAddress",
+      "type": "class",
+      "name": "CivicAddress",
+      "file": "src/vcon/civic_address.py",
+      "line": 4
+    },
+    {
+      "id": "class:Dialog",
+      "type": "class",
+      "name": "Dialog",
+      "file": "src/vcon/dialog.py",
+      "line": 44
+    },
+    {
+      "id": "function:get_extension_registry",
+      "type": "function",
+      "name": "get_extension_registry",
+      "file": "src/vcon/extensions/__init__.py",
+      "line": 18
+    },
+    {
+      "id": "class:ExtensionType",
+      "type": "class",
+      "name": "ExtensionType",
+      "file": "src/vcon/extensions/base.py",
+      "line": 17
+    },
+    {
+      "id": "class:ValidationResult",
+      "type": "class",
+      "name": "ValidationResult",
+      "file": "src/vcon/extensions/base.py",
+      "line": 24
+    },
+    {
+      "id": "class:ProcessingResult",
+      "type": "class",
+      "name": "ProcessingResult",
+      "file": "src/vcon/extensions/base.py",
+      "line": 45
+    },
+    {
+      "id": "class:ExtensionValidator",
+      "type": "class",
+      "name": "ExtensionValidator",
+      "file": "src/vcon/extensions/base.py",
+      "line": 59
+    },
+    {
+      "id": "class:ExtensionProcessor",
+      "type": "class",
+      "name": "ExtensionProcessor",
+      "file": "src/vcon/extensions/base.py",
+      "line": 73
+    },
+    {
+      "id": "class:ExtensionInfo",
+      "type": "class",
+      "name": "ExtensionInfo",
+      "file": "src/vcon/extensions/base.py",
+      "line": 87
+    },
+    {
+      "id": "class:ExtensionAttachment",
+      "type": "class",
+      "name": "ExtensionAttachment",
+      "file": "src/vcon/extensions/base.py",
+      "line": 119
+    },
+    {
+      "id": "class:LawfulBasisType",
+      "type": "class",
+      "name": "LawfulBasisType",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 18
+    },
+    {
+      "id": "class:ProofType",
+      "type": "class",
+      "name": "ProofType",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 28
+    },
+    {
+      "id": "class:HashAlgorithm",
+      "type": "class",
+      "name": "HashAlgorithm",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 36
+    },
+    {
+      "id": "class:CanonicalizationMethod",
+      "type": "class",
+      "name": "CanonicalizationMethod",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 43
+    },
+    {
+      "id": "class:PurposeGrant",
+      "type": "class",
+      "name": "PurposeGrant",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 48
+    },
+    {
+      "id": "class:ContentHash",
+      "type": "class",
+      "name": "ContentHash",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 115
+    },
+    {
+      "id": "class:ProofMechanism",
+      "type": "class",
+      "name": "ProofMechanism",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 178
+    },
+    {
+      "id": "class:RegistryInfo",
+      "type": "class",
+      "name": "RegistryInfo",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 215
+    },
+    {
+      "id": "class:LawfulBasisAttachment",
+      "type": "class",
+      "name": "LawfulBasisAttachment",
+      "file": "src/vcon/extensions/lawful_basis/attachment.py",
+      "line": 238
+    },
+    {
+      "id": "class:LawfulBasisExtension",
+      "type": "class",
+      "name": "LawfulBasisExtension",
+      "file": "src/vcon/extensions/lawful_basis/extension.py",
+      "line": 17
+    },
+    {
+      "id": "class:ProofProcessor",
+      "type": "class",
+      "name": "ProofProcessor",
+      "file": "src/vcon/extensions/lawful_basis/processing.py",
+      "line": 28
+    },
+    {
+      "id": "class:PermissionEvaluator",
+      "type": "class",
+      "name": "PermissionEvaluator",
+      "file": "src/vcon/extensions/lawful_basis/processing.py",
+      "line": 134
+    },
+    {
+      "id": "class:LawfulBasisProcessor",
+      "type": "class",
+      "name": "LawfulBasisProcessor",
+      "file": "src/vcon/extensions/lawful_basis/processing.py",
+      "line": 256
+    },
+    {
+      "id": "class:RegistryClient",
+      "type": "class",
+      "name": "RegistryClient",
+      "file": "src/vcon/extensions/lawful_basis/registry.py",
+      "line": 18
+    },
+    {
+      "id": "class:SCITTRegistryClient",
+      "type": "class",
+      "name": "SCITTRegistryClient",
+      "file": "src/vcon/extensions/lawful_basis/registry.py",
+      "line": 42
+    },
+    {
+      "id": "class:RegistryManager",
+      "type": "class",
+      "name": "RegistryManager",
+      "file": "src/vcon/extensions/lawful_basis/registry.py",
+      "line": 171
+    },
+    {
+      "id": "class:RegistryValidator",
+      "type": "class",
+      "name": "RegistryValidator",
+      "file": "src/vcon/extensions/lawful_basis/registry.py",
+      "line": 222
+    },
+    {
+      "id": "class:LawfulBasisValidationError",
+      "type": "class",
+      "name": "LawfulBasisValidationError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 23
+    },
+    {
+      "id": "class:LawfulBasisExpiredError",
+      "type": "class",
+      "name": "LawfulBasisExpiredError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 28
+    },
+    {
+      "id": "class:PermissionDeniedError",
+      "type": "class",
+      "name": "PermissionDeniedError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 33
+    },
+    {
+      "id": "class:LawfulBasisMissingError",
+      "type": "class",
+      "name": "LawfulBasisMissingError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 38
+    },
+    {
+      "id": "class:ProofVerificationError",
+      "type": "class",
+      "name": "ProofVerificationError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 43
+    },
+    {
+      "id": "class:ContentHashMismatchError",
+      "type": "class",
+      "name": "ContentHashMismatchError",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 48
+    },
+    {
+      "id": "class:LawfulBasisValidator",
+      "type": "class",
+      "name": "LawfulBasisValidator",
+      "file": "src/vcon/extensions/lawful_basis/validation.py",
+      "line": 53
+    },
+    {
+      "id": "class:ExtensionRegistry",
+      "type": "class",
+      "name": "ExtensionRegistry",
+      "file": "src/vcon/extensions/registry.py",
+      "line": 15
+    },
+    {
+      "id": "function:get_extension_registry",
+      "type": "function",
+      "name": "get_extension_registry",
+      "file": "src/vcon/extensions/registry.py",
+      "line": 188
+    },
+    {
+      "id": "function:register_extension",
+      "type": "function",
+      "name": "register_extension",
+      "file": "src/vcon/extensions/registry.py",
+      "line": 195
+    },
+    {
+      "id": "function:validate_extension",
+      "type": "function",
+      "name": "validate_extension",
+      "file": "src/vcon/extensions/registry.py",
+      "line": 200
+    },
+    {
+      "id": "function:validate_attachment",
+      "type": "function",
+      "name": "validate_attachment",
+      "file": "src/vcon/extensions/registry.py",
+      "line": 205
+    },
+    {
+      "id": "class:WTFProvider",
+      "type": "class",
+      "name": "WTFProvider",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 16
+    },
+    {
+      "id": "class:Transcript",
+      "type": "class",
+      "name": "Transcript",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 30
+    },
+    {
+      "id": "class:Word",
+      "type": "class",
+      "name": "Word",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 65
+    },
+    {
+      "id": "class:Segment",
+      "type": "class",
+      "name": "Segment",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 117
+    },
+    {
+      "id": "class:Speaker",
+      "type": "class",
+      "name": "Speaker",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 169
+    },
+    {
+      "id": "class:Quality",
+      "type": "class",
+      "name": "Quality",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 208
+    },
+    {
+      "id": "class:Metadata",
+      "type": "class",
+      "name": "Metadata",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 259
+    },
+    {
+      "id": "class:WTFAttachment",
+      "type": "class",
+      "name": "WTFAttachment",
+      "file": "src/vcon/extensions/wtf/attachment.py",
+      "line": 312
+    },
+    {
+      "id": "class:WTFExtension",
+      "type": "class",
+      "name": "WTFExtension",
+      "file": "src/vcon/extensions/wtf/extension.py",
+      "line": 18
+    },
+    {
+      "id": "class:WTFProcessor",
+      "type": "class",
+      "name": "WTFProcessor",
+      "file": "src/vcon/extensions/wtf/processing.py",
+      "line": 16
+    },
+    {
+      "id": "class:ProviderAdapter",
+      "type": "class",
+      "name": "ProviderAdapter",
+      "file": "src/vcon/extensions/wtf/providers.py",
+      "line": 25
+    },
+    {
+      "id": "class:WhisperAdapter",
+      "type": "class",
+      "name": "WhisperAdapter",
+      "file": "src/vcon/extensions/wtf/providers.py",
+      "line": 63
+    },
+    {
+      "id": "class:DeepgramAdapter",
+      "type": "class",
+      "name": "DeepgramAdapter",
+      "file": "src/vcon/extensions/wtf/providers.py",
+      "line": 160
+    },
+    {
+      "id": "class:AssemblyAIAdapter",
+      "type": "class",
+      "name": "AssemblyAIAdapter",
+      "file": "src/vcon/extensions/wtf/providers.py",
+      "line": 288
+    },
+    {
+      "id": "class:WTFValidator",
+      "type": "class",
+      "name": "WTFValidator",
+      "file": "src/vcon/extensions/wtf/validation.py",
+      "line": 16
+    },
+    {
+      "id": "class:Party",
+      "type": "class",
+      "name": "Party",
+      "file": "src/vcon/party.py",
+      "line": 6
+    },
+    {
+      "id": "class:PartyHistory",
+      "type": "class",
+      "name": "PartyHistory",
+      "file": "src/vcon/party.py",
+      "line": 123
+    },
+    {
+      "id": "class:Attachment",
+      "type": "class",
+      "name": "Attachment",
+      "file": "src/vcon/vcon.py",
+      "line": 79
+    },
+    {
+      "id": "class:Vcon",
+      "type": "class",
+      "name": "Vcon",
+      "file": "src/vcon/vcon.py",
+      "line": 188
+    },
+    {
+      "id": "document:readme-md",
+      "type": "document",
+      "name": "README.md",
+      "file": "README.md"
+    }
+  ],
+  "edges": [
+    {
+      "from": "class:ExtensionType",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ExtensionValidator",
+      "to": "class:ABC",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ExtensionProcessor",
+      "to": "class:ABC",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisType",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ProofType",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:HashAlgorithm",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:CanonicalizationMethod",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisProcessor",
+      "to": "class:ExtensionProcessor",
+      "type": "inherits"
+    },
+    {
+      "from": "class:SCITTRegistryClient",
+      "to": "class:RegistryClient",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisValidationError",
+      "to": "class:Exception",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisExpiredError",
+      "to": "class:LawfulBasisValidationError",
+      "type": "inherits"
+    },
+    {
+      "from": "class:PermissionDeniedError",
+      "to": "class:LawfulBasisValidationError",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisMissingError",
+      "to": "class:LawfulBasisValidationError",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ProofVerificationError",
+      "to": "class:LawfulBasisValidationError",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ContentHashMismatchError",
+      "to": "class:LawfulBasisValidationError",
+      "type": "inherits"
+    },
+    {
+      "from": "class:LawfulBasisValidator",
+      "to": "class:ExtensionValidator",
+      "type": "inherits"
+    },
+    {
+      "from": "class:WTFProvider",
+      "to": "class:Enum",
+      "type": "inherits"
+    },
+    {
+      "from": "class:WTFProcessor",
+      "to": "class:ExtensionProcessor",
+      "type": "inherits"
+    },
+    {
+      "from": "class:ProviderAdapter",
+      "to": "class:ABC",
+      "type": "inherits"
+    },
+    {
+      "from": "class:WhisperAdapter",
+      "to": "class:ProviderAdapter",
+      "type": "inherits"
+    },
+    {
+      "from": "class:DeepgramAdapter",
+      "to": "class:ProviderAdapter",
+      "type": "inherits"
+    },
+    {
+      "from": "class:AssemblyAIAdapter",
+      "to": "class:ProviderAdapter",
+      "type": "inherits"
+    },
+    {
+      "from": "class:WTFValidator",
+      "to": "class:ExtensionValidator",
+      "type": "inherits"
+    }
+  ],
+  "subsystems": []
+}
