@@ -27,17 +27,16 @@ Generating a UUID8 based on a domain name
 
 
 test_vcon_string = (
-    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.3.0",'
+    '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.4.0",'
     '"created_at":"2024-10-20T15:02:55.490850+00:00","parties":['
     '{"tel":"+14513886516","mailto":"david.scott@pickrandombusinesstype.com",'
     '"name":"David Scott","meta":{"role":"agent"}},'
     '{"tel":"+16171557264","mailto":"diane.allen@gmail.com","name":"Diane Allen",'
     '"meta":{"role":"customer"}}],"dialog":[{"type":"recording",'
     '"start":"2024-10-20T15:02:54.888840","duration":52.68,"parties":[0,1],'
-    '"mimetype":"audio/x-wav","filename":"bb1489ad-0b45-47a0-bca6-de124da39a3a.mp3",'
-    '"body":"","encoding":"base64url","alg":"sha256",'
-    '"signature":"JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",'
-    '"disposition":"ANSWERED"}],"attachments":[{"type":"generation_info","body":'
+    '"mediatype":"audio/x-wav","filename":"bb1489ad-0b45-47a0-bca6-de124da39a3a.mp3",'
+    '"body":"","encoding":"base64url","content_hash":"JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",'
+    '"disposition":"ANSWERED"}],"attachments":[{"purpose":"generation_info","body":'
     '{"agent_name":"David Scott","customer_name":"Diane Allen",'
     '"business":"Auto Repair Shop","problem":"billing","emotion":"disappointed",'
     '"prompt":"\\nGenerate a fake conversation between a customer and an agent.'
@@ -152,7 +151,7 @@ def test_build_from_json() -> None:
     """
     vcon = Vcon.build_from_json(test_vcon_string)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.3.0"
+    assert vcon.vcon == "0.4.0"
     assert vcon.created_at == "2024-10-20T15:02:55.490850+00:00"
 
 
@@ -173,11 +172,11 @@ def test_tags() -> None:
 
 def test_add_attachment():
     vcon = Vcon()
-    attachment = vcon.add_attachment(type="test_type", body="test_body")
+    attachment = vcon.add_attachment(purpose="test_purpose", body="test_body")
 
     assert len(vcon.vcon_dict["attachments"]) == 1
     assert vcon.vcon_dict["attachments"][0] == {
-        "type": "test_type",
+        "purpose": "test_purpose",
         "body": "test_body",
         "encoding": "none",
     }
@@ -228,15 +227,15 @@ def test_get_tag() -> None:
     assert vcon.get_tag("nonexistent_tag") is None
 
 
-def test_find_attachment_by_type() -> None:
+def test_find_attachment_by_purpose() -> None:
     vcon = Vcon.build_new()
-    vcon.add_attachment(body={"key": "value"}, type="test_type")
-    assert vcon.find_attachment_by_type("test_type") == {
-        "type": "test_type",
+    vcon.add_attachment(body={"key": "value"}, purpose="test_purpose")
+    assert vcon.find_attachment_by_purpose("test_purpose") == {
+        "purpose": "test_purpose",
         "body": {"key": "value"},
         "encoding": "none",
     }
-    assert vcon.find_attachment_by_type("nonexistent_type") is None
+    assert vcon.find_attachment_by_purpose("nonexistent_purpose") is None
 
 
 def test_find_analysis_by_type() -> None:
@@ -300,17 +299,16 @@ def test_properties() -> None:
         "start": "2024-10-20T15:02:54.888840",
         "duration": 52.68,
         "parties": [0, 1],
-        "mimetype": "audio/x-wav",
+        "mediatype": "audio/x-wav",
         "filename": "bb1489ad-0b45-47a0-bca6-de124da39a3a.mp3",
         "body": "",
         "encoding": "base64url",
-        "alg": "sha256",
-        "signature": "JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",
+        "content_hash": "JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",
         "disposition": "ANSWERED",
     }
 
     assert len(vcon.attachments) == 1
-    assert vcon.attachments[0]["type"] == "generation_info"
+    assert vcon.attachments[0]["purpose"] == "generation_info"
     assert vcon.attachments[0]["encoding"] == "none"
     assert "body" in vcon.attachments[0]
 
@@ -483,7 +481,7 @@ def test_add_dialog_external_audio() -> None:
         parties=[0],
         type="recording",
         url=GITHUB_WAV_URL,
-        mimetype="audio/wav",
+        mediatype="audio/wav",
         duration=get_audio_duration(GITHUB_WAV_URL),
         meta={"direction": "in"},
     )
@@ -495,7 +493,7 @@ def test_add_dialog_external_audio() -> None:
     found_dialog = vcon.find_dialog("type", "recording")
     assert found_dialog.to_dict() == external_dialog.to_dict()
     assert found_dialog.url == GITHUB_WAV_URL
-    assert found_dialog.mimetype == "audio/wav"
+    assert found_dialog.mediatype == "audio/wav"
 
 
 def test_add_dialog_inline_audio():
@@ -508,7 +506,7 @@ def test_add_dialog_inline_audio():
         parties=[0],
         type="recording",
         url=GITHUB_WAV_URL,
-        mimetype="audio/mp3",
+        mediatype="audio/mp3",
         duration=get_audio_duration(GITHUB_WAV_URL),
         meta={"direction": "out"},
     )
@@ -520,7 +518,7 @@ def test_add_dialog_inline_audio():
     found_dialog = vcon.find_dialog("type", "recording")
     assert found_dialog.to_dict() == inline_dialog.to_dict()
     assert found_dialog.url == GITHUB_WAV_URL
-    assert found_dialog.mimetype == "audio/mp3"
+    assert found_dialog.mediatype == "audio/mp3"
 
 
 def test_add_multiple_dialogs():
@@ -537,7 +535,7 @@ def test_add_multiple_dialogs():
         parties=[0, 1],
         type="recording",
         url=GITHUB_WAV_URL,
-        mimetype="audio/mp3",
+        mediatype="audio/mp3",
         duration=get_audio_duration(GITHUB_WAV_URL),
     )
 
@@ -620,19 +618,19 @@ def test_is_valid_with_invalid_analysis_dialog_reference():
     assert any("invalid dialog index: 0" in error for error in errors)
 
 
-def test_is_valid_with_invalid_mimetype():
-    """Test validation fails with invalid mimetype in dialog"""
+def test_is_valid_with_invalid_mediatype():
+    """Test validation fails with invalid mediatype in dialog"""
     vcon = Vcon.build_new()
 
-    # Add dialog with invalid mimetype
+    # Add dialog with invalid mediatype
     dialog = Dialog(
-        type="text", start="2023-06-01T10:00:00Z", parties=[], mimetype="invalid/type"
+        type="text", start="2023-06-01T10:00:00Z", parties=[], mediatype="invalid/type"
     )
     vcon.add_dialog(dialog)
 
     is_valid, errors = vcon.is_valid()
     assert not is_valid
-    assert any("Dialog at index 0 has an invalid or missing mimetype" in error for error in errors)
+    assert any("Dialog at index 0 has an invalid or missing mediatype" in error for error in errors)
 
 
 def test_validate_json_with_valid_vcon():
@@ -715,7 +713,7 @@ def test_load_from_file(tmp_path):
     vcon = Vcon.load(str(file_path))
     assert isinstance(vcon, Vcon)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.3.0"
+    assert vcon.vcon == "0.4.0"
 
 
 def test_load_from_file_not_found():
@@ -748,7 +746,7 @@ def test_load_from_url(mock_get):
     
     # Verify the vCon was loaded correctly
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.3.0"
+    assert vcon.vcon == "0.4.0"
     
     # Verify the mock was called correctly
     mock_get.assert_called_once_with(url)
@@ -931,7 +929,7 @@ def test_add_video_dialog():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],  # First party (index 0)
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="test_video.mp4"
     )
     
@@ -941,9 +939,9 @@ def test_add_video_dialog():
     # Verify it was added correctly
     assert len(vcon.dialog) == 1
     assert vcon.dialog[0]["type"] == "video"
-    assert vcon.dialog[0]["mimetype"] == "video/mp4"
+    assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
-@pytest.mark.parametrize("format_name,mimetype", [
+@pytest.mark.parametrize("format_name,mediatype", [
     ("mp4", "video/mp4"),
     ("mov", "video/quicktime"),
     ("webm", "video/webm"),
@@ -952,7 +950,7 @@ def test_add_video_dialog():
     ("mpeg", "video/mpeg"),
     ("flv", "video/x-flv")
 ])
-def test_video_formats_support(format_name, mimetype):
+def test_video_formats_support(format_name, mediatype):
     """Test support for all required video formats."""
     vcon = Vcon.build_new()
     
@@ -965,7 +963,7 @@ def test_video_formats_support(format_name, mimetype):
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype=mimetype,
+        mediatype=mediatype,
         filename=f"test_video.{format_name}"
     )
     
@@ -973,7 +971,7 @@ def test_video_formats_support(format_name, mimetype):
     vcon.add_dialog(dialog)
     
     # Verify it was added correctly
-    assert vcon.dialog[0]["mimetype"] == mimetype
+    assert vcon.dialog[0]["mediatype"] == mediatype
     
     # Verify the is_video method works
     loaded_dialog = Dialog(**vcon.dialog[0])
@@ -992,7 +990,7 @@ def test_dialog_property_handling():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="test_video.mp4"
     )
     
@@ -1006,7 +1004,7 @@ def test_dialog_property_handling():
     # Verify properties are preserved
     dialog_dict = new_vcon.dialog[0]
     assert dialog_dict["type"] == "video"
-    assert dialog_dict["mimetype"] == "video/mp4"
+    assert dialog_dict["mediatype"] == "video/mp4"
     assert dialog_dict["filename"] == "test_video.mp4"
 
 def test_multiple_video_formats_in_one_vcon():
@@ -1025,12 +1023,12 @@ def test_multiple_video_formats_in_one_vcon():
     ]
     
     # Add a dialog for each format
-    for extension, mimetype in formats:
+    for extension, mediatype in formats:
         dialog = Dialog(
             type="video",
             start=datetime.now(timezone.utc),
             parties=[0],
-            mimetype=mimetype,
+            mediatype=mediatype,
             filename=f"video.{extension}"
         )
         vcon.add_dialog(dialog)
@@ -1038,9 +1036,9 @@ def test_multiple_video_formats_in_one_vcon():
     # Verify all dialogs were added
     assert len(vcon.dialog) == len(formats)
     
-    # Check each dialog has the correct mimetype
-    for i, (extension, mimetype) in enumerate(formats):
-        assert vcon.dialog[i]["mimetype"] == mimetype
+    # Check each dialog has the correct mediatype
+    for i, (extension, mediatype) in enumerate(formats):
+        assert vcon.dialog[i]["mediatype"] == mediatype
         assert vcon.dialog[i]["filename"] == f"video.{extension}"
         assert Dialog(**vcon.dialog[i]).is_video()
 
@@ -1051,14 +1049,14 @@ def test_inline_video_serialization():
     vcon.add_party(party)
     
     # Create mock video data (small for testing)
-    video_data = base64.b64encode(b'X' * 1024).decode()
+    video_data = base64.urlsafe_b64encode(b'X' * 1024).decode()
     
     # Create a dialog with inline video
     dialog = Dialog(
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="inline_video.mp4",
         body=video_data,
         encoding="base64url"
@@ -1086,7 +1084,7 @@ def test_external_video_serialization():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="external_video.mp4",
         url="https://example.com/videos/sample.mp4"
     )
@@ -1122,7 +1120,7 @@ def test_video_http_fetching(mock_get):
         start=datetime.now(timezone.utc),
         parties=[0],
         url="https://example.com/videos/sample.mp4",
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="sample.mp4"
     )
     
@@ -1155,7 +1153,7 @@ def test_vcon_validation_with_video():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="valid_video.mp4"
     )
     vcon.add_dialog(dialog)
@@ -1178,7 +1176,7 @@ def test_video_metadata_in_vcon():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="test_video.mp4"
     )
     
@@ -1187,7 +1185,7 @@ def test_video_metadata_in_vcon():
     
     # Verify the basic properties
     assert vcon.dialog[0]["type"] == "video"
-    assert vcon.dialog[0]["mimetype"] == "video/mp4"
+    assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
 @pytest.mark.skip("Property handling mode tests need vCon implementation check")
 def test_property_handling_modes():
@@ -1218,7 +1216,7 @@ def test_load_save_file_with_videos(tmp_path):
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="test_video.mp4"
     )
     vcon.add_dialog(dialog)
@@ -1232,7 +1230,7 @@ def test_load_save_file_with_videos(tmp_path):
     
     # Verify video properties were preserved
     assert loaded_vcon.dialog[0]["type"] == "video"
-    assert loaded_vcon.dialog[0]["mimetype"] == "video/mp4"
+    assert loaded_vcon.dialog[0]["mediatype"] == "video/mp4"
     assert loaded_vcon.dialog[0]["filename"] == "test_video.mp4"
 
 def test_integration_basic_video_workflow():
@@ -1247,7 +1245,7 @@ def test_integration_basic_video_workflow():
     vcon.add_party(customer)
     
     # Mock video data
-    mock_video_data = base64.b64encode(b'FAKE_VIDEO_DATA').decode()
+    mock_video_data = base64.urlsafe_b64encode(b'FAKE_VIDEO_DATA').decode()
     
     # 1. Add an initial greeting text
     text_dialog = Dialog(
@@ -1255,7 +1253,7 @@ def test_integration_basic_video_workflow():
         start=datetime.now(timezone.utc),
         parties=[0, 1],  # Both parties
         body="Hello, I'd like to demonstrate our product",
-        mimetype="text/plain"
+        mediatype="text/plain"
     )
     vcon.add_dialog(text_dialog)
     
@@ -1264,7 +1262,7 @@ def test_integration_basic_video_workflow():
         type="video",
         start=datetime.now(timezone.utc),
         parties=[0],  # From agent
-        mimetype="video/mp4",
+        mediatype="video/mp4",
         filename="product_demo.mp4",
         body=mock_video_data,
         encoding="base64url"
@@ -1277,7 +1275,7 @@ def test_integration_basic_video_workflow():
         start=datetime.now(timezone.utc),
         parties=[1],  # From customer
         body="Thanks for the demo. I have a few questions.",
-        mimetype="text/plain"
+        mediatype="text/plain"
     )
     vcon.add_dialog(response_dialog)
     
@@ -1288,7 +1286,7 @@ def test_integration_basic_video_workflow():
     assert vcon.dialog[2]["type"] == "text"
     
     # Verify the video properties
-    assert vcon.dialog[1]["mimetype"] == "video/mp4"
+    assert vcon.dialog[1]["mediatype"] == "video/mp4"
     assert vcon.dialog[1]["body"] == mock_video_data
     assert vcon.dialog[1]["encoding"] == "base64url"
     
@@ -1299,7 +1297,7 @@ def test_integration_basic_video_workflow():
     # Verify everything is preserved
     assert len(new_vcon.dialog) == 3
     assert new_vcon.dialog[1]["type"] == "video"
-    assert new_vcon.dialog[1]["mimetype"] == "video/mp4"
+    assert new_vcon.dialog[1]["mediatype"] == "video/mp4"
 
 def test_version_field_optional() -> None:
     """Test that vCons can be created without version field."""
@@ -1410,29 +1408,29 @@ def test_extensions_management():
     assert vcon.get_extensions() == ["encryption"]
 
 
-def test_must_support_management():
-    """Test must_support field management."""
+def test_critical_management():
+    """Test critical field management."""
     vcon = Vcon.build_new()
     
-    # Initially no must_support
-    assert vcon.get_must_support() == []
+    # Initially no critical
+    assert vcon.get_critical() == []
     
-    # Add must_support extensions
-    vcon.add_must_support("encryption")
-    vcon.add_must_support("video")
-    assert vcon.get_must_support() == ["encryption", "video"]
+    # Add critical extensions
+    vcon.add_critical("encryption")
+    vcon.add_critical("video")
+    assert vcon.get_critical() == ["encryption", "video"]
     
     # Add duplicate extension (should not add)
-    vcon.add_must_support("encryption")
-    assert vcon.get_must_support() == ["encryption", "video"]
+    vcon.add_critical("encryption")
+    assert vcon.get_critical() == ["encryption", "video"]
     
     # Remove extension
-    vcon.remove_must_support("encryption")
-    assert vcon.get_must_support() == ["video"]
+    vcon.remove_critical("encryption")
+    assert vcon.get_critical() == ["video"]
     
     # Remove non-existent extension
-    vcon.remove_must_support("nonexistent")
-    assert vcon.get_must_support() == ["video"]
+    vcon.remove_critical("nonexistent")
+    assert vcon.get_critical() == ["video"]
 
 
 def test_extensions_serialization():
@@ -1450,19 +1448,19 @@ def test_extensions_serialization():
     assert '"extensions": ["video", "encryption"]' in json_str
 
 
-def test_must_support_serialization():
-    """Test that must_support are properly serialized."""
+def test_critical_serialization():
+    """Test that critical are properly serialized."""
     vcon = Vcon.build_new()
-    vcon.add_must_support("encryption")
-    vcon.add_must_support("video")
+    vcon.add_critical("encryption")
+    vcon.add_critical("video")
     
     vcon_dict = vcon.to_dict()
-    assert "must_support" in vcon_dict
-    assert vcon_dict["must_support"] == ["encryption", "video"]
+    assert "critical" in vcon_dict
+    assert vcon_dict["critical"] == ["encryption", "video"]
     
     # Test JSON serialization
     json_str = vcon.to_json()
-    assert '"must_support": ["encryption", "video"]' in json_str
+    assert '"critical": ["encryption", "video"]' in json_str
 
 
 def test_extensions_from_json():
@@ -1470,43 +1468,43 @@ def test_extensions_from_json():
     json_str = '''
     {
         "uuid": "123",
-        "vcon": "0.3.0",
+        "vcon": "0.4.0",
         "created_at": "2023-01-01T00:00:00Z",
         "extensions": ["video", "encryption"],
-        "must_support": ["encryption"]
+        "critical": ["encryption"]
     }
     '''
     
     vcon = Vcon.build_from_json(json_str)
     assert vcon.get_extensions() == ["video", "encryption"]
-    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.get_critical() == ["encryption"]
 
 
 def test_extensions_property_handling():
     """Test extensions with different property handling modes."""
     vcon_dict = {
         "uuid": "123",
-        "vcon": "0.3.0",
+        "vcon": "0.4.0",
         "created_at": "2023-01-01T00:00:00Z",
         "extensions": ["video"],
-        "must_support": ["encryption"],
+        "critical": ["encryption"],
         "custom_field": "value"
     }
     
     # Default mode - keep custom fields
     vcon = Vcon(vcon_dict, property_handling="default")
     assert vcon.get_extensions() == ["video"]
-    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.get_critical() == ["encryption"]
     assert "custom_field" in vcon.vcon_dict
     
     # Strict mode - remove custom fields
     vcon = Vcon(vcon_dict, property_handling="strict")
     assert vcon.get_extensions() == ["video"]
-    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.get_critical() == ["encryption"]
     assert "custom_field" not in vcon.vcon_dict
     
     # Meta mode - move custom fields to meta
     vcon = Vcon(vcon_dict, property_handling="meta")
     assert vcon.get_extensions() == ["video"]
-    assert vcon.get_must_support() == ["encryption"]
+    assert vcon.get_critical() == ["encryption"]
     assert vcon.vcon_dict.get("meta", {}).get("custom_field") == "value"

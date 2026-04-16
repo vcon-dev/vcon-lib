@@ -25,7 +25,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
 ]
 
 templates_path = ["_templates"]
@@ -37,7 +36,7 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_static_path = []
 
 # Napoleon settings
 napoleon_google_docstring = True
@@ -52,8 +51,3 @@ napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_type_aliases = None
-
-# Intersphinx settings
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-}

@@ -75,21 +75,21 @@ class ExtensionRegistry:
     
     def validate_attachment(self, attachment: Dict[str, Any]) -> ValidationResult:
         """Validate an extension attachment."""
-        attachment_type = attachment.get("type")
-        if not attachment_type:
-            return ValidationResult(False, ["Attachment missing type field"])
+        attachment_purpose = attachment.get("purpose")
+        if not attachment_purpose:
+            return ValidationResult(False, ["Attachment missing purpose field"])
         
         # Find extension that handles this attachment type
         for extension in self._extensions.values():
-            if attachment_type in extension.attachment_types:
+            if attachment_purpose in extension.attachment_types:
                 if extension.validator:
                     try:
                         return extension.validator.validate_attachment(attachment)
                     except Exception as e:
-                        logger.error(f"Error validating attachment {attachment_type}: {str(e)}")
-                        return ValidationResult(False, [f"Validation error for {attachment_type}: {str(e)}"])
+                        logger.error(f"Error validating attachment {attachment_purpose}: {str(e)}")
+                        return ValidationResult(False, [f"Validation error for {attachment_purpose}: {str(e)}"])
                 else:
-                    return ValidationResult(True, warnings=[f"No validator for attachment type {attachment_type}"])
+                    return ValidationResult(True, warnings=[f"No validator for attachment type {attachment_purpose}"])
         
         # If no extension handles this attachment type, it's not an extension attachment
         return ValidationResult(True)
@@ -129,10 +129,10 @@ class ExtensionRegistry:
     
     def get_required_extensions(self, vcon_dict: Dict[str, Any]) -> List[str]:
         """Get list of extensions that must be supported."""
-        must_support = vcon_dict.get("must_support", [])
+        critical = vcon_dict.get("critical", [])
         required = []
         
-        for extension_name in must_support:
+        for extension_name in critical:
             extension = self.get_extension(extension_name)
             if extension and extension.type == ExtensionType.INCOMPATIBLE:
                 required.append(extension_name)

@@ -121,7 +121,7 @@ class ExtensionAttachment:
     
     def __init__(
         self,
-        attachment_type: str,
+        attachment_purpose: str,
         body: Dict[str, Any],
         start: Optional[Union[str, datetime]] = None,
         party: Optional[int] = None,
@@ -129,7 +129,7 @@ class ExtensionAttachment:
         encoding: str = "json",
         meta: Optional[Dict[str, Any]] = None
     ):
-        self.type = attachment_type
+        self.purpose = attachment_purpose
         self.body = body
         self.start = self._normalize_timestamp(start) if start else None
         self.party = party
@@ -146,7 +146,7 @@ class ExtensionAttachment:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
         result = {
-            "type": self.type,
+            "purpose": self.purpose,
             "body": self.body,
             "encoding": self.encoding
         }
@@ -166,7 +166,7 @@ class ExtensionAttachment:
     def from_dict(cls, data: Dict[str, Any]) -> 'ExtensionAttachment':
         """Create from dictionary representation."""
         return cls(
-            attachment_type=data["type"],
+            attachment_purpose=data["purpose"],
             body=data["body"],
             start=data.get("start"),
             party=data.get("party"),

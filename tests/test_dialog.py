@@ -20,13 +20,11 @@ class TestDialog:
             duration=120.0,
             parties=[1, 2],
             originator=1,
-            mimetype="text/plain",
+            mediatype="text/plain",
             filename="example.txt",
             body="Hello, World!",
             encoding="utf-8",
             url="http://example.com",
-            alg="sha256",
-            signature="signature",
             disposition="inline",
             party_history=party_history,
             transferee=2,
@@ -58,13 +56,11 @@ class TestDialog:
             duration=None,
             parties=[1, 2],
             originator=None,
-            mimetype=None,
+            mediatype=None,
             filename=None,
             body=None,
             encoding=None,
             url=None,
-            alg=None,
-            signature=None,
             disposition=None,
             party_history=None,
             transferee=None,
@@ -82,7 +78,7 @@ class TestDialog:
         assert dialog.type == "audio"
         assert not hasattr(dialog, "duration")
         assert not hasattr(dialog, "originator")
-        assert not hasattr(dialog, "mimetype")
+        assert not hasattr(dialog, "mediatype")
 
     def test_initialization_with_default_optional_parameters(self):
         # Given
@@ -115,11 +111,11 @@ class TestDialog:
             duration=0.0,
             parties=[1],
             originator=1,
-            mimetype="video/mp4",
+            mediatype="video/mp4",
         )
 
         # When & Then
-        assert dialog.mimetype == "video/mp4"
+        assert dialog.mediatype == "video/mp4"
 
     # Conversion of Dialog object to dictionary
     def test_conversion_to_dict(self):
@@ -136,13 +132,11 @@ class TestDialog:
             duration=120.0,
             parties=[1, 2],
             originator=1,
-            mimetype="text/plain",
+            mediatype="text/plain",
             filename="example.txt",
             body="Hello, World!",
             encoding="utf-8",
             url="http://example.com",
-            alg="sha256",
-            signature="signature",
             disposition="inline",
             party_history=party_history,
             transferee=2,
@@ -193,25 +187,24 @@ class TestDialog:
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
         url = "http://example.com/data"
         filename = "data.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
         response_mock = mocker.Mock()
         response_mock.status_code = 200
         response_mock.headers = {"Content-Type": "text/plain"}
         response_mock.text = "sample data"
+        response_mock.content = b"sample data"
         mocker.patch("requests.get", return_value=response_mock)
 
         # Act
-        dialog.add_external_data(url, filename, mimetype)
+        dialog.add_external_data(url, filename, mediatype)
 
         # Assert
-        assert dialog.mimetype == "text/plain"
+        assert dialog.mediatype == "text/plain"
         assert dialog.filename == filename
-        assert dialog.alg == "sha256"
-        assert dialog.encoding == "base64url"
-        expected_signature = base64.urlsafe_b64encode(
-            hashlib.sha256("sample data".encode()).digest()
+        expected_content_hash = base64.urlsafe_b64encode(
+            hashlib.sha256(b"sample data").digest()
         ).decode()
-        assert dialog.signature == expected_signature
+        assert dialog.content_hash == expected_content_hash
         assert not hasattr(dialog, "body")
 
     # URL returns a non-200 status code
@@ -220,35 +213,36 @@ class TestDialog:
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
         url = "http://example.com/data"
         filename = "data.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
         response_mock = mocker.Mock()
         response_mock.status_code = 404
         mocker.patch("requests.get", return_value=response_mock)
 
         # Act & Assert
         with pytest.raises(Exception) as excinfo:
-            dialog.add_external_data(url, filename, mimetype)
+            dialog.add_external_data(url, filename, mediatype)
 
         assert str(excinfo.value) == "Failed to fetch external data: 404"
 
-    # Correctly sets the mimetype from the response headers
-    def test_correctly_sets_mimetype(self, mocker):
+    # Correctly sets the mediatype from the response headers
+    def test_correctly_sets_mediatype(self, mocker):
         # Setup
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
         url = "http://example.com/data"
         filename = "example_data.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
         response_mock = mocker.Mock()
         response_mock.status_code = 200
-        response_mock.headers = {"Content-Type": mimetype}
+        response_mock.headers = {"Content-Type": mediatype}
         response_mock.text = "dummy data"
+        response_mock.content = b"dummy data"
         mocker.patch("requests.get", return_value=response_mock)
 
         # Invoke
         dialog.add_external_data(url, filename, None)
 
         # Assert
-        assert dialog.mimetype == mimetype
+        assert dialog.mediatype == mediatype
 
     # Overrides the filename if provided
     def test_overrides_filename_if_provided(self, mocker):
@@ -257,11 +251,12 @@ class TestDialog:
         url = "http://example.com/data"
         filename = "example_data.txt"
         new_filename = "new_data.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
         response_mock = mocker.Mock()
         response_mock.status_code = 200
-        response_mock.headers = {"Content-Type": mimetype}
+        response_mock.headers = {"Content-Type": mediatype}
         response_mock.text = "dummy data"
+        response_mock.content = b"dummy data"
         mocker.patch("requests.get", return_value=response_mock)
 
         # Invoke
@@ -271,49 +266,49 @@ class TestDialog:
         # Assert
         assert dialog.filename == new_filename
 
-    # Correctly sets body, filename, and mimetype attributes
+    # Correctly sets body, filename, and mediatype attributes
     def test_correctly_sets_attributes(self):
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
         body = "sample body"
         filename = "sample.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
 
-        dialog.add_inline_data(body, filename, mimetype)
+        dialog.add_inline_data(body, filename, mediatype)
 
         assert dialog.body == body
         assert dialog.filename == filename
-        assert dialog.mimetype == mimetype
+        assert dialog.mediatype == mediatype
 
     # Handles empty string for body
     def test_handles_empty_body(self):
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
         body = ""
         filename = "empty.txt"
-        mimetype = "text/plain"
+        mediatype = "text/plain"
 
-        dialog.add_inline_data(body, filename, mimetype)
+        dialog.add_inline_data(body, filename, mediatype)
 
         assert dialog.body == body
         assert dialog.filename == filename
-        assert dialog.mimetype == mimetype
+        assert dialog.mediatype == mediatype
         assert (
-            dialog.signature
+            dialog.content_hash
             == base64.urlsafe_b64encode(hashlib.sha256(body.encode()).digest()).decode()
         )
 
-    # Generates a valid SHA-256 hash signature for the body
-    def test_valid_sha256_signature(self):
+    # Generates a valid SHA-256 content hash for the body
+    def test_valid_sha256_content_hash(self):
         # Initialize the dialog object
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
 
         # Add inline data
         dialog.add_inline_data("example_body", "example_filename", "text/plain")
 
-        # Check if the SHA-256 hash signature is valid
-        expected_signature = base64.urlsafe_b64encode(
+        # Check if the SHA-256 content hash is valid
+        expected_content_hash = base64.urlsafe_b64encode(
             hashlib.sha256("example_body".encode()).digest()
         ).decode()
-        assert dialog.signature == expected_signature
+        assert dialog.content_hash == expected_content_hash
 
     # Sets the encoding to "base64url"
     def test_encoding_base64url(self):
@@ -406,20 +401,20 @@ class TestDialog:
 
         # Verify the conversion was successful
         assert not hasattr(dialog, "url")  # URL should be removed
-        assert dialog.mimetype == "audio/x-wav"
+        assert dialog.mediatype == "audio/x-wav"
         assert dialog.filename == "audio.wav"
         assert dialog.encoding == "base64url"
-        assert dialog.alg == "sha256"
+        assert dialog.content_hash is not None
 
         # Decode the base64url body and verify it matches original content
         decoded_body = base64.urlsafe_b64decode(dialog.body.encode())
         assert decoded_body == fake_binary_data
 
-        # Verify the signature matches the content
-        expected_signature = base64.urlsafe_b64encode(
+        # Verify the content hash matches the content
+        expected_content_hash = base64.urlsafe_b64encode(
             hashlib.sha256(fake_binary_data).digest()
         ).decode()
-        assert dialog.signature == expected_signature
+        assert dialog.content_hash == expected_content_hash
 
     def test_to_inline_data_failed_request(self):
         # Create a dialog with external data
@@ -462,20 +457,20 @@ class TestDialog:
             "application/json": False
         }
         
-        for mimetype, expected in formats.items():
+        for mediatype, expected in formats.items():
             dialog = Dialog(
                 type="recording",
                 start=datetime.now(),
                 parties=[0],
-                mimetype=mimetype
+                mediatype=mediatype
             )
             
             # Use hasattr to check if the attribute exists before accessing it
-            assert dialog.is_video() == expected, f"Failed for {mimetype}, expected {expected}"
+            assert dialog.is_video() == expected, f"Failed for {mediatype}, expected {expected}"
             
             # Also test with content_type parameter if the method supports it
             if hasattr(dialog, 'is_video') and callable(getattr(dialog, 'is_video')) and len(dialog.is_video.__code__.co_varnames) > 1:
-                assert dialog.is_video(content_type=mimetype) == expected
+                assert dialog.is_video(content_type=mediatype) == expected
             else:
                 # Skip this test if the method doesn't take a content_type parameter
                 pass
@@ -489,17 +484,17 @@ class TestDialog:
             type="video",
             start=datetime.now(),
             parties=[0],
-            mimetype="video/mp4"
+            mediatype="video/mp4"
         )
         
         assert dialog.is_video()
         assert dialog.type == "video"
         
-        # Check mimetype by using the to_dict method if direct attribute access isn't possible
+        # Check mediatype by using the to_dict method if direct attribute access isn't possible
         dialog_dict = dialog.to_dict()
-        assert dialog_dict.get("mimetype") == "video/mp4"
+        assert dialog_dict.get("mediatype") == "video/mp4"
         
-        # Create without mimetype
+        # Create without mediatype
         dialog = Dialog(
             type="video",
             start=datetime.now(),
@@ -509,7 +504,7 @@ class TestDialog:
         
         # Check via to_dict
         dialog_dict = dialog.to_dict()
-        assert "mimetype" in dialog_dict, "No mimetype set for video type dialog"
+        assert "mediatype" in dialog_dict, "No mediatype set for video type dialog"
         # Not checking the value since your implementation might set a different default
 
     # Fixed test_add_video_data_inline
@@ -525,7 +520,7 @@ class TestDialog:
         
         # Create mock video data (just some bytes for testing)
         video_data = b'FAKE_VIDEO_DATA'
-        encoded_data = base64.b64encode(video_data).decode()
+        encoded_data = base64.urlsafe_b64encode(video_data).decode()
         
         # Check if add_video_data method exists
         if hasattr(dialog, 'add_video_data') and callable(getattr(dialog, 'add_video_data')):
@@ -534,14 +529,14 @@ class TestDialog:
                 dialog.add_video_data(
                     encoded_data,
                     filename="test_video.mp4",
-                    mimetype="video/mp4"
+                    mediatype="video/mp4"
                 )
             except TypeError:
                 # Your implementation might have a different signature
                 dialog.add_video_data(
                     video_data=encoded_data,
                     filename="test_video.mp4",
-                    mimetype="video/mp4",
+                    mediatype="video/mp4",
                     inline=True
                 )
         else:
@@ -551,7 +546,7 @@ class TestDialog:
         # Verify via to_dict
         dialog_dict = dialog.to_dict()
         assert dialog_dict.get("type") == "video"
-        assert dialog_dict.get("mimetype") == "video/mp4"
+        assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "test_video.mp4"
         assert "body" in dialog_dict
         
@@ -588,13 +583,13 @@ class TestDialog:
         
         # For this specific test, directly set the URL and related properties
         dialog.url = url
-        dialog.mimetype = "video/mp4"
+        dialog.mediatype = "video/mp4"
         dialog.filename = "remote_video.mp4"
         
         # Verify the dialog has the expected attributes
         dialog_dict = dialog.to_dict()
         assert dialog_dict.get("url") == url
-        assert dialog_dict.get("mimetype") == "video/mp4"
+        assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "remote_video.mp4"
         
         # Check if add_video_data method exists and try to use it
@@ -603,7 +598,7 @@ class TestDialog:
                 dialog.add_video_data(
                     url,
                     filename="remote_video.mp4",
-                    mimetype="video/mp4",
+                    mediatype="video/mp4",
                     inline=False
                 )
             except (TypeError, ValueError):
@@ -618,11 +613,11 @@ class TestDialog:
         dialog_dict = dialog.to_dict()
         assert dialog_dict.get("type") == "video"
         assert dialog_dict.get("url") == url
-        assert dialog_dict.get("mimetype") == "video/mp4"
+        assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "remote_video.mp4"
 
-    # Fixed test_mimetype_from_extension
-    @pytest.mark.parametrize("extension,expected_mimetype", [
+    # Fixed test_mediatype_from_extension
+    @pytest.mark.parametrize("extension,expected_mediatype", [
         ("mp4", "video/mp4"),
         ("mov", "video/quicktime"),
         ("webm", "video/webm"),
@@ -635,8 +630,8 @@ class TestDialog:
         ("m4v", "video/x-m4v"),
         ("unknown", "video/mp4")  # Default
     ])
-    def test_mimetype_from_extension(self, extension, expected_mimetype):
-        """Test automatic mimetype detection from file extension."""
+    def test_mediatype_from_extension(self, extension, expected_mediatype):
+        """Test automatic mediatype detection from file extension."""
         from src.vcon.dialog import Dialog
         
         # Create a dialog with a video type and filename with the given extension
@@ -647,12 +642,12 @@ class TestDialog:
             filename=f"video.{extension}"
         )
         
-        # Check mimetype via to_dict
+        # Check mediatype via to_dict
         dialog_dict = dialog.to_dict()
         
-        # Skip this test if your implementation doesn't set mimetype automatically
-        if "mimetype" in dialog_dict:
-            assert dialog_dict["mimetype"] == expected_mimetype
+        # Skip this test if your implementation doesn't set mediatype automatically
+        if "mediatype" in dialog_dict:
+            assert dialog_dict["mediatype"] == expected_mediatype
 
     # FFmpeg tests with proper mocking
     @pytest.mark.skip("FFmpeg functionality requires specific implementation")
@@ -665,7 +660,7 @@ class TestDialog:
             type="video",
             start=datetime.now(),
             parties=[0],
-            mimetype="video/mp4",
+            mediatype="video/mp4",
             filename="test.mp4"
         )
         
@@ -698,7 +693,7 @@ class TestDialog:
             type="video",
             start=datetime.now(),
             parties=[0],
-            mimetype="video/mp4",
+            mediatype="video/mp4",
             filename="test.mp4"
         )
         
@@ -723,18 +718,18 @@ def test_dialog_session_id():
         type="text",
         start="2023-01-01T00:00:00Z",
         parties=[0, 1],
-        session_id="session-123"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     
-    assert dialog.get_session_id() == "session-123"
+    assert dialog.get_session_id() == {"local": "local-uuid", "remote": "remote-uuid"}
     
     # Test setting session_id
-    dialog.set_session_id("session-456")
-    assert dialog.get_session_id() == "session-456"
+    dialog.set_session_id({"local": "local-uuid-2", "remote": "remote-uuid-2"})
+    assert dialog.get_session_id() == {"local": "local-uuid-2", "remote": "remote-uuid-2"}
     
     # Test to_dict includes session_id
     dialog_dict = dialog.to_dict()
-    assert dialog_dict["session_id"] == "session-456"
+    assert dialog_dict["session_id"] == {"local": "local-uuid-2", "remote": "remote-uuid-2"}
 
 
 def test_dialog_content_hash():
@@ -769,7 +764,7 @@ def test_dialog_calculate_content_hash():
     # Calculate hash
     hash_value = dialog.calculate_content_hash()
     assert isinstance(hash_value, str)
-    assert len(hash_value) == 64  # SHA-256 hex digest length
+    assert len(hash_value) == 44  # Base64url-encoded SHA-256 length
     
     # Test with different algorithm
     with pytest.raises(ValueError):
@@ -834,17 +829,17 @@ def test_dialog_new_fields_with_existing_fields():
         type="recording",
         start="2023-01-01T00:00:00Z",
         parties=[0, 1],
-        mimetype="audio/wav",
+        mediatype="audio/wav",
         filename="recording.wav",
-        session_id="session-123",
+        session_id={"local": "local-uuid", "remote": "remote-uuid"},
         content_hash="abc123def456"
     )
     
     dialog_dict = dialog.to_dict()
     assert dialog_dict["type"] == "recording"
-    assert dialog_dict["mimetype"] == "audio/wav"
+    assert dialog_dict["mediatype"] == "audio/wav"
     assert dialog_dict["filename"] == "recording.wav"
-    assert dialog_dict["session_id"] == "session-123"
+    assert dialog_dict["session_id"] == {"local": "local-uuid", "remote": "remote-uuid"}
     assert dialog_dict["content_hash"] == "abc123def456"
 
 

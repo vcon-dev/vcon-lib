@@ -129,7 +129,7 @@ class TestLawfulBasisValidator:
         
         # Valid attachment
         valid_attachment = {
-            "type": "lawful_basis",
+            "purpose": "lawful_basis",
             "encoding": "json",
             "body": {
                 "lawful_basis": "consent",
@@ -166,7 +166,7 @@ class TestLawfulBasisValidator:
             "extensions": ["lawful_basis"],
             "attachments": [
                 {
-                    "type": "lawful_basis",
+                    "purpose": "lawful_basis",
                     "encoding": "json",
                     "body": {
                         "lawful_basis": "consent",
@@ -197,7 +197,7 @@ class TestLawfulBasisProcessor:
         vcon_dict = {
             "attachments": [
                 {
-                    "type": "lawful_basis",
+                    "purpose": "lawful_basis",
                     "encoding": "json",
                     "body": {
                         "lawful_basis": "consent",
@@ -225,7 +225,7 @@ class TestLawfulBasisProcessor:
         vcon_dict = {
             "attachments": [
                 {
-                    "type": "lawful_basis",
+                    "purpose": "lawful_basis",
                     "encoding": "json",
                     "body": {
                         "lawful_basis": "consent",
@@ -284,7 +284,7 @@ class TestLawfulBasisExtension:
             purpose_grants=purpose_grants
         )
         
-        assert attachment["type"] == "lawful_basis"
+        assert attachment["purpose"] == "lawful_basis"
         assert attachment["encoding"] == "json"
         assert "body" in attachment
         assert attachment["body"]["lawful_basis"] == "consent"
@@ -294,7 +294,7 @@ class TestLawfulBasisExtension:
         extension = LawfulBasisExtension()
         
         valid_attachment = {
-            "type": "lawful_basis",
+            "purpose": "lawful_basis",
             "encoding": "json",
             "body": {
                 "lawful_basis": "consent",
@@ -318,7 +318,7 @@ class TestLawfulBasisExtension:
         vcon_dict = {
             "attachments": [
                 {
-                    "type": "lawful_basis",
+                    "purpose": "lawful_basis",
                     "encoding": "json",
                     "body": {
                         "lawful_basis": "consent",

@@ -40,7 +40,7 @@ from vcon import Vcon
 - `meta`: Metadata
 - `tags`: Tags attachment
 - `extensions`: List of extensions used
-- `must_support`: List of must-support extensions
+- `critical`: List of must-support extensions
 
 ### Party
 Represents a participant in the conversation.
@@ -155,14 +155,14 @@ vcon.add_extension("wtf_transcription")
 extensions = vcon.get_extensions()
 
 # Add must-support extensions
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 
 # Get must-support extensions
-must_support = vcon.get_must_support()
+critical = vcon.get_critical()
 
 # Remove extensions
 vcon.remove_extension("video")
-vcon.remove_must_support("encryption")
+vcon.remove_critical("encryption")
 ```
 
 ## Working with Parties
@@ -193,7 +193,7 @@ dialog = Dialog(
     type="text",
     start="2024-03-21T10:00:00Z",
     parties=[0, 1],
-    mimetype="text/plain",
+    mediatype="text/plain",
     body="Hello, how can I help?"
 )
 vcon.add_dialog(dialog)
@@ -205,7 +205,7 @@ vcon.add_dialog(dialog)
 dialog.add_inline_data(
     body="base64_encoded_content",
     filename="recording.wav",
-    mimetype="audio/wav"
+    mediatype="audio/wav"
 )
 
 # Check data type
@@ -225,7 +225,7 @@ vcon.add_attachment(
 )
 
 # Find attachment
-attachment = vcon.find_attachment_by_type("document")
+attachment = vcon.find_attachment_by_purpose("document")
 ```
 
 ### Analysis
@@ -633,7 +633,7 @@ dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 vcon.add_dialog(dialog)
 

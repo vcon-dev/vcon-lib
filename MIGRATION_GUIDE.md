@@ -23,7 +23,7 @@ The vCon library has been updated to align with the latest vCon specification ch
 
 ### vCon Object Level
 - `extensions`: List of extension names used
-- `must_support`: List of extensions that must be supported
+- `critical`: List of extensions that must be supported
 
 ### Party Object
 - `sip`: SIP URI for VoIP communication
@@ -60,7 +60,7 @@ The version field is now optional. You can choose to:
 **Option A: Remove version fields from new vCons**
 ```python
 # Old code
-vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "created_at": "2024-01-01T00:00:00Z"})
+vcon = Vcon({"uuid": "123", "vcon": "0.4.0", "created_at": "2024-01-01T00:00:00Z"})
 
 # New code (version field optional)
 vcon = Vcon({"uuid": "123", "created_at": "2024-01-01T00:00:00Z"})
@@ -69,7 +69,7 @@ vcon = Vcon({"uuid": "123", "created_at": "2024-01-01T00:00:00Z"})
 **Option B: Keep existing version fields**
 ```python
 # This still works - no changes needed
-vcon = Vcon({"uuid": "123", "vcon": "0.3.0", "created_at": "2024-01-01T00:00:00Z"})
+vcon = Vcon({"uuid": "123", "vcon": "0.4.0", "created_at": "2024-01-01T00:00:00Z"})
 ```
 
 ### Step 3: Add Extensions (Optional)
@@ -84,7 +84,7 @@ vcon = Vcon.build_new()
 vcon = Vcon.build_new()
 vcon.add_extension("video")
 vcon.add_extension("encryption")
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 ```
 
 ### Step 2: Enhance Party Information (Optional)
@@ -132,7 +132,7 @@ dialog = Dialog(
     start=datetime.now(),
     parties=[0, 1],
     body="Hello!",
-    session_id="session-12345"
+    session_id={"local": "local-uuid", "remote": "remote-uuid"}
 )
 ```
 
@@ -157,7 +157,7 @@ dialog = Dialog(
     start=datetime.now(),
     parties=[0, 1],
     body="Hello!",
-    session_id="session-12345"
+    session_id={"local": "local-uuid", "remote": "remote-uuid"}
 )
 
 # Calculate and set content hash
@@ -206,7 +206,7 @@ from datetime import datetime
 # Create vCon with extensions
 vcon = Vcon.build_new()
 vcon.add_extension("video")
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 
 # Add party with enhanced information
 party = Party(
@@ -229,7 +229,7 @@ dialog = Dialog(
     start=datetime.now(),
     parties=[0],
     body="Hello!",
-    session_id="session-12345"
+    session_id={"local": "local-uuid", "remote": "remote-uuid"}
 )
 
 # Calculate and set content hash
@@ -248,7 +248,7 @@ vcon.save_to_file("conversation.json")
 ```json
 {
     "uuid": "...",
-    "vcon": "0.3.0",
+    "vcon": "0.4.0",
     "parties": [{
         "name": "Alice",
         "tel": "+1234567890"
@@ -266,9 +266,9 @@ vcon.save_to_file("conversation.json")
 ```json
 {
     "uuid": "...",
-    "vcon": "0.3.0",
+    "vcon": "0.4.0",
     "extensions": ["video"],
-    "must_support": ["encryption"],
+    "critical": ["encryption"],
     "parties": [{
         "name": "Alice",
         "tel": "+1234567890",
@@ -286,7 +286,7 @@ vcon.save_to_file("conversation.json")
         "start": "...",
         "parties": [0],
         "body": "Hello!",
-        "session_id": "session-12345",
+        "session_id": {"local": "local-uuid", "remote": "remote-uuid"},
         "content_hash": "..."
     }]
 }

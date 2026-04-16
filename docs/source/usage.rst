@@ -4,10 +4,10 @@ Usage Guide
 This guide will help you get started with using the vcon library.
 
 Basic Usage
-----------
+-----------
 
 Creating a vCon Container
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's a simple example of creating a vCon container:
 
@@ -24,7 +24,7 @@ Here's a simple example of creating a vCon container:
     # Add extensions and must-support requirements
     vcon.add_extension("video")
     vcon.add_extension("encryption")
-    vcon.add_must_support("encryption")
+    vcon.add_critical("encryption")
     
     # Add participants with enhanced contact information
     party = Party(
@@ -47,7 +47,7 @@ Here's a simple example of creating a vCon container:
         start=datetime.now(timezone.utc),
         parties=[0],
         body="Hello, this is a test message!",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     
     # Calculate and set content hash for integrity verification
@@ -60,7 +60,7 @@ Here's a simple example of creating a vCon container:
     vcon.save_to_file("my_conference.vcon")
 
 Reading a vCon Container
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 To read an existing vCon container:
 
@@ -73,7 +73,7 @@ To read an existing vCon container:
     
     # Access extensions
     extensions = vcon.get_extensions()
-    must_support = vcon.get_must_support()
+    critical = vcon.get_critical()
     
     # Get participants with enhanced information
     parties = vcon.parties
@@ -98,10 +98,10 @@ To read an existing vCon container:
         print(f"Content Hash: {getattr(dialog, 'content_hash', 'Not set')}")
 
 Advanced Usage
--------------
+--------------
 
 Working with Extensions
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Extensions allow vCon implementations to declare additional capabilities:
 
@@ -117,11 +117,11 @@ Extensions allow vCon implementations to declare additional capabilities:
     vcon.add_extension("analytics")
     
     # Specify extensions that must be supported
-    vcon.add_must_support("encryption")
-    vcon.add_must_support("video")
+    vcon.add_critical("encryption")
+    vcon.add_critical("video")
     
     # Check extension compatibility
-    required = vcon.get_must_support()
+    required = vcon.get_critical()
     available = vcon.get_extensions()
     
     for ext in required:
@@ -129,7 +129,7 @@ Extensions allow vCon implementations to declare additional capabilities:
             print(f"Warning: Required extension '{ext}' not available")
 
 Working with Enhanced Party Information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Parties now support additional contact and identification methods:
 
@@ -153,7 +153,7 @@ Parties now support additional contact and identification methods:
     )
 
 Working with Dialog Session Management
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dialogs now support session tracking and content integrity verification:
 
@@ -168,7 +168,7 @@ Dialogs now support session tracking and content integrity verification:
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         body="Hello, this is a test message!",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     
     # Calculate content hash for integrity verification
@@ -180,25 +180,34 @@ Dialogs now support session tracking and content integrity verification:
     print(f"Content integrity: {is_valid}")
 
 Working with Media Files
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can attach and manage media files in a vCon container:
+You can attach and manage media files in a vCon container by creating dialogs and/or attachments:
 
 .. code-block:: python
 
     from vcon import Vcon
+    from vcon.dialog import Dialog
+    from datetime import datetime, timezone
     
-    vcon = Vcon()
+    vcon = Vcon.build_new()
     
-    # Add a video recording
-    vcon.add_media("recording.mp4", media_type="video/mp4")
+    # Add a video recording dialog (external URL)
+    dialog = Dialog(
+        type="recording",
+        start=datetime.now(timezone.utc),
+        parties=[0],
+        url="https://example.com/recording.mp4",
+        mediatype="video/mp4"
+    )
+    vcon.add_dialog(dialog)
     
-    # Add a transcript
-    vcon.add_media("transcript.txt", media_type="text/plain")
+    # Add an attachment (image/pdf)
+    vcon.add_image("document.pdf", purpose="identification")
 
 .. _api-reference:
 
 API Reference
-------------
+-------------
 
 For more detailed information about the API, please refer to the sections below. 

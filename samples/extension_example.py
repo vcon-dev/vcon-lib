@@ -40,9 +40,9 @@ def main():
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0],
-        mimetype="audio/mp3",
+        mediatype="audio/mp3",
         body="dGVzdCBhdWRpbyBkYXRh",  # "test audio data" in base64
-        encoding="base64"
+        encoding="base64url"
     )
     vcon.add_dialog(dialog)
     print("Added dialog")

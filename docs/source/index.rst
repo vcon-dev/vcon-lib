@@ -6,7 +6,7 @@
 Welcome to vcon's documentation!
 ================================
 
-vcon is a Python library for working with vCon (Video Conference) containers, which are standardized formats for storing video conference recordings and metadata.
+vcon is a Python library for working with vCon (Virtual Conversation) containers, which are standardized formats for storing conversation data and metadata.
 
 .. toctree::
    :maxdepth: 2
@@ -31,7 +31,7 @@ For development installation:
 
 .. code-block:: bash
 
-   git clone https://github.com/yourusername/vcon-lib.git
+   git clone https://github.com/vcon-dev/vcon-lib.git
    cd vcon-lib
    poetry install
 

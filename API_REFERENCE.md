@@ -30,10 +30,7 @@ The vCon library provides a complete Python implementation of the latest vCon sp
 pip install vcon
 ```
 
-For image processing support:
-```bash
-pip install vcon[image]
-```
+Image/PDF processing support is included by default with the standard installation.
 
 ## Core Classes
 
@@ -176,7 +173,7 @@ vcon.add_incomplete_dialog(datetime.now(), "no-answer", [0])
 
 ##### Attachment Management
 
-###### `add_attachment(type: str, body: Any, encoding: str = "none") -> Attachment`
+###### `add_attachment(purpose: str, body: Any, encoding: str = "none") -> Attachment`
 Add an attachment to the vCon.
 
 ```python
@@ -190,11 +187,11 @@ Add an image attachment from file.
 attachment = vcon.add_image("screenshot.png", "screenshot")
 ```
 
-###### `find_attachment_by_type(type: str) -> Optional[Dict[str, Any]]`
+###### `find_attachment_by_purpose(purpose: str) -> Optional[Dict[str, Any]]`
 Find attachment by type.
 
 ```python
-transcript = vcon.find_attachment_by_type("transcript")
+transcript = vcon.find_attachment_by_purpose("transcript")
 ```
 
 ##### Analysis Management
@@ -258,21 +255,21 @@ Remove an extension.
 vcon.remove_extension("video")
 ```
 
-###### `add_must_support(extension: str) -> None`
+###### `add_critical(extension: str) -> None`
 Add a must-support extension.
 
 ```python
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 ```
 
-###### `get_must_support() -> List[str]`
+###### `get_critical() -> List[str]`
 Get list of must-support extensions.
 
 ```python
-must_support = vcon.get_must_support()
+critical = vcon.get_critical()
 ```
 
-###### `remove_must_support(extension: str) -> None`
+###### `remove_critical(extension: str) -> None`
 Remove a must-support extension.
 
 ##### Extension-Specific Methods
@@ -425,8 +422,8 @@ Get the update timestamp.
 ##### `redacted`
 Get the redacted flag.
 
-##### `appended`
-Get the appended flag.
+##### `amended`
+Get the amended flag.
 
 ##### `group`
 Get the group information.
@@ -514,13 +511,11 @@ Dialog(
     start: Union[datetime, str],
     parties: List[int],
     originator: Optional[int] = None,
-    mimetype: Optional[str] = None,
+    mediatype: Optional[str] = None,
     filename: Optional[str] = None,
     body: Optional[str] = None,
     encoding: Optional[str] = None,
     url: Optional[str] = None,
-    alg: Optional[str] = None,
-    signature: Optional[str] = None,
     disposition: Optional[str] = None,
     party_history: Optional[List[PartyHistory]] = None,
     transferee: Optional[int] = None,
@@ -542,7 +537,7 @@ Dialog(
     codec: Optional[str] = None,
     bitrate: Optional[int] = None,
     thumbnail: Optional[str] = None,
-    session_id: Optional[str] = None,
+    session_id: Optional[Union[Dict[str, str], List[Dict[str, str]]]] = None,
     content_hash: Optional[str] = None,
     application: Optional[str] = None,
     message_id: Optional[str] = None,
@@ -555,13 +550,11 @@ Dialog(
 - `start` (Union[datetime, str]): Start time
 - `parties` (List[int]): List of party indices
 - `originator` (int, optional): Originator party index
-- `mimetype` (str, optional): MIME type of content
+- `mediatype` (str, optional): MIME type of content
 - `filename` (str, optional): Filename
 - `body` (str, optional): Content body
 - `encoding` (str, optional): Content encoding
 - `url` (str, optional): External URL
-- `alg` (str, optional): Signature algorithm
-- `signature` (str, optional): Content signature
 - `disposition` (str, optional): Disposition for incomplete dialogs
 - `party_history` (List[PartyHistory], optional): Party event history
 - `transferee` (int, optional): Transferee party index
@@ -583,7 +576,7 @@ Dialog(
 - `codec` (str, optional): Video codec
 - `bitrate` (int, optional): Video bitrate
 - `thumbnail` (str, optional): Base64-encoded thumbnail
-- `session_id` (str, optional): Session identifier
+- `session_id` (dict or list, optional): Session identifier (SessionId or list of SessionId)
 - `content_hash` (str, optional): Content hash for external files
 - `application` (str, optional): Application identifier
 - `message_id` (str, optional): Message identifier
@@ -593,10 +586,10 @@ Dialog(
 ##### `to_dict() -> Dict[str, Any]`
 Convert Dialog to dictionary.
 
-##### `add_external_data(url: str, filename: str, mimetype: str) -> None`
+##### `add_external_data(url: str, filename: str, mediatype: str) -> None`
 Add external data to dialog.
 
-##### `add_inline_data(body: str, filename: str, mimetype: str) -> None`
+##### `add_inline_data(body: str, filename: str, mediatype: str) -> None`
 Add inline data to dialog.
 
 ##### `is_external_data() -> bool`
@@ -632,7 +625,7 @@ Check if dialog has image content.
 ##### `is_pdf() -> bool`
 Check if dialog has PDF content.
 
-##### `add_video_data(video_data, filename: Optional[str] = None, mimetype: Optional[str] = None, inline: bool = True, metadata: Optional[dict] = None) -> None`
+##### `add_video_data(video_data, filename: Optional[str] = None, mediatype: Optional[str] = None, inline: bool = True, metadata: Optional[dict] = None) -> None`
 Add video data to dialog.
 
 ##### `extract_video_metadata(video_path: Optional[str] = None) -> dict`
@@ -641,19 +634,19 @@ Extract video metadata using FFmpeg.
 ##### `generate_thumbnail(timestamp: float = 0.0, width: int = 320, height: int = 240, quality: int = 90) -> bytes`
 Generate video thumbnail.
 
-##### `add_streaming_video_reference(reference_id: str, mimetype: str, metadata: Optional[dict] = None) -> None`
+##### `add_streaming_video_reference(reference_id: str, mediatype: str, metadata: Optional[dict] = None) -> None`
 Add streaming video reference.
 
-##### `add_video_with_optimal_storage(video_data, filename: str, mimetype: Optional[str] = None, size_threshold_mb: int = 10) -> None`
+##### `add_video_with_optimal_storage(video_data, filename: str, mediatype: Optional[str] = None, size_threshold_mb: int = 10) -> None`
 Add video with optimal storage method.
 
 ##### `transcode_video(target_format: str, codec: Optional[str] = None, bit_rate: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None) -> None`
 Transcode video to different format.
 
-##### `add_image_data(image_path: str, mimetype: Optional[str] = None) -> None`
+##### `add_image_data(image_path: str, mediatype: Optional[str] = None) -> None`
 Add image data from file.
 
-##### `extract_image_metadata(image_data: bytes, mimetype: str) -> None`
+##### `extract_image_metadata(image_data: bytes, mediatype: str) -> None`
 Extract image metadata.
 
 ##### `generate_thumbnail(max_size: Tuple[int, int] = (200, 200)) -> Optional[str]`
@@ -665,10 +658,10 @@ Check if external data has changed.
 ##### `to_inline_data() -> None`
 Convert external data to inline data.
 
-##### `set_session_id(session_id: str) -> None`
+##### `set_session_id(session_id: Union[Dict[str, str], List[Dict[str, str]]]) -> None`
 Set session identifier.
 
-##### `get_session_id() -> Optional[str]`
+##### `get_session_id() -> Optional[Union[Dict[str, str], List[Dict[str, str]]]]`
 Get session identifier.
 
 ##### `set_content_hash(content_hash: str) -> None`
@@ -1338,10 +1331,10 @@ vcon.add_extension("video")
 vcon.add_extension("encryption")
 
 # Add must-support
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 
 print(f"Extensions: {vcon.get_extensions()}")
-print(f"Must support: {vcon.get_must_support()}")
+print(f"Critical: {vcon.get_critical()}")
 ```
 
 ### Analysis and Attachments
@@ -1376,7 +1369,7 @@ video_dialog = Dialog(
     type="video",
     start=datetime.now(),
     parties=[0, 1],
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     resolution="1920x1080",
     frame_rate=30.0,
     codec="H.264"
@@ -1386,7 +1379,7 @@ video_dialog = Dialog(
 video_dialog.add_video_data(
     video_data=binary_video_data,
     filename="recording.mp4",
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     inline=True
 )
 
@@ -1496,7 +1489,7 @@ dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 vcon.add_dialog(dialog)
 
@@ -1553,7 +1546,7 @@ dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 vcon.add_dialog(dialog)
 
@@ -1680,7 +1673,7 @@ dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 vcon.add_dialog(dialog)
 

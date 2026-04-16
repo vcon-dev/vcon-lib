@@ -203,7 +203,7 @@ class PermissionEvaluator:
         applicable = []
         
         for attachment in attachments:
-            if attachment.get("type") != "lawful_basis":
+            if attachment.get("purpose") != "lawful_basis":
                 continue
             
             # Check party index if specified
@@ -266,7 +266,7 @@ class LawfulBasisProcessor(ExtensionProcessor):
             attachments = vcon_dict.get("attachments", [])
             lawful_basis_attachments = [
                 att for att in attachments 
-                if att.get("type") == "lawful_basis"
+                if att.get("purpose") == "lawful_basis"
             ]
             
             if not lawful_basis_attachments:

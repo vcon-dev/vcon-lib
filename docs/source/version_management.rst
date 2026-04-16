@@ -11,7 +11,8 @@ Starting with version 0.7.0, the vCon library has simplified version management 
 Key Changes
 -----------
 
-### Version Field is Now Optional
+Version Field Is Now Optional
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``vcon`` field in vCon objects is no longer required:
 
@@ -19,7 +20,8 @@ The ``vcon`` field in vCon objects is no longer required:
 - Existing vCon objects with version fields continue to work unchanged
 - The version field can be manually added if needed
 
-### Removed Version Management Parameters
+Removed Version Management Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following parameters have been removed from all Vcon methods:
 
@@ -31,7 +33,8 @@ The following parameters have been removed from all Vcon methods:
   - ``Vcon.load_from_file()``
   - ``Vcon.load_from_url()``
 
-### Updated Method Signatures
+Updated Method Signatures
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All method signatures have been updated to remove version management:
 
@@ -52,7 +55,8 @@ All method signatures have been updated to remove version management:
 Migration Guide
 ---------------
 
-### For Existing Code
+For Existing Code
+~~~~~~~~~~~~~~~~~
 
 If you were using the ``strict_version`` parameter, simply remove it:
 
@@ -68,7 +72,8 @@ If you were using the ``strict_version`` parameter, simply remove it:
     vcon = Vcon.build_from_json(json_str)
     vcon = Vcon(data)
 
-### For Version Field Handling
+For Version Field Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version field is now optional. You can choose to:
 
@@ -88,10 +93,11 @@ The version field is now optional. You can choose to:
 
     # Option 2: Manually add version field if needed
     vcon = Vcon.build_new()
-    vcon.vcon_dict["vcon"] = "0.3.0"
-    # vcon.vcon will be "0.3.0"
+    vcon.vcon_dict["vcon"] = "0.4.0"
+    # vcon.vcon will be "0.4.0"
 
-### Backward Compatibility
+Backward Compatibility
+~~~~~~~~~~~~~~~~~~~~~~
 
 All changes are backward compatible:
 
@@ -102,7 +108,8 @@ All changes are backward compatible:
 Examples
 --------
 
-### Creating Versionless vCons
+Creating Versionless vCons
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -113,10 +120,11 @@ Examples
     print(vcon.vcon)  # None
 
     # Add version field manually if needed
-    vcon.vcon_dict["vcon"] = "0.3.0"
-    print(vcon.vcon)  # "0.3.0"
+    vcon.vcon_dict["vcon"] = "0.4.0"
+    print(vcon.vcon)  # "0.4.0"
 
-### Working with Existing vCons
+Working with Existing vCons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -129,7 +137,8 @@ Examples
     else:
         print("No version field")
 
-### Validation Changes
+Validation Changes
+~~~~~~~~~~~~~~~~~~
 
 The validation logic has been updated to reflect the optional nature of the version field:
 
@@ -153,9 +162,10 @@ The simplified version management provides several benefits:
 5. **Future-Proof**: Aligns with evolving vCon specification
 
 Troubleshooting
---------------
+---------------
 
-### Common Issues
+Common Issues
+~~~~~~~~~~~~~
 
 1. **"strict_version" parameter errors**:
    - Remove the ``strict_version`` parameter from all method calls
@@ -163,13 +173,14 @@ Troubleshooting
 
 2. **Version field not found**:
    - Check if the vCon object has a version field: ``vcon.vcon is not None``
-   - Add version field manually if needed: ``vcon.vcon_dict["vcon"] = "0.3.0"``
+   - Add version field manually if needed: ``vcon.vcon_dict["vcon"] = "0.4.0"``
 
 3. **Validation errors**:
    - Ensure required fields (uuid, created_at) are present
    - Version field is no longer required for validation
 
-### Getting Help
+Getting Help
+~~~~~~~~~~~~
 
 If you encounter issues with the version management changes:
 

@@ -37,8 +37,11 @@
                 1
             ],
             "body": "Hello, this is a test message!",
-            "session_id": "session-12345",
-            "content_hash": "c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
+            "session_id": {
+                "local": "local-uuid",
+                "remote": "remote-uuid"
+            },
+            "content_hash": "yNPWf2YqeH6W50zLCneAMTjA8TSVoYbMveSVxXw4Vgg=",
             "metadata": {},
             "meta": {}
         }
@@ -50,7 +53,7 @@
         "video",
         "encryption"
     ],
-    "must_support": [
+    "critical": [
         "encryption"
     ]
 }

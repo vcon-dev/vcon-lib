@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>vcon.vcon &mdash; vcon 0.3.9 documentation</title>
+  <title>vcon.vcon &mdash; vcon 0.7.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
 
@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../version_management.html">Version Management Changes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">vcon</a></li>
 </ul>
 
@@ -94,6 +95,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.party</span><span class="w"> </span><span class="kn">import</span> <span class="n">Party</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dialog</span>
 
+<span class="c1"># Set up logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Import extension framework</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_extension_registry</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationResult</span>
+    <span class="n">EXTENSIONS_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">EXTENSIONS_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Extensions not available - install required dependencies&quot;</span><span class="p">)</span>
+
 <span class="c1"># Define constants for property handling modes</span>
 <span class="n">PROPERTY_HANDLING_DEFAULT</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>  <span class="c1"># Keep non-standard properties</span>
 <span class="n">PROPERTY_HANDLING_STRICT</span> <span class="o">=</span> <span class="s2">&quot;strict&quot;</span>    <span class="c1"># Remove non-standard properties</span>
@@ -101,10 +114,10 @@
 
 <span class="c1"># Define allowed properties for each object type</span>
 <span class="n">_ALLOWED_VCON_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;vcon&quot;</span><span class="p">,</span> <span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="s2">&quot;updated_at&quot;</span><span class="p">,</span> <span class="s2">&quot;redacted&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;parties&quot;</span><span class="p">,</span> <span class="s2">&quot;dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="s2">&quot;analysis&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;signatures&quot;</span><span class="p">,</span> <span class="s2">&quot;payload&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;subject&quot;</span><span class="p">,</span> <span class="s2">&quot;appended&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;extensions&quot;</span><span class="p">,</span> <span class="s2">&quot;must_support&quot;</span>
+    <span class="s2">&quot;uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;vcon&quot;</span><span class="p">,</span> <span class="s2">&quot;created_at&quot;</span><span class="p">,</span> <span class="s2">&quot;updated_at&quot;</span><span class="p">,</span> <span class="s2">&quot;redacted&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;parties&quot;</span><span class="p">,</span> <span class="s2">&quot;dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="s2">&quot;analysis&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;signatures&quot;</span><span class="p">,</span> <span class="s2">&quot;payload&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;subject&quot;</span><span class="p">,</span> <span class="s2">&quot;amended&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extensions&quot;</span><span class="p">,</span> <span class="s2">&quot;critical&quot;</span>
 <span class="p">}</span>
 
 <span class="n">_ALLOWED_PARTY_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
@@ -114,22 +127,24 @@
 <span class="p">}</span>
 
 <span class="n">_ALLOWED_DIALOG_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;parties&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;alg&quot;</span><span class="p">,</span> <span class="s2">&quot;signature&quot;</span><span class="p">,</span> <span class="s2">&quot;disposition&quot;</span><span class="p">,</span> 
+    <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;parties&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;content_hash&quot;</span><span class="p">,</span> <span class="s2">&quot;disposition&quot;</span><span class="p">,</span>
     <span class="s2">&quot;party_history&quot;</span><span class="p">,</span> <span class="s2">&quot;transferee&quot;</span><span class="p">,</span> <span class="s2">&quot;transferor&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer_target&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;original&quot;</span><span class="p">,</span> <span class="s2">&quot;consultation&quot;</span><span class="p">,</span> <span class="s2">&quot;target_dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;campaign&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;interaction&quot;</span><span class="p">,</span> <span class="s2">&quot;skill&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer&quot;</span><span class="p">,</span> 
-    <span class="s2">&quot;signaling&quot;</span><span class="p">,</span> <span class="s2">&quot;originator&quot;</span><span class="p">,</span> <span class="s2">&quot;resolution&quot;</span><span class="p">,</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span> 
+    <span class="s2">&quot;original&quot;</span><span class="p">,</span> <span class="s2">&quot;consultation&quot;</span><span class="p">,</span> <span class="s2">&quot;target_dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;campaign&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;interaction&quot;</span><span class="p">,</span> <span class="s2">&quot;skill&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;signaling&quot;</span><span class="p">,</span> <span class="s2">&quot;originator&quot;</span><span class="p">,</span> <span class="s2">&quot;resolution&quot;</span><span class="p">,</span> <span class="s2">&quot;frame_rate&quot;</span><span class="p">,</span>
     <span class="s2">&quot;codec&quot;</span><span class="p">,</span> <span class="s2">&quot;bitrate&quot;</span><span class="p">,</span> <span class="s2">&quot;thumbnail&quot;</span><span class="p">,</span> <span class="s2">&quot;streaming&quot;</span><span class="p">,</span> <span class="s2">&quot;video&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;session_id&quot;</span><span class="p">,</span> <span class="s2">&quot;content_hash&quot;</span><span class="p">,</span> <span class="s2">&quot;application&quot;</span><span class="p">,</span> <span class="s2">&quot;message_id&quot;</span>
+    <span class="s2">&quot;session_id&quot;</span><span class="p">,</span> <span class="s2">&quot;application&quot;</span><span class="p">,</span> <span class="s2">&quot;message_id&quot;</span>
 <span class="p">}</span>
 
 <span class="n">_ALLOWED_ATTACHMENT_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span>
+    <span class="s2">&quot;purpose&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;party&quot;</span><span class="p">,</span> <span class="s2">&quot;dialog&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mediatype&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;content_hash&quot;</span>
 <span class="p">}</span>
 
 <span class="n">_ALLOWED_ANALYSIS_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;vendor&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;schema&quot;</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;dialog&quot;</span><span class="p">,</span> <span class="s2">&quot;vendor&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;content_hash&quot;</span>
 <span class="p">}</span>
 
 <span class="c1"># Configure logging</span>
@@ -142,23 +157,35 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class representing an attachment in a vCon.</span>
 <span class="sd">    </span>
-<span class="sd">    An attachment consists of a type, body content, and an encoding format.</span>
-<span class="sd">    The encoding format must be one of the supported formats: base64, base64url, or none.</span>
+<span class="sd">    An attachment consists of a purpose, body content, and an encoding format.</span>
+<span class="sd">    The encoding format must be one of the supported formats: base64url, json, or none.</span>
 <span class="sd">    </span>
 <span class="sd">    Attributes:</span>
-<span class="sd">        type (str): The type of the attachment</span>
+<span class="sd">        purpose (str): The purpose of the attachment</span>
 <span class="sd">        body (Any): The content of the attachment</span>
 <span class="sd">        encoding (str): The encoding format used for the body</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">VALID_ENCODINGS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;base64&quot;</span><span class="p">,</span> <span class="s2">&quot;base64url&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span>
+    <span class="n">VALID_ENCODINGS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;base64url&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="Attachment.__init__"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Attachment.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Attachment.__init__"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Attachment.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">body</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="n">mediatype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">content_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">party</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dialog</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize an Attachment object.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            type: The type of the attachment</span>
+<span class="sd">            purpose: The purpose of the attachment</span>
 <span class="sd">            body: The content of the attachment</span>
 <span class="sd">            encoding: The encoding format used for the body (default: &quot;none&quot;)</span>
 <span class="sd">            </span>
@@ -168,22 +195,41 @@
         <span class="k">if</span> <span class="n">encoding</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_ENCODINGS</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid encoding attempted: </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid encoding: </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2">. Must be one of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_ENCODINGS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">purpose</span> <span class="o">=</span> <span class="n">purpose</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created new attachment of type </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2"> encoding&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">mediatype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span> <span class="o">=</span> <span class="n">content_hash</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">party</span> <span class="o">=</span> <span class="n">party</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dialog</span> <span class="o">=</span> <span class="n">dialog</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created new attachment of purpose </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2"> encoding&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Attachment.to_dict"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Attachment.to_dict">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert the attachment to a dictionary representation.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns:</span>
-<span class="sd">            Dict containing the attachment&#39;s type, body, and encoding</span>
+<span class="sd">            Dict containing the attachment&#39;s purpose, body, and encoding</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">}</span></div>
+        <span class="n">attachment_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;purpose&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">purpose</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+            <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="s2">&quot;mediatype&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span><span class="p">,</span>
+            <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="s2">&quot;content_hash&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span><span class="p">,</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+            <span class="s2">&quot;party&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">party</span><span class="p">,</span>
+            <span class="s2">&quot;dialog&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dialog</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attachment_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span></div>
         
 <div class="viewcode-block" id="Attachment.from_image"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Attachment.from_image">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_image</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Attachment&#39;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_image</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Attachment&#39;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create an Attachment from an image file.</span>
 <span class="sd">        </span>
@@ -214,36 +260,14 @@
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">image_data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             
-        <span class="c1"># Create attachment</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">image_path</span><span class="p">),</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">:</span> <span class="n">mimetype</span><span class="p">}</span>
-        
-        <span class="c1"># Extract additional metadata</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">:</span>
-                <span class="c1"># Extract PDF metadata</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">pypdf</span><span class="w"> </span><span class="kn">import</span> <span class="n">PdfReader</span>
-                <span class="n">pdf</span> <span class="o">=</span> <span class="n">PdfReader</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="o">.</span><span class="n">pages</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">mimetype</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;image/tiff&quot;</span><span class="p">]:</span>
-                <span class="c1"># Extract image metadata</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-                <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;width&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">width</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;height&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">height</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;format&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">format</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="c1"># Library not available</span>
-            <span class="k">pass</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Log error but continue</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Could not extract image metadata: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
         <span class="c1"># Create and return attachment</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span>
-            <span class="n">body</span><span class="o">=</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">image_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span>
-            <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;base64&quot;</span><span class="p">,</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
+            <span class="n">purpose</span><span class="o">=</span><span class="n">purpose</span><span class="p">,</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">image_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;base64url&quot;</span><span class="p">,</span>
+            <span class="n">mediatype</span><span class="o">=</span><span class="n">mimetype</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
         <span class="p">)</span></div></div>
 
 
@@ -264,13 +288,13 @@
 <span class="sd">    - Attachments for ancillary documents</span>
 <span class="sd">    - Analysis data for conversation insights</span>
 <span class="sd">    - Digital signatures and encryption</span>
-<span class="sd">    - Extensions and must_support for extensibility</span>
+<span class="sd">    - Extensions and critical for extensibility</span>
 <span class="sd">    - Civic address information for location data</span>
 <span class="sd">    - Party history for tracking join/drop/hold/mute events</span>
 <span class="sd">    </span>
-<span class="sd">    New in vCon 0.3.0:</span>
+<span class="sd">    New in vCon 0.4.0:</span>
 <span class="sd">    - Extensions field for listing used extensions</span>
-<span class="sd">    - Must_support field for incompatible extensions</span>
+<span class="sd">    - Critical field for incompatible extensions</span>
 <span class="sd">    - Enhanced party fields (sip, did, jCard, timezone)</span>
 <span class="sd">    - Dialog session_id and content_hash fields</span>
 <span class="sd">    - Party history with event tracking</span>
@@ -540,7 +564,7 @@
 <span class="sd">            &gt;&gt;&gt; print(tags[&quot;body&quot;])  # Prints [&quot;category:meeting&quot;]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Retrieving tags attachment&quot;</span><span class="p">)</span>
-        <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_type</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_purpose</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Found tags attachment&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -564,7 +588,7 @@
 <span class="sd">            &gt;&gt;&gt; print(value)  # Prints &quot;meeting&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrieving value for tag: </span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">tags_attachment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_type</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
+        <span class="n">tags_attachment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_purpose</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tags_attachment</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No tags attachment found&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -597,11 +621,11 @@
 <span class="sd">            &gt;&gt;&gt; vcon.add_tag(&quot;priority&quot;, &quot;high&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adding tag </span><span class="si">{</span><span class="n">tag_name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">tag_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">tags_attachment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_type</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
+        <span class="n">tags_attachment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_attachment_by_purpose</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tags_attachment</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating new tags attachment&quot;</span><span class="p">)</span>
             <span class="n">tags_attachment</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;tags&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;purpose&quot;</span><span class="p">:</span> <span class="s2">&quot;tags&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="p">[],</span>
                 <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
             <span class="p">}</span>
@@ -659,65 +683,303 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;extensions&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removed extension: </span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Vcon.get_must_support"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.get_must_support">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_must_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="Vcon.get_critical"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.get_critical">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_critical</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the list of extensions that must be supported.</span>
+<span class="sd">        Get the list of critical extensions that must be supported.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of extension names that must be supported, empty list if none are defined</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
-<span class="sd">            &gt;&gt;&gt; vcon.add_must_support(&quot;encryption&quot;)</span>
-<span class="sd">            &gt;&gt;&gt; must_support = vcon.get_must_support()</span>
-<span class="sd">            &gt;&gt;&gt; print(must_support)  # Prints [&quot;encryption&quot;]</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_critical(&quot;encryption&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; critical = vcon.get_critical()</span>
+<span class="sd">            &gt;&gt;&gt; print(critical)  # Prints [&quot;encryption&quot;]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;must_support&quot;</span><span class="p">,</span> <span class="p">[])</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span> <span class="p">[])</span></div>
 
-<div class="viewcode-block" id="Vcon.add_must_support"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_must_support">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_must_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Vcon.add_critical"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_critical">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_critical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Add an extension to the must_support list.</span>
+<span class="sd">        Add an extension to the critical list.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            extension: The name of the extension that must be supported</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
-<span class="sd">            &gt;&gt;&gt; vcon.add_must_support(&quot;encryption&quot;)</span>
-<span class="sd">            &gt;&gt;&gt; vcon.add_must_support(&quot;video&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_critical(&quot;encryption&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_critical(&quot;video&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;must_support&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;must_support&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">if</span> <span class="n">extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;must_support&quot;</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;must_support&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added must_support extension: </span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="s2">&quot;critical&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;critical&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="Vcon.remove_must_support"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.remove_must_support">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">remove_must_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;critical&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;critical&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added critical extension: </span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vcon.remove_critical"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.remove_critical">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">remove_critical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Remove an extension from the must_support list.</span>
+<span class="sd">        Remove an extension from the critical list.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            extension: The name of the extension to remove from must_support</span>
+<span class="sd">            extension: The name of the extension to remove from critical</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
-<span class="sd">            &gt;&gt;&gt; vcon.add_must_support(&quot;encryption&quot;)</span>
-<span class="sd">            &gt;&gt;&gt; vcon.remove_must_support(&quot;encryption&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_critical(&quot;encryption&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; vcon.remove_critical(&quot;encryption&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;must_support&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span> <span class="ow">and</span> <span class="n">extension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;must_support&quot;</span><span class="p">]:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;must_support&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removed must_support extension: </span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="s2">&quot;critical&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span> <span class="ow">and</span> <span class="n">extension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;critical&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;critical&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">extension</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removed critical extension: </span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Vcon.find_attachment_by_type"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.find_attachment_by_type">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">find_attachment_by_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="c1"># Extension-specific methods</span>
+<div class="viewcode-block" id="Vcon.add_lawful_basis_attachment"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_lawful_basis_attachment">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_lawful_basis_attachment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">lawful_basis</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">expiration</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">purpose_grants</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">party_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dialog_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Find an attachment in the vCon by its type.</span>
+<span class="sd">        Add a lawful basis attachment to the vCon.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lawful_basis: The lawful basis type (consent, contract, etc.)</span>
+<span class="sd">            expiration: ISO 8601 timestamp when the lawful basis expires</span>
+<span class="sd">            purpose_grants: List of purpose grant dictionaries</span>
+<span class="sd">            party_index: Index of the party this applies to (optional)</span>
+<span class="sd">            dialog_index: Index of the dialog this applies to (optional)</span>
+<span class="sd">            **kwargs: Additional lawful basis parameters</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_lawful_basis_attachment(</span>
+<span class="sd">            ...     lawful_basis=&quot;consent&quot;,</span>
+<span class="sd">            ...     expiration=&quot;2026-01-01T00:00:00Z&quot;,</span>
+<span class="sd">            ...     purpose_grants=[</span>
+<span class="sd">            ...         {&quot;purpose&quot;: &quot;recording&quot;, &quot;granted&quot;: True, &quot;granted_at&quot;: &quot;2025-01-01T00:00:00Z&quot;}</span>
+<span class="sd">            ...     ]</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">EXTENSIONS_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Extensions not available&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.lawful_basis</span><span class="w"> </span><span class="kn">import</span> <span class="n">LawfulBasisExtension</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">LawfulBasisExtension</span><span class="p">()</span>
+            <span class="n">attachment</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">create_lawful_basis_attachment</span><span class="p">(</span>
+                <span class="n">lawful_basis</span><span class="o">=</span><span class="n">lawful_basis</span><span class="p">,</span>
+                <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">,</span>
+                <span class="n">purpose_grants</span><span class="o">=</span><span class="n">purpose_grants</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Add party and dialog references if provided</span>
+            <span class="k">if</span> <span class="n">party_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">attachment</span><span class="p">[</span><span class="s2">&quot;party&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">party_index</span>
+            <span class="k">if</span> <span class="n">dialog_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">attachment</span><span class="p">[</span><span class="s2">&quot;dialog&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dialog_index</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+            
+            <span class="c1"># Add extension to extensions list if not already present</span>
+            <span class="k">if</span> <span class="s2">&quot;lawful_basis&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;lawful_basis&quot;</span><span class="p">)</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Added lawful basis attachment&quot;</span><span class="p">)</span>
+            
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Lawful basis extension not available&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vcon.add_wtf_transcription_attachment"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_wtf_transcription_attachment">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_wtf_transcription_attachment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transcript</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">party_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dialog_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a WTF transcription attachment to the vCon.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transcript: Transcript information dictionary</span>
+<span class="sd">            segments: List of segment dictionaries</span>
+<span class="sd">            metadata: Metadata dictionary</span>
+<span class="sd">            party_index: Index of the party this applies to (optional)</span>
+<span class="sd">            dialog_index: Index of the dialog this applies to (optional)</span>
+<span class="sd">            **kwargs: Additional WTF parameters</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
+<span class="sd">            &gt;&gt;&gt; vcon.add_wtf_transcription_attachment(</span>
+<span class="sd">            ...     transcript={&quot;text&quot;: &quot;Hello world&quot;, &quot;language&quot;: &quot;en&quot;, &quot;duration&quot;: 2.0, &quot;confidence&quot;: 0.95},</span>
+<span class="sd">            ...     segments=[{&quot;id&quot;: 0, &quot;start&quot;: 0.0, &quot;end&quot;: 2.0, &quot;text&quot;: &quot;Hello world&quot;, &quot;confidence&quot;: 0.95}],</span>
+<span class="sd">            ...     metadata={&quot;created_at&quot;: &quot;2025-01-01T00:00:00Z&quot;, &quot;processed_at&quot;: &quot;2025-01-01T00:00:01Z&quot;, </span>
+<span class="sd">            ...              &quot;provider&quot;: &quot;whisper&quot;, &quot;model&quot;: &quot;whisper-1&quot;}</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">EXTENSIONS_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Extensions not available&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.wtf</span><span class="w"> </span><span class="kn">import</span> <span class="n">WTFExtension</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">WTFExtension</span><span class="p">()</span>
+            <span class="n">attachment</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">create_wtf_attachment</span><span class="p">(</span>
+                <span class="n">transcript</span><span class="o">=</span><span class="n">transcript</span><span class="p">,</span>
+                <span class="n">segments</span><span class="o">=</span><span class="n">segments</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Add party and dialog references if provided</span>
+            <span class="k">if</span> <span class="n">party_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">attachment</span><span class="p">[</span><span class="s2">&quot;party&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">party_index</span>
+            <span class="k">if</span> <span class="n">dialog_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">attachment</span><span class="p">[</span><span class="s2">&quot;dialog&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dialog_index</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+            
+            <span class="c1"># Add extension to extensions list if not already present</span>
+            <span class="k">if</span> <span class="s2">&quot;wtf_transcription&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;wtf_transcription&quot;</span><span class="p">)</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Added WTF transcription attachment&quot;</span><span class="p">)</span>
+            
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;WTF extension not available&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Vcon.find_lawful_basis_attachments"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.find_lawful_basis_attachments">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">find_lawful_basis_attachments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">party_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find lawful basis attachments in the vCon.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            party_index: Filter by party index (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of lawful basis attachment dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">attachments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attachment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">if</span> <span class="n">attachment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;purpose&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;lawful_basis&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">party_index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">attachment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;party&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">party_index</span><span class="p">:</span>
+                    <span class="n">attachments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attachments</span></div>
+
+<div class="viewcode-block" id="Vcon.find_wtf_attachments"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.find_wtf_attachments">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">find_wtf_attachments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">party_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find WTF transcription attachments in the vCon.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            party_index: Filter by party index (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of WTF attachment dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">attachments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attachment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">if</span> <span class="n">attachment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;purpose&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;wtf_transcription&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">party_index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">attachment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;party&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">party_index</span><span class="p">:</span>
+                    <span class="n">attachments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attachments</span></div>
+
+<div class="viewcode-block" id="Vcon.check_lawful_basis_permission"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.check_lawful_basis_permission">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">check_lawful_basis_permission</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">party_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if permission is granted for a specific purpose.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            purpose: The purpose to check permission for</span>
+<span class="sd">            party_index: Index of the party to check (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if permission is granted, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">EXTENSIONS_AVAILABLE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.extensions.lawful_basis</span><span class="w"> </span><span class="kn">import</span> <span class="n">LawfulBasisExtension</span>
+            <span class="n">extension</span> <span class="o">=</span> <span class="n">LawfulBasisExtension</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">extension</span><span class="o">.</span><span class="n">check_permission</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">,</span> <span class="n">purpose</span><span class="p">,</span> <span class="n">party_index</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Vcon.validate_extensions"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.validate_extensions">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">validate_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate all extensions in the vCon.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with validation results for each extension</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">EXTENSIONS_AVAILABLE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Extensions not available&quot;</span><span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">registry</span> <span class="o">=</span> <span class="n">get_extension_registry</span><span class="p">()</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+            
+            <span class="c1"># Validate each extension</span>
+            <span class="k">for</span> <span class="n">extension_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">():</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">validate_extension</span><span class="p">(</span><span class="n">extension_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">)</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">extension_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;is_valid&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">,</span>
+                    <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+                    <span class="s2">&quot;warnings&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">warnings</span>
+                <span class="p">}</span>
+            
+            <span class="c1"># Validate all attachments</span>
+            <span class="n">attachment_results</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">attachment</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">validate_attachment</span><span class="p">(</span><span class="n">attachment</span><span class="p">)</span>
+                <span class="n">attachment_results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s2">&quot;purpose&quot;</span><span class="p">:</span> <span class="n">attachment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;purpose&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;is_valid&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">,</span>
+                    <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+                    <span class="s2">&quot;warnings&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">warnings</span>
+                <span class="p">})</span>
+            
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attachment_results</span>
+            
+            <span class="k">return</span> <span class="n">results</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error validating extensions: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span></div>
+
+<div class="viewcode-block" id="Vcon.process_extensions"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.process_extensions">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">process_extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process all extensions in the vCon.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with processing results for each extension</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">EXTENSIONS_AVAILABLE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Extensions not available&quot;</span><span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">registry</span> <span class="o">=</span> <span class="n">get_extension_registry</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">registry</span><span class="o">.</span><span class="n">process_extensions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing extensions: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span></div>
+
+<div class="viewcode-block" id="Vcon.find_attachment_by_purpose"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.find_attachment_by_purpose">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">find_attachment_by_purpose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find an attachment in the vCon by its purpose.</span>
 
 <span class="sd">        This method searches through the vCon&#39;s attachments and returns the first</span>
 <span class="sd">        attachment matching the specified type.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            type: The type of attachment to find</span>
+<span class="sd">            purpose: The purpose of attachment to find</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The matching attachment dictionary if found, None otherwise</span>
@@ -725,19 +987,31 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
 <span class="sd">            &gt;&gt;&gt; vcon.add_attachment(&quot;metadata&quot;, {&quot;version&quot;: &quot;1.0&quot;})</span>
-<span class="sd">            &gt;&gt;&gt; metadata = vcon.find_attachment_by_type(&quot;metadata&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; metadata = vcon.find_attachment_by_purpose(&quot;metadata&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching for attachment of type: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching for attachment of purpose: </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">attachment</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">type</span><span class="p">),</span> <span class="kc">None</span>
+            <span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">a</span><span class="p">[</span><span class="s2">&quot;purpose&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">purpose</span><span class="p">),</span> <span class="kc">None</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">attachment</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found attachment of type: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found attachment of purpose: </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No attachment found of type: </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No attachment found of purpose: </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">attachment</span></div>
 
-<div class="viewcode-block" id="Vcon.add_attachment"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_attachment">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_attachment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attachment</span><span class="p">:</span>
+<div class="viewcode-block" id="Vcon.add_attachment"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_attachment">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_attachment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">body</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="n">mediatype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">content_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">party</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dialog</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attachment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add an attachment to the vCon.</span>
 
@@ -745,9 +1019,16 @@
 <span class="sd">        and adds it to the vCon&#39;s attachments list.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            type: The type of the attachment</span>
+<span class="sd">            purpose: The purpose of the attachment</span>
 <span class="sd">            body: The content of the attachment</span>
 <span class="sd">            encoding: The encoding format for the body (default: &quot;none&quot;)</span>
+<span class="sd">            mediatype: Optional media type of the attachment</span>
+<span class="sd">            filename: Optional file name of the attachment</span>
+<span class="sd">            url: Optional URL for external attachments</span>
+<span class="sd">            content_hash: Optional content hash for external attachments</span>
+<span class="sd">            start: Optional timestamp for the attachment</span>
+<span class="sd">            party: Optional party index</span>
+<span class="sd">            dialog: Optional dialog index</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The created Attachment object</span>
@@ -758,11 +1039,22 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
 <span class="sd">            &gt;&gt;&gt; attachment = vcon.add_attachment(&quot;metadata&quot;, {&quot;version&quot;: &quot;1.0&quot;}, &quot;json&quot;)</span>
-<span class="sd">            &gt;&gt;&gt; print(attachment.type)  # Prints &quot;metadata&quot;</span>
+<span class="sd">            &gt;&gt;&gt; print(attachment.purpose)  # Prints &quot;metadata&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating new attachment of type </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2"> encoding&quot;</span><span class="p">)</span>
-    
-        <span class="n">attachment</span> <span class="o">=</span> <span class="n">Attachment</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating new attachment of purpose </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">encoding</span><span class="si">}</span><span class="s2"> encoding&quot;</span><span class="p">)</span>
+
+        <span class="n">attachment</span> <span class="o">=</span> <span class="n">Attachment</span><span class="p">(</span>
+            <span class="n">purpose</span><span class="o">=</span><span class="n">purpose</span><span class="p">,</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="n">mediatype</span><span class="o">=</span><span class="n">mediatype</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
+            <span class="n">content_hash</span><span class="o">=</span><span class="n">content_hash</span><span class="p">,</span>
+            <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+            <span class="n">party</span><span class="o">=</span><span class="n">party</span><span class="p">,</span>
+            <span class="n">dialog</span><span class="o">=</span><span class="n">dialog</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">attachment_dict</span> <span class="o">=</span> <span class="n">attachment</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
     
         <span class="c1"># Process attachment dict according to property handling mode</span>
@@ -770,10 +1062,10 @@
     
         <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processed_attachment</span><span class="p">)</span>
     
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added new attachment of type </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added new attachment of purpose </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">attachment</span></div>
 
-<div class="viewcode-block" id="Vcon.add_image"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_image">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attachment</span><span class="p">:</span>
+<div class="viewcode-block" id="Vcon.add_image"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.add_image">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attachment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add an image attachment to the vCon.</span>
 <span class="sd">        </span>
@@ -782,7 +1074,7 @@
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            image_path: Path to the image file</span>
-<span class="sd">            type: The type of the attachment (default: &quot;image&quot;)</span>
+<span class="sd">            purpose: The purpose of the attachment (default: &quot;image&quot;)</span>
 <span class="sd">            </span>
 <span class="sd">        Returns:</span>
 <span class="sd">            The created Attachment object</span>
@@ -794,11 +1086,11 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
 <span class="sd">            &gt;&gt;&gt; attachment = vcon.add_image(&quot;document.pdf&quot;, &quot;identification&quot;)</span>
-<span class="sd">            &gt;&gt;&gt; print(attachment.metadata.get(&quot;mimetype&quot;))  # Prints &quot;application/pdf&quot;</span>
+<span class="sd">            &gt;&gt;&gt; print(attachment.mediatype)  # Prints &quot;application/pdf&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">attachment</span> <span class="o">=</span> <span class="n">Attachment</span><span class="o">.</span><span class="n">from_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="n">attachment</span> <span class="o">=</span> <span class="n">Attachment</span><span class="o">.</span><span class="n">from_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">purpose</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;attachments&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attachment</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added new image attachment of type </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added new image attachment of purpose </span><span class="si">{</span><span class="n">purpose</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">attachment</span></div>
 
 <div class="viewcode-block" id="Vcon.find_analysis_by_type"><a class="viewcode-back" href="../../api/vcon.html#vcon.vcon.Vcon.find_analysis_by_type">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">find_analysis_by_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
@@ -837,6 +1129,11 @@
         <span class="n">vendor</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">body</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="n">mediatype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">product</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">content_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">meta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
@@ -854,6 +1151,11 @@
 <span class="sd">            vendor: The name of the vendor who performed the analysis</span>
 <span class="sd">            body: The analysis data</span>
 <span class="sd">            encoding: The encoding format of the body (default: &quot;none&quot;)</span>
+<span class="sd">            mediatype: Optional media type of the analysis content</span>
+<span class="sd">            filename: Optional filename for the analysis content</span>
+<span class="sd">            product: Optional product name of the vendor</span>
+<span class="sd">            url: Optional URL for external analysis content</span>
+<span class="sd">            content_hash: Optional content hash for external analysis content</span>
 <span class="sd">            schema: Optional schema information about the analysis (default: None)</span>
 <span class="sd">            meta: Optional metadata about the analysis (default: None)</span>
 <span class="sd">            **extra: Additional key-value pairs to include in the analysis</span>
@@ -901,6 +1203,17 @@
             <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
             <span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">,</span>
         <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">mediatype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;mediatype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mediatype</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="n">product</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">product</span>
+        <span class="k">if</span> <span class="n">url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">if</span> <span class="n">content_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;content_hash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">content_hash</span>
         
         <span class="c1"># Add schema if provided</span>
         <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1175,7 +1488,7 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
 <span class="sd">            &gt;&gt;&gt; vcon_dict = vcon.to_dict()</span>
-<span class="sd">            &gt;&gt;&gt; print(vcon_dict[&quot;vcon&quot;])  # Prints &quot;0.3.0&quot;</span>
+<span class="sd">            &gt;&gt;&gt; print(vcon_dict[&quot;vcon&quot;])  # Prints &quot;0.4.0&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Converting vCon to dictionary&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_json</span><span class="p">())</span></div>
@@ -1266,7 +1579,7 @@
 <span class="sd">            &gt;&gt;&gt; vcon = Vcon.build_new()</span>
 <span class="sd">            &gt;&gt;&gt; vcon.add_attachment(&quot;metadata&quot;, {&quot;version&quot;: &quot;1.0&quot;})</span>
 <span class="sd">            &gt;&gt;&gt; attachments = vcon.attachments</span>
-<span class="sd">            &gt;&gt;&gt; print(attachments[0][&quot;type&quot;])  # Prints &quot;metadata&quot;</span>
+<span class="sd">            &gt;&gt;&gt; print(attachments[0][&quot;purpose&quot;])  # Prints &quot;metadata&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attachments&quot;</span><span class="p">,</span> <span class="p">[])</span>
 
@@ -1311,8 +1624,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;redacted&quot;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">appended</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;appended&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amended</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;amended&quot;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1484,6 +1797,7 @@
 <span class="sd">        Checks required fields, ensures data types are correct, and verifies</span>
 <span class="sd">        relationships between different parts of the vCon (for example, dialog party</span>
 <span class="sd">        references and attachment fields).</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple[bool, List[str]]: A tuple where the first element is True if the vCon</span>
 <span class="sd">            is valid and False otherwise, and the second element is a list of error messages.</span>
@@ -1561,13 +1875,13 @@
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dialog at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has an invalid &#39;start&#39; format. Must be an ISO 8601 datetime string.&quot;</span><span class="p">)</span>
     
-            <span class="c1"># Validate mimetype for non-transfer/incomplete types</span>
+            <span class="c1"># Validate mediatype for non-transfer/incomplete types</span>
             <span class="n">dialog_type</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dialog_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;transfer&quot;</span><span class="p">,</span> <span class="s2">&quot;incomplete&quot;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;mimetype&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dialog</span> <span class="ow">or</span>
-                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dialog</span><span class="p">[</span><span class="s2">&quot;mimetype&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span>
-                    <span class="n">dialog</span><span class="p">[</span><span class="s2">&quot;mimetype&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Dialog</span><span class="o">.</span><span class="n">MIME_TYPES</span><span class="p">):</span>
-                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dialog at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has an invalid or missing mimetype: </span><span class="si">{</span><span class="n">dialog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mimetype&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;missing&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;mediatype&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dialog</span> <span class="ow">or</span>
+                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dialog</span><span class="p">[</span><span class="s2">&quot;mediatype&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="n">dialog</span><span class="p">[</span><span class="s2">&quot;mediatype&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Dialog</span><span class="o">.</span><span class="n">MIME_TYPES</span><span class="p">):</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dialog at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has an invalid or missing mediatype: </span><span class="si">{</span><span class="n">dialog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mediatype&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;missing&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     
         <span class="c1"># Validate attachments.</span>
         <span class="k">if</span> <span class="s2">&quot;attachments&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">:</span>
@@ -1579,10 +1893,14 @@
                         <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attachment at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> must be a dictionary.&quot;</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="c1"># Check for required attachment fields.</span>
-                        <span class="n">required_attachment_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">]</span>
-                        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">required_attachment_fields</span><span class="p">:</span>
-                            <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attachment</span><span class="p">:</span>
-                                <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attachment at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is missing required field: </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="s2">&quot;purpose&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attachment</span><span class="p">:</span>
+                            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Attachment at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is missing required field: purpose&quot;</span><span class="p">)</span>
+                        <span class="n">has_inline</span> <span class="o">=</span> <span class="s2">&quot;body&quot;</span> <span class="ow">in</span> <span class="n">attachment</span> <span class="ow">and</span> <span class="s2">&quot;encoding&quot;</span> <span class="ow">in</span> <span class="n">attachment</span>
+                        <span class="n">has_external</span> <span class="o">=</span> <span class="s2">&quot;url&quot;</span> <span class="ow">in</span> <span class="n">attachment</span> <span class="ow">and</span> <span class="s2">&quot;content_hash&quot;</span> <span class="ow">in</span> <span class="n">attachment</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">has_inline</span> <span class="ow">or</span> <span class="n">has_external</span><span class="p">):</span>
+                            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Attachment at index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> must include body+encoding or url+content_hash.&quot;</span>
+                            <span class="p">)</span>
                         <span class="c1"># Validate encoding.</span>
                         <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;encoding&quot;</span> <span class="ow">in</span> <span class="n">attachment</span> <span class="ow">and</span>
                             <span class="n">attachment</span><span class="p">[</span><span class="s2">&quot;encoding&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="s2">&quot;base64url&quot;</span><span class="p">]):</span>

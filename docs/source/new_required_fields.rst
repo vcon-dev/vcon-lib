@@ -1,5 +1,5 @@
 New Required Fields
-==================
+===================
 
 This document describes the new required fields added to the vCon library to support the latest IETF vCon specification requirements.
 
@@ -13,12 +13,12 @@ The vCon library has been updated to include new fields that enhance functionali
 - **Dialog Object**: Session identifier and content hash for integrity verification
 
 vCon Object Level Extensions
----------------------------
+----------------------------
 
 Extensions allow vCon implementations to declare additional capabilities and requirements.
 
 Adding Extensions
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -32,24 +32,24 @@ Adding Extensions
     vcon.add_extension("analytics")
     
     # Specify extensions that must be supported
-    vcon.add_must_support("encryption")
-    vcon.add_must_support("video")
+    vcon.add_critical("encryption")
+    vcon.add_critical("video")
 
 Managing Extensions
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
     # Get current extensions
     extensions = vcon.get_extensions()  # ["video", "encryption", "analytics"]
-    must_support = vcon.get_must_support()  # ["encryption", "video"]
+    critical = vcon.get_critical()  # ["encryption", "video"]
     
     # Remove extensions if needed
     vcon.remove_extension("analytics")
-    vcon.remove_must_support("video")
+    vcon.remove_critical("video")
     
     # Check extension compatibility
-    required = vcon.get_must_support()
+    required = vcon.get_critical()
     available = vcon.get_extensions()
     
     for ext in required:
@@ -57,12 +57,12 @@ Managing Extensions
             print(f"Warning: Required extension '{ext}' not available")
 
 Enhanced Party Information
--------------------------
+--------------------------
 
 Parties now support additional contact and identification methods for better interoperability.
 
 SIP URI Support
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 SIP (Session Initiation Protocol) URIs allow parties to be contacted via VoIP:
 
@@ -75,10 +75,9 @@ SIP (Session Initiation Protocol) URIs allow parties to be contacted via VoIP:
         tel="+1234567890",
         sip="sip:john@example.com"
     )
-```
 
 Decentralized Identifier (DID) Support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DIDs provide blockchain-based identity management:
 
@@ -88,10 +87,9 @@ DIDs provide blockchain-based identity management:
         name="Alice Smith",
         did="did:example:123456789abcdef"
     )
-```
 
 vCard Format Support
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 vCard format provides standardized contact information:
 
@@ -107,10 +105,9 @@ vCard format provides standardized contact information:
             "title": "Software Engineer"
         }
     )
-```
 
 Timezone Support
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Timezone information helps with proper time handling:
 
@@ -120,10 +117,9 @@ Timezone information helps with proper time handling:
         name="Carol Wilson",
         timezone="America/New_York"
     )
-```
 
 Complete Party Example
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -140,15 +136,14 @@ Complete Party Example
         },
         timezone="America/New_York"
     )
-```
 
 Dialog Session Management and Content Integrity
-----------------------------------------------
+-----------------------------------------------
 
 Dialogs now support session tracking and content integrity verification.
 
 Session Identifier
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Session IDs help track conversation sessions across multiple dialogs:
 
@@ -162,7 +157,7 @@ Session IDs help track conversation sessions across multiple dialogs:
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         body="Hello, this is a test message!",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     
     # Get session ID
@@ -170,10 +165,9 @@ Session IDs help track conversation sessions across multiple dialogs:
     
     # Set session ID
     dialog.set_session_id("session-67890")
-```
 
 Content Hash for Integrity Verification
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Content hashes ensure data integrity and can replace the older alg/signature fields:
 
@@ -192,10 +186,9 @@ Content hashes ensure data integrity and can replace the older alg/signature fie
     
     # Set hash manually
     dialog.set_content_hash("abc123def456")
-```
 
 Complete Dialog Example
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -204,7 +197,7 @@ Complete Dialog Example
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         body="Hello, this is a test message!",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     
     # Calculate and set content hash for integrity verification
@@ -214,10 +207,9 @@ Complete Dialog Example
     # Verify content integrity
     is_valid = dialog.verify_content_hash(content_hash)
     print(f"Content integrity: {is_valid}")
-```
 
 JSON Serialization
------------------
+------------------
 
 The new fields are properly serialized to JSON:
 
@@ -226,7 +218,7 @@ The new fields are properly serialized to JSON:
     # Create a vCon with new fields
     vcon = Vcon.build_new()
     vcon.add_extension("video")
-    vcon.add_must_support("encryption")
+    vcon.add_critical("encryption")
     
     party = Party(
         name="John Doe",
@@ -242,7 +234,7 @@ The new fields are properly serialized to JSON:
         start=datetime.now(timezone.utc),
         parties=[0],
         body="Hello!",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     dialog.set_content_hash(dialog.calculate_content_hash())
     vcon.add_dialog(dialog)
@@ -250,7 +242,6 @@ The new fields are properly serialized to JSON:
     # Serialize to JSON
     json_data = vcon.to_json()
     print(json_data)
-```
 
 The resulting JSON will include:
 
@@ -259,7 +250,7 @@ The resulting JSON will include:
     {
         "uuid": "...",
         "extensions": ["video"],
-        "must_support": ["encryption"],
+        "critical": ["encryption"],
         "parties": [{
             "name": "John Doe",
             "sip": "sip:john@example.com",
@@ -272,14 +263,13 @@ The resulting JSON will include:
             "start": "...",
             "parties": [0],
             "body": "Hello!",
-            "session_id": "session-12345",
+            "session_id": {"local": "local-uuid", "remote": "remote-uuid"},
             "content_hash": "..."
         }]
     }
-```
 
 Backward Compatibility
----------------------
+----------------------
 
 All new fields are optional and backward compatible:
 
@@ -288,11 +278,11 @@ All new fields are optional and backward compatible:
 - The library maintains compatibility with older vCon versions
 
 Migration Guide
---------------
+---------------
 
 To migrate existing code to use the new fields:
 
-1. **Add Extensions**: Use `add_extension()` and `add_must_support()` to declare capabilities
+1. **Add Extensions**: Use `add_extension()` and `add_critical()` to declare capabilities
 2. **Enhance Parties**: Add SIP, DID, jCard, and timezone information to Party objects
 3. **Track Sessions**: Add session_id to Dialog objects for better session management
 4. **Verify Integrity**: Use content_hash for data integrity verification instead of alg/signature
@@ -318,7 +308,6 @@ Example migration:
         start=datetime.now(), 
         parties=[0], 
         body="Hello",
-        session_id="session-12345"
+        session_id={"local": "local-uuid", "remote": "remote-uuid"}
     )
     dialog.set_content_hash(dialog.calculate_content_hash())
-``` 

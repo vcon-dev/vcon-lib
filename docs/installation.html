@@ -100,7 +100,7 @@
 </div>
 </li>
 <li><p>Clone the repository:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/yourusername/vcon-lib.git
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/vcon-dev/vcon-lib.git
 <span class="nb">cd</span><span class="w"> </span>vcon-lib
 </pre></div>
 </div>
@@ -115,14 +115,20 @@
 </section>
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
-<p>vcon requires Python 3.8 or later and has the following main dependencies:</p>
+<p>vcon requires Python 3.12 or later and has the following main dependencies:</p>
 <ul class="simple">
-<li><p>authlib&gt;=1.3.2</p></li>
+<li><p>authlib&gt;=1.6.4</p></li>
+<li><p>uuid6&gt;=2024.7.10</p></li>
 <li><p>requests&gt;=2.32.3</p></li>
 <li><p>pydash&gt;=8.0.3</p></li>
 <li><p>python-dateutil&gt;=2.9.0</p></li>
 <li><p>mutagen&gt;=1.47.0</p></li>
+<li><p>ffmpeg&gt;=1.4</p></li>
+<li><p>logger&gt;=1.4</p></li>
+<li><p>pypdf&gt;=6.0.0</p></li>
+<li><p>pillow&gt;=11.3.0</p></li>
 </ul>
+<p>Some video processing features require the <cite>ffmpeg</cite> system binary to be installed and available on your PATH.</p>
 <p>These dependencies will be automatically installed when you install vcon using any of the methods above.</p>
 </section>
 </section>

@@ -13,7 +13,7 @@ The simplest way to install vcon is using pip:
     pip install vcon
 
 Using Poetry (recommended for development)
-----------------------------------------
+------------------------------------------
 
 For development, we recommend using Poetry:
 
@@ -27,7 +27,7 @@ For development, we recommend using Poetry:
 
    .. code-block:: bash
 
-       git clone https://github.com/yourusername/vcon-lib.git
+       git clone https://github.com/vcon-dev/vcon-lib.git
        cd vcon-lib
 
 3. Install dependencies:
@@ -41,12 +41,19 @@ This will create a virtual environment and install all dependencies, including d
 Requirements
 ------------
 
-vcon requires Python 3.8 or later and has the following main dependencies:
+vcon requires Python 3.12 or later and has the following main dependencies:
 
-- authlib>=1.3.2
+- authlib>=1.6.4
+- uuid6>=2024.7.10
 - requests>=2.32.3
 - pydash>=8.0.3
 - python-dateutil>=2.9.0
 - mutagen>=1.47.0
+- ffmpeg>=1.4
+- logger>=1.4
+- pypdf>=6.0.0
+- pillow>=11.3.0
+
+Some video processing features require the `ffmpeg` system binary to be installed and available on your PATH.
 
 These dependencies will be automatically installed when you install vcon using any of the methods above. 

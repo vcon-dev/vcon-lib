@@ -49,11 +49,30 @@
 <li class="toctree-l1"><a class="reference internal" href="new_required_fields.html">New Required Fields</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Version Management Changes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#key-changes">Key Changes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-changes">Key Changes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#version-field-is-now-optional">Version Field Is Now Optional</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#removed-version-management-parameters">Removed Version Management Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updated-method-signatures">Updated Method Signatures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#migration-guide">Migration Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#for-existing-code">For Existing Code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#for-version-field-handling">For Version Field Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#backward-compatibility">Backward Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-versionless-vcons">Creating Versionless vCons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-existing-vcons">Working with Existing vCons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validation-changes">Validation Changes</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#benefits">Benefits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getting-help">Getting Help</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api/modules.html">vcon</a></li>
@@ -92,14 +111,17 @@
 </section>
 <section id="key-changes">
 <h2>Key Changes<a class="headerlink" href="#key-changes" title="Permalink to this heading"></a></h2>
-<p>### Version Field is Now Optional</p>
+<section id="version-field-is-now-optional">
+<h3>Version Field Is Now Optional<a class="headerlink" href="#version-field-is-now-optional" title="Permalink to this heading"></a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">vcon</span></code> field in vCon objects is no longer required:</p>
 <ul class="simple">
 <li><p>New vCon objects created with <code class="docutils literal notranslate"><span class="pre">Vcon.build_new()</span></code> do not include a version field by default</p></li>
 <li><p>Existing vCon objects with version fields continue to work unchanged</p></li>
 <li><p>The version field can be manually added if needed</p></li>
 </ul>
-<p>### Removed Version Management Parameters</p>
+</section>
+<section id="removed-version-management-parameters">
+<h3>Removed Version Management Parameters<a class="headerlink" href="#removed-version-management-parameters" title="Permalink to this heading"></a></h3>
 <p>The following parameters have been removed from all Vcon methods:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter removed from:
@@ -110,7 +132,9 @@
 - <code class="docutils literal notranslate"><span class="pre">Vcon.load_from_file()</span></code>
 - <code class="docutils literal notranslate"><span class="pre">Vcon.load_from_url()</span></code></p></li>
 </ul>
-<p>### Updated Method Signatures</p>
+</section>
+<section id="updated-method-signatures">
+<h3>Updated Method Signatures<a class="headerlink" href="#updated-method-signatures" title="Permalink to this heading"></a></h3>
 <p>All method signatures have been updated to remove version management:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Old signatures (no longer supported)</span>
 <span class="n">Vcon</span><span class="p">(</span><span class="n">vcon_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -126,9 +150,11 @@
 </pre></div>
 </div>
 </section>
+</section>
 <section id="migration-guide">
 <h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Permalink to this heading"></a></h2>
-<p>### For Existing Code</p>
+<section id="for-existing-code">
+<h3>For Existing Code<a class="headerlink" href="#for-existing-code" title="Permalink to this heading"></a></h3>
 <p>If you were using the <code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter, simply remove it:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Old code (will cause errors)</span>
 <span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;file.json&quot;</span><span class="p">,</span> <span class="n">strict_version</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -141,7 +167,9 @@
 <span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>### For Version Field Handling</p>
+</section>
+<section id="for-version-field-handling">
+<h3>For Version Field Handling<a class="headerlink" href="#for-version-field-handling" title="Permalink to this heading"></a></h3>
 <p>The version field is now optional. You can choose to:</p>
 <ol class="arabic simple">
 <li><p><strong>Ignore version fields</strong> (recommended for new code):
@@ -157,11 +185,13 @@
 
 <span class="c1"># Option 2: Manually add version field if needed</span>
 <span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.3.0&quot;</span>
-<span class="c1"># vcon.vcon will be &quot;0.3.0&quot;</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.4.0&quot;</span>
+<span class="c1"># vcon.vcon will be &quot;0.4.0&quot;</span>
 </pre></div>
 </div>
-<p>### Backward Compatibility</p>
+</section>
+<section id="backward-compatibility">
+<h3>Backward Compatibility<a class="headerlink" href="#backward-compatibility" title="Permalink to this heading"></a></h3>
 <p>All changes are backward compatible:</p>
 <ul class="simple">
 <li><p>Existing vCon objects with version fields continue to work</p></li>
@@ -169,9 +199,11 @@
 <li><p>No breaking changes to existing functionality</p></li>
 </ul>
 </section>
+</section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-<p>### Creating Versionless vCons</p>
+<section id="creating-versionless-vcons">
+<h3>Creating Versionless vCons<a class="headerlink" href="#creating-versionless-vcons" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
 
 <span class="c1"># Create a new vCon without version field</span>
@@ -179,11 +211,13 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">)</span>  <span class="c1"># None</span>
 
 <span class="c1"># Add version field manually if needed</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.3.0&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">)</span>  <span class="c1"># &quot;0.3.0&quot;</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">vcon_dict</span><span class="p">[</span><span class="s2">&quot;vcon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0.4.0&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">vcon</span><span class="o">.</span><span class="n">vcon</span><span class="p">)</span>  <span class="c1"># &quot;0.4.0&quot;</span>
 </pre></div>
 </div>
-<p>### Working with Existing vCons</p>
+</section>
+<section id="working-with-existing-vcons">
+<h3>Working with Existing vCons<a class="headerlink" href="#working-with-existing-vcons" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load existing vCon (with or without version field)</span>
 <span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;existing.vcon.json&quot;</span><span class="p">)</span>
 
@@ -194,7 +228,9 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No version field&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>### Validation Changes</p>
+</section>
+<section id="validation-changes">
+<h3>Validation Changes<a class="headerlink" href="#validation-changes" title="Permalink to this heading"></a></h3>
 <p>The validation logic has been updated to reflect the optional nature of the version field:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Validation no longer requires version field</span>
 <span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
@@ -203,6 +239,7 @@
 <span class="c1"># Version field is optional and not validated</span>
 </pre></div>
 </div>
+</section>
 </section>
 <section id="benefits">
 <h2>Benefits<a class="headerlink" href="#benefits" title="Permalink to this heading"></a></h2>
@@ -217,19 +254,22 @@
 </section>
 <section id="troubleshooting">
 <h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this heading"></a></h2>
-<p>### Common Issues</p>
+<section id="common-issues">
+<h3>Common Issues<a class="headerlink" href="#common-issues" title="Permalink to this heading"></a></h3>
 <ol class="arabic simple">
 <li><p><strong>“strict_version” parameter errors</strong>:
 - Remove the <code class="docutils literal notranslate"><span class="pre">strict_version</span></code> parameter from all method calls
 - Update method signatures to use <code class="docutils literal notranslate"><span class="pre">property_handling</span></code> instead</p></li>
 <li><p><strong>Version field not found</strong>:
 - Check if the vCon object has a version field: <code class="docutils literal notranslate"><span class="pre">vcon.vcon</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">None</span></code>
-- Add version field manually if needed: <code class="docutils literal notranslate"><span class="pre">vcon.vcon_dict[&quot;vcon&quot;]</span> <span class="pre">=</span> <span class="pre">&quot;0.3.0&quot;</span></code></p></li>
+- Add version field manually if needed: <code class="docutils literal notranslate"><span class="pre">vcon.vcon_dict[&quot;vcon&quot;]</span> <span class="pre">=</span> <span class="pre">&quot;0.4.0&quot;</span></code></p></li>
 <li><p><strong>Validation errors</strong>:
 - Ensure required fields (uuid, created_at) are present
 - Version field is no longer required for validation</p></li>
 </ol>
-<p>### Getting Help</p>
+</section>
+<section id="getting-help">
+<h3>Getting Help<a class="headerlink" href="#getting-help" title="Permalink to this heading"></a></h3>
 <p>If you encounter issues with the version management changes:</p>
 <ol class="arabic simple">
 <li><p>Check the migration guide above</p></li>
@@ -237,6 +277,7 @@
 <li><p>Test with the updated method signatures</p></li>
 <li><p>Ensure backward compatibility with existing vCon objects</p></li>
 </ol>
+</section>
 </section>
 </section>
 

@@ -109,7 +109,7 @@
 <span class="c1"># Add extensions and must-support requirements</span>
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
 
 <span class="c1"># Add participants with enhanced contact information</span>
 <span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
@@ -132,7 +132,7 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># Calculate and set content hash for integrity verification</span>
@@ -156,7 +156,7 @@
 
 <span class="c1"># Access extensions</span>
 <span class="n">extensions</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
-<span class="n">must_support</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+<span class="n">critical</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_critical</span><span class="p">()</span>
 
 <span class="c1"># Get participants with enhanced information</span>
 <span class="n">parties</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">parties</span>
@@ -198,11 +198,11 @@
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
 
 <span class="c1"># Specify extensions that must be supported</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
 
 <span class="c1"># Check extension compatibility</span>
-<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_critical</span><span class="p">()</span>
 <span class="n">available</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
@@ -245,7 +245,7 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># Calculate content hash for integrity verification</span>
@@ -260,16 +260,25 @@
 </section>
 <section id="working-with-media-files">
 <h3>Working with Media Files<a class="headerlink" href="#working-with-media-files" title="Permalink to this heading"></a></h3>
-<p>You can attach and manage media files in a vCon container:</p>
+<p>You can attach and manage media files in a vCon container by creating dialogs and/or attachments:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">vcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vcon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcon.dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dialog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 
-<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="p">()</span>
+<span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
 
-<span class="c1"># Add a video recording</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_media</span><span class="p">(</span><span class="s2">&quot;recording.mp4&quot;</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;video/mp4&quot;</span><span class="p">)</span>
+<span class="c1"># Add a video recording dialog (external URL)</span>
+<span class="n">dialog</span> <span class="o">=</span> <span class="n">Dialog</span><span class="p">(</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;recording&quot;</span><span class="p">,</span>
+    <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+    <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://example.com/recording.mp4&quot;</span><span class="p">,</span>
+    <span class="n">mediatype</span><span class="o">=</span><span class="s2">&quot;video/mp4&quot;</span>
+<span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_dialog</span><span class="p">(</span><span class="n">dialog</span><span class="p">)</span>
 
-<span class="c1"># Add a transcript</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_media</span><span class="p">(</span><span class="s2">&quot;transcript.txt&quot;</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="s2">&quot;text/plain&quot;</span><span class="p">)</span>
+<span class="c1"># Add an attachment (image/pdf)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_image</span><span class="p">(</span><span class="s2">&quot;document.pdf&quot;</span><span class="p">,</span> <span class="n">purpose</span><span class="o">=</span><span class="s2">&quot;identification&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

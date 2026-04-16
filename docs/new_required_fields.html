@@ -127,8 +127,8 @@
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
 
 <span class="c1"># Specify extensions that must be supported</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -136,14 +136,14 @@
 <h3>Managing Extensions<a class="headerlink" href="#managing-extensions" title="Permalink to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get current extensions</span>
 <span class="n">extensions</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>  <span class="c1"># [&quot;video&quot;, &quot;encryption&quot;, &quot;analytics&quot;]</span>
-<span class="n">must_support</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>  <span class="c1"># [&quot;encryption&quot;, &quot;video&quot;]</span>
+<span class="n">critical</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_critical</span><span class="p">()</span>  <span class="c1"># [&quot;encryption&quot;, &quot;video&quot;]</span>
 
 <span class="c1"># Remove extensions if needed</span>
 <span class="n">vcon</span><span class="o">.</span><span class="n">remove_extension</span><span class="p">(</span><span class="s2">&quot;analytics&quot;</span><span class="p">)</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">remove_must_support</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">remove_critical</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
 
 <span class="c1"># Check extension compatibility</span>
-<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_must_support</span><span class="p">()</span>
+<span class="n">required</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_critical</span><span class="p">()</span>
 <span class="n">available</span> <span class="o">=</span> <span class="n">vcon</span><span class="o">.</span><span class="n">get_extensions</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
@@ -168,7 +168,6 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a></p>
 </section>
 <section id="decentralized-identifier-did-support">
 <h3>Decentralized Identifier (DID) Support<a class="headerlink" href="#decentralized-identifier-did-support" title="Permalink to this heading"></a></h3>
@@ -179,7 +178,6 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id5"><span class="problematic" id="id6">``</span></a><a href="#id7"><span class="problematic" id="id8">`</span></a></p>
 </section>
 <section id="vcard-format-support">
 <h3>vCard Format Support<a class="headerlink" href="#vcard-format-support" title="Permalink to this heading"></a></h3>
@@ -196,7 +194,6 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id9"><span class="problematic" id="id10">``</span></a><a href="#id11"><span class="problematic" id="id12">`</span></a></p>
 </section>
 <section id="timezone-support">
 <h3>Timezone Support<a class="headerlink" href="#timezone-support" title="Permalink to this heading"></a></h3>
@@ -207,7 +204,6 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id13"><span class="problematic" id="id14">``</span></a><a href="#id15"><span class="problematic" id="id16">`</span></a></p>
 </section>
 <section id="complete-party-example">
 <h3>Complete Party Example<a class="headerlink" href="#complete-party-example" title="Permalink to this heading"></a></h3>
@@ -226,7 +222,6 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id17"><span class="problematic" id="id18">``</span></a><a href="#id19"><span class="problematic" id="id20">`</span></a></p>
 </section>
 </section>
 <section id="dialog-session-management-and-content-integrity">
@@ -243,7 +238,7 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># Get session ID</span>
@@ -253,7 +248,6 @@
 <span class="n">dialog</span><span class="o">.</span><span class="n">set_session_id</span><span class="p">(</span><span class="s2">&quot;session-67890&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id21"><span class="problematic" id="id22">``</span></a><a href="#id23"><span class="problematic" id="id24">`</span></a></p>
 </section>
 <section id="content-hash-for-integrity-verification">
 <h3>Content Hash for Integrity Verification<a class="headerlink" href="#content-hash-for-integrity-verification" title="Permalink to this heading"></a></h3>
@@ -273,7 +267,6 @@
 <span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="s2">&quot;abc123def456&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id25"><span class="problematic" id="id26">``</span></a><a href="#id27"><span class="problematic" id="id28">`</span></a></p>
 </section>
 <section id="complete-dialog-example">
 <h3>Complete Dialog Example<a class="headerlink" href="#complete-dialog-example" title="Permalink to this heading"></a></h3>
@@ -282,7 +275,7 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello, this is a test message!&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 
 <span class="c1"># Calculate and set content hash for integrity verification</span>
@@ -294,7 +287,6 @@
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content integrity: </span><span class="si">{</span><span class="n">is_valid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id29"><span class="problematic" id="id30">``</span></a><a href="#id31"><span class="problematic" id="id32">`</span></a></p>
 </section>
 </section>
 <section id="json-serialization">
@@ -303,7 +295,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a vCon with new fields</span>
 <span class="n">vcon</span> <span class="o">=</span> <span class="n">Vcon</span><span class="o">.</span><span class="n">build_new</span><span class="p">()</span>
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_extension</span><span class="p">(</span><span class="s2">&quot;video&quot;</span><span class="p">)</span>
-<span class="n">vcon</span><span class="o">.</span><span class="n">add_must_support</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
+<span class="n">vcon</span><span class="o">.</span><span class="n">add_critical</span><span class="p">(</span><span class="s2">&quot;encryption&quot;</span><span class="p">)</span>
 
 <span class="n">party</span> <span class="o">=</span> <span class="n">Party</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
@@ -319,7 +311,7 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello!&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">())</span>
 <span class="n">vcon</span><span class="o">.</span><span class="n">add_dialog</span><span class="p">(</span><span class="n">dialog</span><span class="p">)</span>
@@ -329,12 +321,11 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><a href="#id33"><span class="problematic" id="id34">``</span></a><a href="#id35"><span class="problematic" id="id36">`</span></a></p>
 <p>The resulting JSON will include:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;extensions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;must_support&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;encryption&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;critical&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;encryption&quot;</span><span class="p">],</span>
 <span class="w">    </span><span class="nt">&quot;parties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
 <span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;sip&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sip:john@example.com&quot;</span><span class="p">,</span>
@@ -347,13 +338,12 @@
 <span class="w">        </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;parties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
 <span class="w">        </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello!&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;session-12345&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;local&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;remote&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;remote-uuid&quot;</span><span class="p">},</span>
 <span class="w">        </span><span class="nt">&quot;content_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
 <span class="w">    </span><span class="p">}]</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p><a href="#id37"><span class="problematic" id="id38">``</span></a><a href="#id39"><span class="problematic" id="id40">`</span></a></p>
 </section>
 <section id="backward-compatibility">
 <h2>Backward Compatibility<a class="headerlink" href="#backward-compatibility" title="Permalink to this heading"></a></h2>
@@ -368,7 +358,7 @@
 <h2>Migration Guide<a class="headerlink" href="#migration-guide" title="Permalink to this heading"></a></h2>
 <p>To migrate existing code to use the new fields:</p>
 <ol class="arabic simple">
-<li><p><strong>Add Extensions</strong>: Use <cite>add_extension()</cite> and <cite>add_must_support()</cite> to declare capabilities</p></li>
+<li><p><strong>Add Extensions</strong>: Use <cite>add_extension()</cite> and <cite>add_critical()</cite> to declare capabilities</p></li>
 <li><p><strong>Enhance Parties</strong>: Add SIP, DID, jCard, and timezone information to Party objects</p></li>
 <li><p><strong>Track Sessions</strong>: Add session_id to Dialog objects for better session management</p></li>
 <li><p><strong>Verify Integrity</strong>: Use content_hash for data integrity verification instead of alg/signature</p></li>
@@ -391,12 +381,11 @@
     <span class="n">start</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
     <span class="n">parties</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">body</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">,</span>
-    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;session-12345&quot;</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="s2">&quot;local-uuid&quot;</span><span class="p">,</span> <span class="s2">&quot;remote&quot;</span><span class="p">:</span> <span class="s2">&quot;remote-uuid&quot;</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">dialog</span><span class="o">.</span><span class="n">set_content_hash</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">calculate_content_hash</span><span class="p">())</span>
 </pre></div>
 </div>
-<p><a href="#id41"><span class="problematic" id="id42">``</span></a><a href="#id43"><span class="problematic" id="id44">`</span></a></p>
 </section>
 </section>
 

@@ -26,7 +26,7 @@ This release introduces a comprehensive extension framework with two major exten
 - **Permission Checking**: `check_lawful_basis_permission()` method for granular permission validation
 
 #### **WTF Extension (World Transcription Format)**
-- **Multi-Provider Support**: Whisper, Deepgram, AssemblyAI, Google, Amazon, Azure, and more
+- **Multi-Provider Support**: Whisper, Deepgram, AssemblyAI
 - **Standardized Format**: Hierarchical structure with transcripts, segments, words, and speakers
 - **Quality Metrics**: Audio quality assessment and confidence scoring
 - **Export Capabilities**: SRT and WebVTT subtitle formats
@@ -53,9 +53,9 @@ This release introduces a comprehensive extension framework with two major exten
 ### 🧪 Testing
 
 #### **Comprehensive Test Suite**
-- **Extension Framework Tests**: Complete test coverage for extension registry and validation
-- **Lawful Basis Tests**: Full test suite for privacy compliance functionality
-- **WTF Extension Tests**: Complete test coverage for transcription functionality
+- **Extension Framework Tests**: Test coverage for extension registry and validation
+- **Lawful Basis Tests**: Test suite for privacy compliance functionality
+- **WTF Extension Tests**: Test coverage for transcription functionality
 - **Integration Tests**: End-to-end testing of extension workflows
 - **Provider Adapter Tests**: Testing of multi-provider data conversion
 - **Export Functionality Tests**: SRT and WebVTT export testing
@@ -115,12 +115,12 @@ This release introduces a comprehensive extension framework with two major exten
 #### **Code Metrics**
 - **New Files**: 20+ new extension-related files
 - **Lines of Code**: 2,000+ lines of new extension functionality
-- **Test Coverage**: 100% test coverage for all extension features
+- **Test Coverage**: Test coverage for extension features
 - **Documentation**: 4,000+ lines of comprehensive documentation
 
 #### **Feature Coverage**
 - **2 Major Extensions**: Lawful Basis and WTF
-- **10+ Provider Adapters**: Multi-provider transcription support
+- **3 Provider Adapters**: Multi-provider transcription support
 - **2 Export Formats**: SRT and WebVTT
 - **6+ Validation Types**: Comprehensive extension validation
 - **15+ New Methods**: Extension-specific functionality

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>vcon.dialog &mdash; vcon 0.3.9 documentation</title>
+  <title>vcon.dialog &mdash; vcon 0.7.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
 
@@ -44,6 +44,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../new_required_fields.html">New Required Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../version_management.html">Version Management Changes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">vcon</a></li>
 </ul>
 
@@ -136,7 +137,7 @@
 <span class="sd">    - Text formats: Plain text, multipart messages</span>
 <span class="sd">    - Images: JPEG, TIFF, PDF</span>
 <span class="sd">    </span>
-<span class="sd">    New in vCon 0.3.0:</span>
+<span class="sd">    New in vCon 0.4.0:</span>
 <span class="sd">    - session_id: Session identifier for tracking</span>
 <span class="sd">    - content_hash: Hash for externally referenced files (replaces alg/signature)</span>
 <span class="sd">    - application: Application identifier for the dialog</span>
@@ -210,13 +211,11 @@
         <span class="n">start</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">datetime</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">parties</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">originator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">mimetype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mediatype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">alg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">signature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">disposition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">party_history</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">PartyHistory</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transferee</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -241,7 +240,7 @@
         <span class="n">bitrate</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">thumbnail</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="c1"># New required fields</span>
-        <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">session_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">content_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="c1"># Additional fields from specification</span>
         <span class="n">application</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -258,8 +257,8 @@
 <span class="sd">        :type parties: List[int]</span>
 <span class="sd">        :param originator: the party that originated the dialog</span>
 <span class="sd">        :type originator: int or None</span>
-<span class="sd">        :param mimetype: the MIME type of the dialog body</span>
-<span class="sd">        :type mimetype: str or None</span>
+<span class="sd">        :param mediatype: the MIME type of the dialog body</span>
+<span class="sd">        :type mediatype: str or None</span>
 <span class="sd">        :param filename: the filename of the dialog body</span>
 <span class="sd">        :type filename: str or None</span>
 <span class="sd">        :param body: the body of the dialog</span>
@@ -268,10 +267,6 @@
 <span class="sd">        :type encoding: str or None</span>
 <span class="sd">        :param url: the URL of the dialog</span>
 <span class="sd">        :type url: str or None</span>
-<span class="sd">        :param alg: the algorithm used to sign the dialog</span>
-<span class="sd">        :type alg: str or None</span>
-<span class="sd">        :param signature: the signature of the dialog</span>
-<span class="sd">        :type signature: str or None</span>
 <span class="sd">        :param disposition: the disposition of the dialog</span>
 <span class="sd">        :type disposition: str or None</span>
 <span class="sd">        :param party_history: the history of parties involved in the dialog</span>
@@ -369,35 +364,35 @@
                     <span class="sa">f</span><span class="s2">&quot;Must be one of: </span><span class="si">{</span><span class="n">Dialog</span><span class="o">.</span><span class="n">VALID_DISPOSITIONS</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
 
-        <span class="c1"># Auto-detect mimetype for video type</span>
-        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;video&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">):</span>
-            <span class="c1"># Try to infer mimetype from filename extension if available</span>
+        <span class="c1"># Auto-detect mediatype for video type</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s2">&quot;video&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">):</span>
+            <span class="c1"># Try to infer mediatype from filename extension if available</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">:</span>
                 <span class="n">ext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;mp4&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;mov&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/quicktime&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/quicktime&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;webm&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/webm&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/webm&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;avi&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/x-msvideo&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/x-msvideo&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;mkv&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/x-matroska&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/x-matroska&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;mpg&quot;</span><span class="p">,</span> <span class="s2">&quot;mpeg&quot;</span><span class="p">]:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/mpeg&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/mpeg&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;flv&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/x-flv&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/x-flv&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;3gp&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/3gpp&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/3gpp&quot;</span>
                 <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;m4v&quot;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/x-m4v&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/x-m4v&quot;</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># Default to MP4 if we can&#39;t determine from extension</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Default mimetype for video</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span></div>
+                <span class="c1"># Default mediatype for video</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="s2">&quot;video/mp4&quot;</span></div>
 
 <div class="viewcode-block" id="Dialog.to_dict"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.to_dict">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -422,7 +417,7 @@
 
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dialog_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span></div>
 
-<div class="viewcode-block" id="Dialog.add_external_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_external_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_external_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_external_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_external_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_external_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add external data to the dialog.</span>
 
@@ -431,9 +426,10 @@
 <span class="sd">        :return: None</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to fetch external data: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -445,18 +441,17 @@
             <span class="n">url_path</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">url_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="c1"># Override the mimetype if provided, otherwise use the mimetype from the URL</span>
-        <span class="k">if</span> <span class="n">mimetype</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">mimetype</span>
+        <span class="c1"># Override the mediatype if provided, otherwise use the mediatype from the URL</span>
+        <span class="k">if</span> <span class="n">mediatype</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">mediatype</span>
 
-        <span class="c1"># Calculate the SHA-256 hash of the body as the signature</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alg</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;base64url&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
-            <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+        <span class="c1"># Calculate the content hash for external data</span>
+        <span class="n">raw_content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
+            <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw_content</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Dialog.add_inline_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_inline_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_inline_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_inline_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_inline_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_inline_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add inline data to the dialog.</span>
 
@@ -464,17 +459,16 @@
 <span class="sd">        :type body: str</span>
 <span class="sd">        :param filename: the filename of the inline data</span>
 <span class="sd">        :type filename: str</span>
-<span class="sd">        :param mimetype: the mimetype of the inline data</span>
-<span class="sd">        :type mimetype: str</span>
+<span class="sd">        :param mediatype: the mediatype of the inline data</span>
+<span class="sd">        :type mediatype: str</span>
 <span class="sd">        :return: None</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">mimetype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">mediatype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alg</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;base64url&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
             <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span></div>
 
@@ -534,7 +528,7 @@
 <span class="sd">        :return: True if the dialog has audio content, False otherwise</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="ow">in</span> <span class="p">[</span>
             <span class="s2">&quot;audio/x-wav&quot;</span><span class="p">,</span>
             <span class="s2">&quot;audio/wav&quot;</span><span class="p">,</span>
             <span class="s2">&quot;audio/wave&quot;</span><span class="p">,</span>
@@ -551,13 +545,13 @@
 <span class="sd">        Check if the dialog has video content.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            content_type: Optional content type to check. If None, use the dialog&#39;s mimetype.</span>
+<span class="sd">            content_type: Optional content type to check. If None, use the dialog&#39;s mediatype.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns:</span>
 <span class="sd">            True if the content is a video format, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Use provided content_type or dialog&#39;s mimetype</span>
-        <span class="n">check_type</span> <span class="o">=</span> <span class="n">content_type</span> <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># Use provided content_type or dialog&#39;s mediatype</span>
+        <span class="n">check_type</span> <span class="o">=</span> <span class="n">content_type</span> <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="n">check_type</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -579,14 +573,14 @@
         
         <span class="k">return</span> <span class="n">check_type</span> <span class="ow">in</span> <span class="n">video_types</span></div>
 
-<div class="viewcode-block" id="Dialog.add_video_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_video_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_video_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_video_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_video_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_video_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mediatype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add video data to the dialog.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            video_data: Binary video data or URL to video</span>
 <span class="sd">            filename: Name of the video file</span>
-<span class="sd">            mimetype: MIME type of the video, or auto-detected from filename if None</span>
+<span class="sd">            mediatype: MIME type of the video, or auto-detected from filename if None</span>
 <span class="sd">            inline: Whether to include the video as inline content (True) or external reference (False)</span>
 <span class="sd">            metadata: Optional video metadata to include</span>
 <span class="sd">            </span>
@@ -596,10 +590,10 @@
         <span class="c1"># Set dialog type to video</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;video&quot;</span>
         
-        <span class="c1"># Auto-detect mimetype from filename if not provided</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">mimetype</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">:</span>
+        <span class="c1"># Auto-detect mediatype from filename if not provided</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mediatype</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">:</span>
             <span class="n">ext</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="n">ext_to_mimetype</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ext_to_mediatype</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;mp4&#39;</span><span class="p">:</span> <span class="s1">&#39;video/mp4&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;mov&#39;</span><span class="p">:</span> <span class="s1">&#39;video/quicktime&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;webm&#39;</span><span class="p">:</span> <span class="s1">&#39;video/webm&#39;</span><span class="p">,</span>
@@ -610,7 +604,7 @@
                 <span class="s1">&#39;flv&#39;</span><span class="p">:</span> <span class="s1">&#39;video/x-flv&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;ogg&#39;</span><span class="p">:</span> <span class="s1">&#39;video/ogg&#39;</span>
             <span class="p">}</span>
-            <span class="n">mimetype</span> <span class="o">=</span> <span class="n">ext_to_mimetype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="s1">&#39;video/mp4&#39;</span><span class="p">)</span>  <span class="c1"># Default to MP4 if unknown</span>
+            <span class="n">mediatype</span> <span class="o">=</span> <span class="n">ext_to_mediatype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="s1">&#39;video/mp4&#39;</span><span class="p">)</span>  <span class="c1"># Default to MP4 if unknown</span>
         
         <span class="c1"># Handle external vs inline data</span>
         <span class="k">if</span> <span class="n">inline</span><span class="p">:</span>
@@ -621,16 +615,16 @@
             <span class="c1"># Add inline data</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
                 <span class="c1"># Base64 encode the binary data</span>
-                <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">video_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">)</span>
+                <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">video_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Assume it&#39;s already base64 encoded</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># External data</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">video_data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">video_data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">)):</span>
                 <span class="c1"># It&#39;s a URL, use it directly</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_external_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_external_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Cannot use non-URL as external data</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;External video references must be URLs&quot;</span><span class="p">)</span>
@@ -663,14 +657,14 @@
             <span class="k">if</span> <span class="n">video_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_inline_data</span><span class="p">():</span>
                     <span class="c1"># Decode base64 content to temporary file</span>
-                    <span class="n">temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">video_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
                     <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">video_data</span><span class="p">)</span>
                     <span class="n">temp_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                     <span class="n">video_path</span> <span class="o">=</span> <span class="n">temp_file</span><span class="o">.</span><span class="n">name</span>
                 <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_external_data</span><span class="p">():</span>
                     <span class="c1"># Download from URL to temporary file</span>
-                    <span class="n">temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">temp_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
                     <span class="n">temp_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
                     <span class="n">temp_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -729,7 +723,7 @@
             <span class="c1"># Return minimal metadata on error</span>
             <span class="k">return</span> <span class="p">{</span>
                 <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">(),</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">(),</span>
                 <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
             <span class="p">}</span>
         
@@ -784,13 +778,13 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Setup source video file</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_inline_data</span><span class="p">():</span>
-                <span class="n">temp_video</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">temp_video</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">video_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
                 <span class="n">temp_video</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">video_data</span><span class="p">)</span>
                 <span class="n">temp_video</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="n">video_path</span> <span class="o">=</span> <span class="n">temp_video</span><span class="o">.</span><span class="n">name</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_external_data</span><span class="p">():</span>
-                <span class="n">temp_video</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">temp_video</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
                 <span class="n">temp_video</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
                 <span class="n">temp_video</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -860,13 +854,13 @@
             <span class="k">if</span> <span class="n">temp_thumb</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_thumb</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">temp_thumb</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Dialog.add_streaming_video_reference"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_streaming_video_reference">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_streaming_video_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_id</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_streaming_video_reference"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_streaming_video_reference">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_streaming_video_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_id</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a reference to a streamable video.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            reference_id: Unique identifier for the streamable video</span>
-<span class="sd">            mimetype: MIME type of the video</span>
+<span class="sd">            mediatype: MIME type of the video</span>
 <span class="sd">            metadata: Optional video metadata</span>
 <span class="sd">            </span>
 <span class="sd">        Returns:</span>
@@ -874,7 +868,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s2">&quot;video&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;stream://</span><span class="si">{</span><span class="n">reference_id</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">mimetype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">mediatype</span>
         
         <span class="c1"># Add streaming-specific metadata</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">):</span>
@@ -894,17 +888,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span></div>
     
 
-<div class="viewcode-block" id="Dialog.get_video_format_from_mimetype"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.get_video_format_from_mimetype">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_video_format_from_mimetype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.get_video_format_from_mediatype"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.get_video_format_from_mediatype">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_video_format_from_mediatype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the video format name from a MIME type.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
-<span class="sd">            mimetype: MIME type of the video</span>
+<span class="sd">            mediatype: MIME type of the video</span>
 <span class="sd">            </span>
 <span class="sd">        Returns:</span>
 <span class="sd">            Format name (mp4, mov, etc.)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">mimetype_to_format</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">mediatype_to_format</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;video/mp4&#39;</span><span class="p">:</span> <span class="s1">&#39;mp4&#39;</span><span class="p">,</span>
             <span class="s1">&#39;video/x-mp4&#39;</span><span class="p">:</span> <span class="s1">&#39;mp4&#39;</span><span class="p">,</span>
             <span class="s1">&#39;video/quicktime&#39;</span><span class="p">:</span> <span class="s1">&#39;mov&#39;</span><span class="p">,</span>
@@ -916,7 +910,7 @@
             <span class="s1">&#39;video/ogg&#39;</span><span class="p">:</span> <span class="s1">&#39;ogg&#39;</span>
         <span class="p">}</span>
         
-        <span class="k">return</span> <span class="n">mimetype_to_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mimetype</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">mediatype_to_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mediatype</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span></div>
     
 <div class="viewcode-block" id="Dialog.has_thumbnail"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.has_thumbnail">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">has_thumbnail</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -929,14 +923,14 @@
             <span class="k">return</span> <span class="s2">&quot;thumbnail&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">]</span>
         <span class="k">return</span> <span class="kc">False</span></div>
     
-<div class="viewcode-block" id="Dialog.add_video_with_optimal_storage"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_video_with_optimal_storage">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_video_with_optimal_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">size_threshold_mb</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_video_with_optimal_storage"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_video_with_optimal_storage">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_video_with_optimal_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">size_threshold_mb</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add video with the optimal storage method based on size.</span>
 <span class="sd">        </span>
 <span class="sd">        Args:</span>
 <span class="sd">            video_data: Binary video data or URL</span>
 <span class="sd">            filename: Name of the video file</span>
-<span class="sd">            mimetype: MIME type of the video (optional)</span>
+<span class="sd">            mediatype: MIME type of the video (optional)</span>
 <span class="sd">            size_threshold_mb: Size threshold in MB for inline vs external storage</span>
 <span class="sd">            </span>
 <span class="sd">        Returns:</span>
@@ -948,7 +942,7 @@
             
             <span class="c1"># Use inline for small videos, external for larger ones</span>
             <span class="k">if</span> <span class="n">size_mb</span> <span class="o">&lt;=</span> <span class="n">size_threshold_mb</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_video_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_video_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># For larger videos, we would typically upload to external storage</span>
                 <span class="c1"># and then reference the URL, but this is a placeholder</span>
@@ -958,7 +952,7 @@
                 <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">video_data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">video_data</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">)):</span>
             <span class="c1"># It&#39;s already a URL, use external reference</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_video_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_video_data</span><span class="p">(</span><span class="n">video_data</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Unknown format</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;video_data must be binary data or a URL&quot;</span><span class="p">)</span></div>
@@ -989,13 +983,13 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Get source video</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_inline_data</span><span class="p">():</span>
-                <span class="n">temp_input</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">temp_input</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">video_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
                 <span class="n">temp_input</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">video_data</span><span class="p">)</span>
                 <span class="n">temp_input</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="n">input_path</span> <span class="o">=</span> <span class="n">temp_input</span><span class="o">.</span><span class="n">name</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_external_data</span><span class="p">():</span>
-                <span class="n">temp_input</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">temp_input</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
                 <span class="n">temp_input</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
                 <span class="n">temp_input</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -1029,7 +1023,7 @@
                 <span class="n">new_video_data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             
             <span class="c1"># Update the dialog with the new video</span>
-            <span class="n">ext_to_mimetype</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ext_to_mediatype</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s1">&#39;mp4&#39;</span><span class="p">:</span> <span class="s1">&#39;video/mp4&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;mov&#39;</span><span class="p">:</span> <span class="s1">&#39;video/quicktime&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;webm&#39;</span><span class="p">:</span> <span class="s1">&#39;video/webm&#39;</span><span class="p">,</span>
@@ -1041,7 +1035,7 @@
                 <span class="s1">&#39;ogg&#39;</span><span class="p">:</span> <span class="s1">&#39;video/ogg&#39;</span>
             <span class="p">}</span>
             
-            <span class="n">new_mimetype</span> <span class="o">=</span> <span class="n">ext_to_mimetype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target_format</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;video/</span><span class="si">{</span><span class="n">target_format</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">new_mediatype</span> <span class="o">=</span> <span class="n">ext_to_mediatype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target_format</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;video/</span><span class="si">{</span><span class="n">target_format</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">new_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">target_format</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;video.</span><span class="si">{</span><span class="n">target_format</span><span class="si">}</span><span class="s2">&quot;</span>
             
             <span class="c1"># Extract metadata from new video</span>
@@ -1049,8 +1043,8 @@
             
             <span class="c1"># Use add_video_data to replace current content (maintaining inline/external status)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_inline_data</span><span class="p">():</span>
-                <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">new_video_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">,</span> <span class="n">new_filename</span><span class="p">,</span> <span class="n">new_mimetype</span><span class="p">)</span>
+                <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">new_video_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_inline_data</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">,</span> <span class="n">new_filename</span><span class="p">,</span> <span class="n">new_mediatype</span><span class="p">)</span>
                 
                 <span class="c1"># Update metadata to include transcoding info</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">):</span>
@@ -1060,7 +1054,7 @@
                     
                 <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;video&quot;</span><span class="p">][</span><span class="s2">&quot;transcoded&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;original_format&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mimetype</span><span class="p">(),</span>
+                    <span class="s2">&quot;original_format&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_video_format_from_mediatype</span><span class="p">(),</span>
                     <span class="s2">&quot;target_format&quot;</span><span class="p">:</span> <span class="n">target_format</span><span class="p">,</span>
                     <span class="s2">&quot;codec&quot;</span><span class="p">:</span> <span class="n">codec</span><span class="p">,</span>
                     <span class="s2">&quot;bit_rate&quot;</span><span class="p">:</span> <span class="n">bit_rate</span><span class="p">,</span>
@@ -1093,7 +1087,7 @@
 <span class="sd">        :return: True if the dialog is an email dialog, False otherwise</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;message/rfc822&quot;</span></div>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">==</span> <span class="s2">&quot;message/rfc822&quot;</span></div>
     
 <div class="viewcode-block" id="Dialog.is_image"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.is_image">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">is_image</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1102,7 +1096,7 @@
 <span class="sd">        :return: True if the dialog has image content, False otherwise</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="ow">in</span> <span class="p">[</span>
             <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> 
             <span class="s2">&quot;image/tiff&quot;</span><span class="p">,</span> 
             <span class="s2">&quot;application/pdf&quot;</span>
@@ -1115,27 +1109,27 @@
 <span class="sd">        :return: True if the dialog has PDF content, False otherwise</span>
 <span class="sd">        :rtype: bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mimetype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span></div>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mediatype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span></div>
 
-<div class="viewcode-block" id="Dialog.add_image_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_image_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_image_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.add_image_data"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.add_image_data">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_image_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add image data to the dialog from a local file.</span>
 <span class="sd">        </span>
 <span class="sd">        :param image_path: Path to the image file</span>
 <span class="sd">        :type image_path: str</span>
-<span class="sd">        :param mimetype: MIME type of the image (optional, auto-detected if not provided)</span>
-<span class="sd">        :type mimetype: str or None</span>
+<span class="sd">        :param mediatype: MIME type of the image (optional, auto-detected if not provided)</span>
+<span class="sd">        :type mediatype: str or None</span>
 <span class="sd">        :return: None</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
         
-        <span class="c1"># Auto-detect mimetype if not provided</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">mimetype</span><span class="p">:</span>
-            <span class="n">mimetype</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+        <span class="c1"># Auto-detect mediatype if not provided</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mediatype</span><span class="p">:</span>
+            <span class="n">mediatype</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
             
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">mimetype</span> <span class="ow">or</span> <span class="n">mimetype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;image/tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mediatype</span> <span class="ow">or</span> <span class="n">mediatype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;image/tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported image format. Must be JPEG, TIFF, or PDF.&quot;</span><span class="p">)</span>
         
         <span class="c1"># Read image data</span>
@@ -1146,32 +1140,31 @@
         <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
         
         <span class="c1"># Add as inline data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">image_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">mimetype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">image_data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">mediatype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;base64&quot;</span>
-        
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;base64url&quot;</span>
+
         <span class="c1"># Calculate hash for integrity validation</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alg</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
             <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">image_data</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
         
         <span class="c1"># Extract metadata if possible</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">extract_image_metadata</span><span class="p">(</span><span class="n">image_data</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">extract_image_metadata</span><span class="p">(</span><span class="n">image_data</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># Log the error but don&#39;t fail if metadata extraction fails</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: Could not extract image metadata: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
             
-<div class="viewcode-block" id="Dialog.extract_image_metadata"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.extract_image_metadata">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_image_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">mimetype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.extract_image_metadata"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.extract_image_metadata">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_image_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">mediatype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract metadata from image data and add it to the dialog metadata.</span>
 <span class="sd">        </span>
 <span class="sd">        :param image_data: Raw image data</span>
 <span class="sd">        :type image_data: bytes</span>
-<span class="sd">        :param mimetype: MIME type of the image</span>
-<span class="sd">        :type mimetype: str</span>
+<span class="sd">        :param mediatype: MIME type of the image</span>
+<span class="sd">        :type mediatype: str</span>
 <span class="sd">        :return: None</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1182,7 +1175,7 @@
         <span class="k">if</span> <span class="s2">&quot;image&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         
-        <span class="k">if</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mediatype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">:</span>
             <span class="c1"># Extract PDF metadata</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
@@ -1200,7 +1193,7 @@
                 <span class="c1"># PyPDF not installed</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">][</span><span class="s2">&quot;note&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Install PyPDF for enhanced PDF metadata&quot;</span>
         
-        <span class="k">elif</span> <span class="n">mimetype</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;image/tiff&quot;</span><span class="p">]:</span>
+        <span class="k">elif</span> <span class="n">mediatype</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;image/tiff&quot;</span><span class="p">]:</span>
             <span class="c1"># Extract image metadata</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
@@ -1245,8 +1238,8 @@
             
             <span class="c1"># Get image data</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;base64&quot;</span><span class="p">,</span> <span class="s2">&quot;base64url&quot;</span><span class="p">]:</span>
-                    <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;base64url&quot;</span><span class="p">]:</span>
+                    <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># If not base64 encoded, assume it&#39;s already raw data</span>
                     <span class="n">image_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span>
@@ -1261,7 +1254,7 @@
                     <span class="k">return</span> <span class="kc">None</span>
             
             <span class="c1"># For PDFs, just return None as they require special handling</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">==</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
                 
             <span class="c1"># Generate thumbnail</span>
@@ -1281,8 +1274,7 @@
     
 <div class="viewcode-block" id="Dialog.is_external_data_changed"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.is_external_data_changed">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">is_external_data_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check to see if it&#39;s an external data dialog, that the contents are valid by</span>
-<span class="sd">        checking the hash of the body against the signature.</span>
+<span class="sd">        Check to see if it&#39;s an external data dialog and verify the content hash.</span>
 
 <span class="sd">        :return: True if the dialog is an external data dialog and the contents are valid, False otherwise</span>
 <span class="sd">        :rtype: bool</span>
@@ -1290,8 +1282,15 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_external_data</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">body_hash</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-            <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span> <span class="o">!=</span> <span class="n">body_hash</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;content_hash&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="n">calculated</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
+                <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">calculated</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span></div>
@@ -1313,14 +1312,13 @@
             <span class="n">raw_content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
             <span class="c1"># Base64url encode the body</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">raw_content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mimetype</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mediatype</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to fetch external data: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Calculate the SHA-256 hash of the original binary content</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alg</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
+        <span class="c1"># Calculate the content hash of the original binary content</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;base64url&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_hash</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span>
             <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw_content</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
         <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
 
@@ -1331,18 +1329,18 @@
         <span class="c1"># Remove the url since this is now inline data</span>
         <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Dialog.set_session_id"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.set_session_id">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Dialog.set_session_id"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.set_session_id">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the session identifier for this dialog.</span>
 
-<span class="sd">        :param session_id: The session identifier</span>
-<span class="sd">        :type session_id: str</span>
+<span class="sd">        :param session_id: The session identifier (SessionId or list of SessionId)</span>
+<span class="sd">        :type session_id: dict or list</span>
 <span class="sd">        :return: None</span>
 <span class="sd">        :rtype: None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span></div>
 
-<div class="viewcode-block" id="Dialog.get_session_id"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.get_session_id">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="Dialog.get_session_id"><a class="viewcode-back" href="../../api/vcon.html#vcon.dialog.Dialog.get_session_id">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_session_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the session identifier for this dialog.</span>
 
@@ -1389,7 +1387,7 @@
                 <span class="n">hash_obj</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">hash_obj</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">hash_obj</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">urlsafe_b64encode</span><span class="p">(</span><span class="n">hash_obj</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported hash algorithm: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 

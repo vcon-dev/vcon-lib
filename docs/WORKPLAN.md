@@ -1,12 +1,12 @@
 # IETF-123 vCon Library Workplan
 
 ## Overview
-This document outlines the changes required to update the vCon library to be compatible with the new vCon core specification (version 0.3.0).
+This document outlines the changes required to update the vCon library to be compatible with the new vCon core specification (version 0.4.0).
 
 ## 1. Version Change
 
-**Current library:** Uses version "0.3.0"  
-**New specification:** Requires version "0.3.0"  
+**Current library:** Uses version "0.4.0"  
+**New specification:** Requires version "0.4.0"  
 **Impact:** This is a breaking change that requires updating all vCon objects
 
 
@@ -16,7 +16,7 @@ The new specification adds several new fields that are not currently supported:
 
 ### vCon Object Level:
 - **extensions** (String[]) - List of extension names used
-- **must_support** (String[]) - List of incompatible extensions that must be supported
+- **critical** (String[]) - List of incompatible extensions that must be supported
 
 ### Party Object:
 - **sip** - SIP URI for the party
@@ -31,7 +31,7 @@ The new specification adds several new fields that are not currently supported:
 
 ## 3. Field Name Changes
 
-- `mimetype` → `mediatype` (in dialog objects)
+- `mediatype` → `mediatype` (in dialog objects)
 - `transfer-target` → `transfer_target` (for consistency with underscore naming)
 - `target-dialog` → `target_dialog`
 
@@ -58,19 +58,19 @@ The new specification adds several new fields that are not currently supported:
 - **Appended** class for append references
 
 ### Version Handling:
-- Update default version from "0.3.0" to "0.3.0"
+- Update default version from "0.4.0" to "0.4.0"
 - Add migration logic for existing vCon objects
 
 ## 7. Backward Compatibility
 
 The specification provides migration paths:
-- **Version 0.3.0 → 0.3.0:** `mimetype` → `mediatype`, `alg`/`signature` → `content_hash`
-- **Version 0.0.2 → 0.3.0:** `transfer-target` → `transfer_target`, `target-dialog` → `target_dialog`
+- **Version 0.4.0 → 0.4.0:** `mediatype` → `mediatype`, `alg`/`signature` → `content_hash`
+- **Version 0.0.2 → 0.4.0:** `transfer-target` → `transfer_target`, `target-dialog` → `target_dialog`
 
 ## 8. Recommendations
 
 ### Immediate Actions:
-- Update the library to support version "0.3.0"
+- Update the library to support version "0.4.0"
 - Add the new required fields to property lists
 - Implement the new object classes
 
@@ -93,18 +93,18 @@ The changes are significant but manageable, and the new specification provides b
 Based on my analysis of the new vCon core document and the current library implementation, here's a comprehensive list of changes needed to make the library compatible with the new specification:
 
 ### 1. Version Update
-- **Change:** Update version from "0.3.0" to "0.3.0"
+- **Change:** Update version from "0.4.0" to "0.4.0"
 - **Files:** `src/vcon/vcon.py`, `samples/example.vcon.json`
-- **Test:** Verify new vCons are created with version "0.3.0"
+- **Test:** Verify new vCons are created with version "0.4.0"
 
 ### 2. Add New Required vCon Fields ✅ COMPLETED
 - **Change:** Add extensions field (String[])
 - **Files:** `src/vcon/vcon.py`
 - **Test:** Verify extensions array is included in vCon objects
 
-- **Change:** Add must_support field (String[])
+- **Change:** Add critical field (String[])
 - **Files:** `src/vcon/vcon.py`
-- **Test:** Verify must_support array is included when extensions are used
+- **Test:** Verify critical array is included when extensions are used
 
 ### 3. Update Party Object Fields ✅ COMPLETED
 - **Change:** Add did field (String) for Decentralized Identifiers
@@ -120,7 +120,7 @@ Based on my analysis of the new vCon core document and the current library imple
 - **Test:** Verify timezone can be set and serialized
 
 ### 4. Update Dialog Object Fields ✅ COMPLETED
-- **Change:** Rename mimetype to mediatype (already done in library) ✅
+- **Change:** Rename mediatype to mediatype (already done in library) ✅
 - **Files:** `src/vcon/dialog.py`
 - **Test:** Verify mediatype is used consistently ✅
 
@@ -184,7 +184,7 @@ Based on my analysis of the new vCon core document and the current library imple
 - **Test:** Verify all event types are supported ✅
 
 ### 12. Update Sample Files ✅ COMPLETED
-- **Change:** Update sample vCon files to use version "0.3.0" ✅
+- **Change:** Update sample vCon files to use version "0.4.0" ✅
 - **Files:** `samples/example.vcon.json` ✅
 - **Test:** Verify samples are valid according to new specification ✅
 
@@ -199,7 +199,7 @@ Based on my analysis of the new vCon core document and the current library imple
 - **Test:** Verify documentation is accurate ✅
 
 ### 15. Add Migration Support ✅ COMPLETED
-- **Change:** Add methods to migrate from 0.3.0 to 0.3.0 ✅
+- **Change:** Add methods to migrate from 0.4.0 to 0.4.0 ✅
 - **Files:** `src/vcon/vcon.py` ✅
 - **Test:** Verify old vCons can be migrated to new format ✅
 

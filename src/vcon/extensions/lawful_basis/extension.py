@@ -67,7 +67,7 @@ class LawfulBasisExtension:
         
         # Return as attachment dictionary
         return {
-            "type": "lawful_basis",
+            "purpose": "lawful_basis",
             "encoding": "json",
             "body": attachment.to_dict()
         }

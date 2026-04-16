@@ -284,7 +284,7 @@ class TestWTFValidator:
         
         # Valid attachment
         valid_attachment = {
-            "type": "wtf_transcription",
+            "purpose": "wtf_transcription",
             "encoding": "json",
             "body": {
                 "transcript": {
@@ -333,7 +333,7 @@ class TestWTFValidator:
             "extensions": ["wtf_transcription"],
             "attachments": [
                 {
-                    "type": "wtf_transcription",
+                    "purpose": "wtf_transcription",
                     "encoding": "json",
                     "body": {
                         "transcript": {
@@ -376,7 +376,7 @@ class TestWTFProcessor:
         vcon_dict = {
             "attachments": [
                 {
-                    "type": "wtf_transcription",
+                    "purpose": "wtf_transcription",
                     "encoding": "json",
                     "body": {
                         "transcript": {
@@ -513,7 +513,7 @@ class TestWTFExtension:
             metadata=metadata
         )
         
-        assert attachment["type"] == "wtf_transcription"
+        assert attachment["purpose"] == "wtf_transcription"
         assert attachment["encoding"] == "json"
         assert "body" in attachment
         assert attachment["body"]["transcript"]["text"] == "Hello world"
@@ -523,7 +523,7 @@ class TestWTFExtension:
         extension = WTFExtension()
         
         valid_attachment = {
-            "type": "wtf_transcription",
+            "purpose": "wtf_transcription",
             "encoding": "json",
             "body": {
                 "transcript": {
@@ -557,7 +557,7 @@ class TestWTFExtension:
         extension = WTFExtension()
         
         attachment = {
-            "type": "wtf_transcription",
+            "purpose": "wtf_transcription",
             "encoding": "json",
             "body": {
                 "transcript": {

@@ -25,8 +25,8 @@ class WTFValidator(ExtensionValidator):
         result = ValidationResult(True)
         
         # Check attachment type
-        if attachment.get("type") != "wtf_transcription":
-            result.add_error("Invalid attachment type for WTF extension")
+        if attachment.get("purpose") != "wtf_transcription":
+            result.add_error("Invalid attachment purpose for WTF extension")
             return result
         
         # Check encoding
@@ -61,7 +61,7 @@ class WTFValidator(ExtensionValidator):
         attachments = vcon_dict.get("attachments", [])
         wtf_attachments = [
             att for att in attachments 
-            if att.get("type") == "wtf_transcription"
+            if att.get("purpose") == "wtf_transcription"
         ]
         
         for i, attachment in enumerate(wtf_attachments):

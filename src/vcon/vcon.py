@@ -39,10 +39,10 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 
 # Define allowed properties for each object type
 _ALLOWED_VCON_PROPERTIES = {
-    "uuid", "vcon", "created_at", "updated_at", "redacted", 
-    "group", "parties", "dialog", "attachments", "analysis", 
-    "signatures", "payload", "meta", "subject", "appended",
-    "extensions", "must_support"
+    "uuid", "vcon", "created_at", "updated_at", "redacted",
+    "group", "parties", "dialog", "attachments", "analysis",
+    "signatures", "payload", "meta", "subject", "amended",
+    "extensions", "critical"
 }
 
 _ALLOWED_PARTY_PROPERTIES = {
@@ -52,22 +52,24 @@ _ALLOWED_PARTY_PROPERTIES = {
 }
 
 _ALLOWED_DIALOG_PROPERTIES = {
-    "type", "start", "parties", "duration", "mimetype", "filename", 
-    "body", "encoding", "url", "alg", "signature", "disposition", 
+    "type", "start", "parties", "duration", "mediatype", "filename",
+    "body", "encoding", "url", "content_hash", "disposition",
     "party_history", "transferee", "transferor", "transfer_target",
-    "original", "consultation", "target_dialog", "campaign", 
-    "interaction", "skill", "meta", "metadata", "transfer", 
-    "signaling", "originator", "resolution", "frame_rate", 
+    "original", "consultation", "target_dialog", "campaign",
+    "interaction", "skill", "meta", "metadata", "transfer",
+    "signaling", "originator", "resolution", "frame_rate",
     "codec", "bitrate", "thumbnail", "streaming", "video",
-    "session_id", "content_hash", "application", "message_id"
+    "session_id", "application", "message_id"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
-    "type", "body", "encoding", "meta", "start", "party", "dialog"
+    "purpose", "body", "encoding", "start", "party", "dialog",
+    "mediatype", "filename", "url", "content_hash"
 }
 
 _ALLOWED_ANALYSIS_PROPERTIES = {
-    "type", "dialog", "vendor", "body", "encoding", "meta", "schema"
+    "type", "dialog", "vendor", "product", "body", "encoding",
+    "schema", "mediatype", "filename", "url", "content_hash"
 }
 
 # Configure logging
@@ -80,23 +82,35 @@ class Attachment:
     """
     A class representing an attachment in a vCon.
     
-    An attachment consists of a type, body content, and an encoding format.
-    The encoding format must be one of the supported formats: base64, base64url, or none.
+    An attachment consists of a purpose, body content, and an encoding format.
+    The encoding format must be one of the supported formats: base64url, json, or none.
     
     Attributes:
-        type (str): The type of the attachment
+        purpose (str): The purpose of the attachment
         body (Any): The content of the attachment
         encoding (str): The encoding format used for the body
     """
 
-    VALID_ENCODINGS = ["base64", "base64url", "none"]
+    VALID_ENCODINGS = ["base64url", "json", "none"]
 
-    def __init__(self, type: str, body: Any, encoding: str = "none") -> None:
+    def __init__(
+        self,
+        purpose: str,
+        body: Any = None,
+        encoding: str = "none",
+        mediatype: Optional[str] = None,
+        filename: Optional[str] = None,
+        url: Optional[str] = None,
+        content_hash: Optional[str] = None,
+        start: Optional[str] = None,
+        party: Optional[int] = None,
+        dialog: Optional[int] = None,
+    ) -> None:
         """
         Initialize an Attachment object.
         
         Args:
-            type: The type of the attachment
+            purpose: The purpose of the attachment
             body: The content of the attachment
             encoding: The encoding format used for the body (default: "none")
             
@@ -106,22 +120,41 @@ class Attachment:
         if encoding not in self.VALID_ENCODINGS:
             logger.error(f"Invalid encoding attempted: {encoding}")
             raise ValueError(f"Invalid encoding: {encoding}. Must be one of {self.VALID_ENCODINGS}")
-        self.type = type
+        self.purpose = purpose
         self.body = body
         self.encoding = encoding
-        logger.debug(f"Created new attachment of type {type} with {encoding} encoding")
+        self.mediatype = mediatype
+        self.filename = filename
+        self.url = url
+        self.content_hash = content_hash
+        self.start = start
+        self.party = party
+        self.dialog = dialog
+        logger.debug(f"Created new attachment of purpose {purpose} with {encoding} encoding")
 
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert the attachment to a dictionary representation.
         
         Returns:
-            Dict containing the attachment's type, body, and encoding
+            Dict containing the attachment's purpose, body, and encoding
         """
-        return {"type": self.type, "body": self.body, "encoding": self.encoding}
+        attachment_dict = {
+            "purpose": self.purpose,
+            "body": self.body,
+            "encoding": self.encoding,
+            "mediatype": self.mediatype,
+            "filename": self.filename,
+            "url": self.url,
+            "content_hash": self.content_hash,
+            "start": self.start,
+            "party": self.party,
+            "dialog": self.dialog,
+        }
+        return {k: v for k, v in attachment_dict.items() if v is not None}
         
     @classmethod
-    def from_image(cls, image_path: str, type: str = "image") -> 'Attachment':
+    def from_image(cls, image_path: str, purpose: str = "image") -> 'Attachment':
         """
         Create an Attachment from an image file.
         
@@ -152,36 +185,14 @@ class Attachment:
         with open(image_path, 'rb') as f:
             image_data = f.read()
             
-        # Create attachment
-        metadata = {"filename": os.path.basename(image_path), "mimetype": mimetype}
-        
-        # Extract additional metadata
-        try:
-            if mimetype == "application/pdf":
-                # Extract PDF metadata
-                from pypdf import PdfReader
-                pdf = PdfReader(image_path)
-                metadata["pages"] = len(pdf.pages)
-            elif mimetype in ["image/jpeg", "image/tiff"]:
-                # Extract image metadata
-                from PIL import Image
-                img = Image.open(image_path)
-                metadata["width"] = img.width
-                metadata["height"] = img.height
-                metadata["format"] = img.format
-        except ImportError:
-            # Library not available
-            pass
-        except Exception as e:
-            # Log error but continue
-            print(f"Warning: Could not extract image metadata: {str(e)}")
-        
+        filename = os.path.basename(image_path)
         # Create and return attachment
         return cls(
-            type=type,
-            body=base64.b64encode(image_data).decode('utf-8'),
-            encoding="base64",
-            metadata=metadata
+            purpose=purpose,
+            body=base64.urlsafe_b64encode(image_data).decode('utf-8'),
+            encoding="base64url",
+            mediatype=mimetype,
+            filename=filename,
         )
 
 
@@ -202,13 +213,13 @@ class Vcon:
     - Attachments for ancillary documents
     - Analysis data for conversation insights
     - Digital signatures and encryption
-    - Extensions and must_support for extensibility
+    - Extensions and critical for extensibility
     - Civic address information for location data
     - Party history for tracking join/drop/hold/mute events
     
-    New in vCon 0.3.0:
+    New in vCon 0.4.0:
     - Extensions field for listing used extensions
-    - Must_support field for incompatible extensions
+    - Critical field for incompatible extensions
     - Enhanced party fields (sip, did, jCard, timezone)
     - Dialog session_id and content_hash fields
     - Party history with event tracking
@@ -478,7 +489,7 @@ class Vcon:
             >>> print(tags["body"])  # Prints ["category:meeting"]
         """
         logger.debug("Retrieving tags attachment")
-        tags = self.find_attachment_by_type("tags")
+        tags = self.find_attachment_by_purpose("tags")
         if tags:
             logger.debug("Found tags attachment")
         else:
@@ -502,7 +513,7 @@ class Vcon:
             >>> print(value)  # Prints "meeting"
         """
         logger.debug(f"Retrieving value for tag: {tag_name}")
-        tags_attachment = self.find_attachment_by_type("tags")
+        tags_attachment = self.find_attachment_by_purpose("tags")
         if not tags_attachment:
             logger.debug("No tags attachment found")
             return None
@@ -535,11 +546,11 @@ class Vcon:
             >>> vcon.add_tag("priority", "high")
         """
         logger.debug(f"Adding tag {tag_name}:{tag_value}")
-        tags_attachment = self.find_attachment_by_type("tags")
+        tags_attachment = self.find_attachment_by_purpose("tags")
         if not tags_attachment:
             logger.debug("Creating new tags attachment")
             tags_attachment = {
-                "type": "tags",
+                "purpose": "tags",
                 "body": [],
                 "encoding": "json",
             }
@@ -597,55 +608,55 @@ class Vcon:
             self.vcon_dict["extensions"].remove(extension)
             logger.info(f"Removed extension: {extension}")
 
-    def get_must_support(self) -> List[str]:
+    def get_critical(self) -> List[str]:
         """
-        Get the list of extensions that must be supported.
+        Get the list of critical extensions that must be supported.
 
         Returns:
             List of extension names that must be supported, empty list if none are defined
 
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_must_support("encryption")
-            >>> must_support = vcon.get_must_support()
-            >>> print(must_support)  # Prints ["encryption"]
+            >>> vcon.add_critical("encryption")
+            >>> critical = vcon.get_critical()
+            >>> print(critical)  # Prints ["encryption"]
         """
-        return self.vcon_dict.get("must_support", [])
+        return self.vcon_dict.get("critical", [])
 
-    def add_must_support(self, extension: str) -> None:
+    def add_critical(self, extension: str) -> None:
         """
-        Add an extension to the must_support list.
+        Add an extension to the critical list.
 
         Args:
             extension: The name of the extension that must be supported
 
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_must_support("encryption")
-            >>> vcon.add_must_support("video")
+            >>> vcon.add_critical("encryption")
+            >>> vcon.add_critical("video")
         """
-        if "must_support" not in self.vcon_dict:
-            self.vcon_dict["must_support"] = []
-        
-        if extension not in self.vcon_dict["must_support"]:
-            self.vcon_dict["must_support"].append(extension)
-            logger.info(f"Added must_support extension: {extension}")
+        if "critical" not in self.vcon_dict:
+            self.vcon_dict["critical"] = []
 
-    def remove_must_support(self, extension: str) -> None:
+        if extension not in self.vcon_dict["critical"]:
+            self.vcon_dict["critical"].append(extension)
+            logger.info(f"Added critical extension: {extension}")
+
+    def remove_critical(self, extension: str) -> None:
         """
-        Remove an extension from the must_support list.
+        Remove an extension from the critical list.
 
         Args:
-            extension: The name of the extension to remove from must_support
+            extension: The name of the extension to remove from critical
 
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_must_support("encryption")
-            >>> vcon.remove_must_support("encryption")
+            >>> vcon.add_critical("encryption")
+            >>> vcon.remove_critical("encryption")
         """
-        if "must_support" in self.vcon_dict and extension in self.vcon_dict["must_support"]:
-            self.vcon_dict["must_support"].remove(extension)
-            logger.info(f"Removed must_support extension: {extension}")
+        if "critical" in self.vcon_dict and extension in self.vcon_dict["critical"]:
+            self.vcon_dict["critical"].remove(extension)
+            logger.info(f"Removed critical extension: {extension}")
 
     # Extension-specific methods
     def add_lawful_basis_attachment(
@@ -779,7 +790,7 @@ class Vcon:
         """
         attachments = []
         for attachment in self.vcon_dict.get("attachments", []):
-            if attachment.get("type") == "lawful_basis":
+            if attachment.get("purpose") == "lawful_basis":
                 if party_index is None or attachment.get("party") == party_index:
                     attachments.append(attachment)
         return attachments
@@ -796,7 +807,7 @@ class Vcon:
         """
         attachments = []
         for attachment in self.vcon_dict.get("attachments", []):
-            if attachment.get("type") == "wtf_transcription":
+            if attachment.get("purpose") == "wtf_transcription":
                 if party_index is None or attachment.get("party") == party_index:
                     attachments.append(attachment)
         return attachments
@@ -854,7 +865,7 @@ class Vcon:
             for attachment in self.vcon_dict.get("attachments", []):
                 result = registry.validate_attachment(attachment)
                 attachment_results.append({
-                    "type": attachment.get("type"),
+                    "purpose": attachment.get("purpose"),
                     "is_valid": result.is_valid,
                     "errors": result.errors,
                     "warnings": result.warnings
@@ -885,15 +896,15 @@ class Vcon:
             logger.error(f"Error processing extensions: {str(e)}")
             return {"error": str(e)}
 
-    def find_attachment_by_type(self, type: str) -> Optional[Dict[str, Any]]:
+    def find_attachment_by_purpose(self, purpose: str) -> Optional[Dict[str, Any]]:
         """
-        Find an attachment in the vCon by its type.
+        Find an attachment in the vCon by its purpose.
 
         This method searches through the vCon's attachments and returns the first
         attachment matching the specified type.
 
         Args:
-            type: The type of attachment to find
+            purpose: The purpose of attachment to find
 
         Returns:
             The matching attachment dictionary if found, None otherwise
@@ -901,19 +912,31 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_attachment("metadata", {"version": "1.0"})
-            >>> metadata = vcon.find_attachment_by_type("metadata")
+            >>> metadata = vcon.find_attachment_by_purpose("metadata")
         """
-        logger.debug(f"Searching for attachment of type: {type}")
+        logger.debug(f"Searching for attachment of purpose: {purpose}")
         attachment = next(
-            (a for a in self.vcon_dict["attachments"] if a["type"] == type), None
+            (a for a in self.vcon_dict["attachments"] if a["purpose"] == purpose), None
         )
         if attachment:
-            logger.debug(f"Found attachment of type: {type}")
+            logger.debug(f"Found attachment of purpose: {purpose}")
         else:
-            logger.debug(f"No attachment found of type: {type}")
+            logger.debug(f"No attachment found of purpose: {purpose}")
         return attachment
 
-    def add_attachment(self, type: str, body: Any, encoding: str = "none") -> Attachment:
+    def add_attachment(
+        self,
+        purpose: str,
+        body: Any = None,
+        encoding: str = "none",
+        mediatype: Optional[str] = None,
+        filename: Optional[str] = None,
+        url: Optional[str] = None,
+        content_hash: Optional[str] = None,
+        start: Optional[str] = None,
+        party: Optional[int] = None,
+        dialog: Optional[int] = None,
+    ) -> Attachment:
         """
         Add an attachment to the vCon.
 
@@ -921,9 +944,16 @@ class Vcon:
         and adds it to the vCon's attachments list.
 
         Args:
-            type: The type of the attachment
+            purpose: The purpose of the attachment
             body: The content of the attachment
             encoding: The encoding format for the body (default: "none")
+            mediatype: Optional media type of the attachment
+            filename: Optional file name of the attachment
+            url: Optional URL for external attachments
+            content_hash: Optional content hash for external attachments
+            start: Optional timestamp for the attachment
+            party: Optional party index
+            dialog: Optional dialog index
 
         Returns:
             The created Attachment object
@@ -934,11 +964,22 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> attachment = vcon.add_attachment("metadata", {"version": "1.0"}, "json")
-            >>> print(attachment.type)  # Prints "metadata"
+            >>> print(attachment.purpose)  # Prints "metadata"
         """
-        logger.debug(f"Creating new attachment of type {type} with {encoding} encoding")
-    
-        attachment = Attachment(type, body, encoding)
+        logger.debug(f"Creating new attachment of purpose {purpose} with {encoding} encoding")
+
+        attachment = Attachment(
+            purpose=purpose,
+            body=body,
+            encoding=encoding,
+            mediatype=mediatype,
+            filename=filename,
+            url=url,
+            content_hash=content_hash,
+            start=start,
+            party=party,
+            dialog=dialog,
+        )
         attachment_dict = attachment.to_dict()
     
         # Process attachment dict according to property handling mode
@@ -946,10 +987,10 @@ class Vcon:
     
         self.vcon_dict["attachments"].append(processed_attachment)
     
-        logger.info(f"Added new attachment of type {type}")
+        logger.info(f"Added new attachment of purpose {purpose}")
         return attachment
 
-    def add_image(self, image_path: str, type: str = "image") -> Attachment:
+    def add_image(self, image_path: str, purpose: str = "image") -> Attachment:
         """
         Add an image attachment to the vCon.
         
@@ -958,7 +999,7 @@ class Vcon:
         
         Args:
             image_path: Path to the image file
-            type: The type of the attachment (default: "image")
+            purpose: The purpose of the attachment (default: "image")
             
         Returns:
             The created Attachment object
@@ -970,11 +1011,11 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> attachment = vcon.add_image("document.pdf", "identification")
-            >>> print(attachment.metadata.get("mimetype"))  # Prints "application/pdf"
+            >>> print(attachment.mediatype)  # Prints "application/pdf"
         """
-        attachment = Attachment.from_image(image_path, type)
+        attachment = Attachment.from_image(image_path, purpose)
         self.vcon_dict["attachments"].append(attachment.to_dict())
-        logger.info(f"Added new image attachment of type {type}")
+        logger.info(f"Added new image attachment of purpose {purpose}")
         return attachment
 
     def find_analysis_by_type(self, type: str) -> Optional[Dict[str, Any]]:
@@ -1013,6 +1054,11 @@ class Vcon:
         vendor: str,
         body: Union[Dict[str, Any], List[Any], str],
         encoding: str = "none",
+        mediatype: Optional[str] = None,
+        filename: Optional[str] = None,
+        product: Optional[str] = None,
+        url: Optional[str] = None,
+        content_hash: Optional[str] = None,
         schema: Optional[Dict[str, Any]] = None,
         meta: Optional[Dict[str, Any]] = None,
         **extra,
@@ -1030,6 +1076,11 @@ class Vcon:
             vendor: The name of the vendor who performed the analysis
             body: The analysis data
             encoding: The encoding format of the body (default: "none")
+            mediatype: Optional media type of the analysis content
+            filename: Optional filename for the analysis content
+            product: Optional product name of the vendor
+            url: Optional URL for external analysis content
+            content_hash: Optional content hash for external analysis content
             schema: Optional schema information about the analysis (default: None)
             meta: Optional metadata about the analysis (default: None)
             **extra: Additional key-value pairs to include in the analysis
@@ -1077,6 +1128,17 @@ class Vcon:
             "body": body,
             "encoding": encoding,
         }
+
+        if mediatype is not None:
+            analysis["mediatype"] = mediatype
+        if filename is not None:
+            analysis["filename"] = filename
+        if product is not None:
+            analysis["product"] = product
+        if url is not None:
+            analysis["url"] = url
+        if content_hash is not None:
+            analysis["content_hash"] = content_hash
         
         # Add schema if provided
         if schema is not None:
@@ -1351,7 +1413,7 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon_dict = vcon.to_dict()
-            >>> print(vcon_dict["vcon"])  # Prints "0.3.0"
+            >>> print(vcon_dict["vcon"])  # Prints "0.4.0"
         """
         logger.debug("Converting vCon to dictionary")
         return json.loads(self.to_json())
@@ -1442,7 +1504,7 @@ class Vcon:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_attachment("metadata", {"version": "1.0"})
             >>> attachments = vcon.attachments
-            >>> print(attachments[0]["type"])  # Prints "metadata"
+            >>> print(attachments[0]["purpose"])  # Prints "metadata"
         """
         return self.vcon_dict.get("attachments", [])
 
@@ -1487,8 +1549,8 @@ class Vcon:
         return self.vcon_dict.get("redacted")
 
     @property
-    def appended(self):
-        return self.vcon_dict.get("appended")
+    def amended(self):
+        return self.vcon_dict.get("amended")
 
     @property
     def group(self):
@@ -1660,6 +1722,7 @@ class Vcon:
         Checks required fields, ensures data types are correct, and verifies
         relationships between different parts of the vCon (for example, dialog party
         references and attachment fields).
+
         Returns:
             Tuple[bool, List[str]]: A tuple where the first element is True if the vCon
             is valid and False otherwise, and the second element is a list of error messages.
@@ -1737,13 +1800,13 @@ class Vcon:
                 except Exception:
                     errors.append(f"Dialog at index {i} has an invalid 'start' format. Must be an ISO 8601 datetime string.")
     
-            # Validate mimetype for non-transfer/incomplete types
+            # Validate mediatype for non-transfer/incomplete types
             dialog_type = dialog.get("type", "")
             if dialog_type not in ["transfer", "incomplete"]:
-                if ("mimetype" not in dialog or
-                    not isinstance(dialog["mimetype"], str) or
-                    dialog["mimetype"] not in Dialog.MIME_TYPES):
-                    errors.append(f"Dialog at index {i} has an invalid or missing mimetype: {dialog.get('mimetype', 'missing')}")
+                if ("mediatype" not in dialog or
+                    not isinstance(dialog["mediatype"], str) or
+                    dialog["mediatype"] not in Dialog.MIME_TYPES):
+                    errors.append(f"Dialog at index {i} has an invalid or missing mediatype: {dialog.get('mediatype', 'missing')}")
     
         # Validate attachments.
         if "attachments" in self.vcon_dict:
@@ -1755,10 +1818,14 @@ class Vcon:
                         errors.append(f"Attachment at index {i} must be a dictionary.")
                     else:
                         # Check for required attachment fields.
-                        required_attachment_fields = ["type", "body", "encoding"]
-                        for field in required_attachment_fields:
-                            if field not in attachment:
-                                errors.append(f"Attachment at index {i} is missing required field: {field}")
+                        if "purpose" not in attachment:
+                            errors.append(f"Attachment at index {i} is missing required field: purpose")
+                        has_inline = "body" in attachment and "encoding" in attachment
+                        has_external = "url" in attachment and "content_hash" in attachment
+                        if not (has_inline or has_external):
+                            errors.append(
+                                f"Attachment at index {i} must include body+encoding or url+content_hash."
+                            )
                         # Validate encoding.
                         if ("encoding" in attachment and
                             attachment["encoding"] not in ["json", "none", "base64url"]):

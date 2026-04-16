@@ -62,7 +62,7 @@ class Dialog:
     - Text formats: Plain text, multipart messages
     - Images: JPEG, TIFF, PDF
     
-    New in vCon 0.3.0:
+    New in vCon 0.4.0:
     - session_id: Session identifier for tracking
     - content_hash: Hash for externally referenced files (replaces alg/signature)
     - application: Application identifier for the dialog
@@ -136,13 +136,11 @@ class Dialog:
         start: Union[datetime, str],
         parties: List[int],
         originator: Optional[int] = None,
-        mimetype: Optional[str] = None,
+        mediatype: Optional[str] = None,
         filename: Optional[str] = None,
         body: Optional[str] = None,
         encoding: Optional[str] = None,
         url: Optional[str] = None,
-        alg: Optional[str] = None,
-        signature: Optional[str] = None,
         disposition: Optional[str] = None,
         party_history: Optional[List[PartyHistory]] = None,
         transferee: Optional[int] = None,
@@ -167,7 +165,7 @@ class Dialog:
         bitrate: Optional[int] = None,
         thumbnail: Optional[str] = None,
         # New required fields
-        session_id: Optional[str] = None,
+        session_id: Optional[Union[Dict[str, str], List[Dict[str, str]]]] = None,
         content_hash: Optional[str] = None,
         # Additional fields from specification
         application: Optional[str] = None,
@@ -184,8 +182,8 @@ class Dialog:
         :type parties: List[int]
         :param originator: the party that originated the dialog
         :type originator: int or None
-        :param mimetype: the MIME type of the dialog body
-        :type mimetype: str or None
+        :param mediatype: the MIME type of the dialog body
+        :type mediatype: str or None
         :param filename: the filename of the dialog body
         :type filename: str or None
         :param body: the body of the dialog
@@ -194,10 +192,6 @@ class Dialog:
         :type encoding: str or None
         :param url: the URL of the dialog
         :type url: str or None
-        :param alg: the algorithm used to sign the dialog
-        :type alg: str or None
-        :param signature: the signature of the dialog
-        :type signature: str or None
         :param disposition: the disposition of the dialog
         :type disposition: str or None
         :param party_history: the history of parties involved in the dialog
@@ -295,35 +289,35 @@ class Dialog:
                     f"Must be one of: {Dialog.VALID_DISPOSITIONS}"
                 )
 
-        # Auto-detect mimetype for video type
-        if type == "video" and not hasattr(self, "mimetype"):
-            # Try to infer mimetype from filename extension if available
+        # Auto-detect mediatype for video type
+        if type == "video" and not hasattr(self, "mediatype"):
+            # Try to infer mediatype from filename extension if available
             if hasattr(self, "filename") and self.filename:
                 ext = self.filename.split('.')[-1].lower()
                 if ext == "mp4":
-                    self.mimetype = "video/mp4"
+                    self.mediatype = "video/mp4"
                 elif ext == "mov":
-                    self.mimetype = "video/quicktime"
+                    self.mediatype = "video/quicktime"
                 elif ext == "webm":
-                    self.mimetype = "video/webm"
+                    self.mediatype = "video/webm"
                 elif ext == "avi":
-                    self.mimetype = "video/x-msvideo"
+                    self.mediatype = "video/x-msvideo"
                 elif ext == "mkv":
-                    self.mimetype = "video/x-matroska"
+                    self.mediatype = "video/x-matroska"
                 elif ext in ["mpg", "mpeg"]:
-                    self.mimetype = "video/mpeg"
+                    self.mediatype = "video/mpeg"
                 elif ext == "flv":
-                    self.mimetype = "video/x-flv"
+                    self.mediatype = "video/x-flv"
                 elif ext == "3gp":
-                    self.mimetype = "video/3gpp"
+                    self.mediatype = "video/3gpp"
                 elif ext == "m4v":
-                    self.mimetype = "video/x-m4v"
+                    self.mediatype = "video/x-m4v"
                 else:
                     # Default to MP4 if we can't determine from extension
-                    self.mimetype = "video/mp4"
+                    self.mediatype = "video/mp4"
             else:
-                # Default mimetype for video
-                self.mimetype = "video/mp4"
+                # Default mediatype for video
+                self.mediatype = "video/mp4"
 
     def to_dict(self):
         """
@@ -348,7 +342,7 @@ class Dialog:
 
         return {k: v for k, v in dialog_dict.items() if v is not None}
 
-    def add_external_data(self, url: str, filename: str, mimetype: str) -> None:
+    def add_external_data(self, url: str, filename: str, mediatype: str) -> None:
         """
         Add external data to the dialog.
 
@@ -357,9 +351,10 @@ class Dialog:
         :return: None
         :rtype: None
         """
+        self.url = url
         response = requests.get(url)
         if response.status_code == 200:
-            self.mimetype = response.headers["Content-Type"]
+            self.mediatype = response.headers["Content-Type"]
         else:
             raise Exception(f"Failed to fetch external data: {response.status_code}")
 
@@ -371,18 +366,17 @@ class Dialog:
             url_path = url.split("?")[0]
             self.filename = url_path.split("/")[-1]
 
-        # Override the mimetype if provided, otherwise use the mimetype from the URL
-        if mimetype:
-            self.mimetype = mimetype
+        # Override the mediatype if provided, otherwise use the mediatype from the URL
+        if mediatype:
+            self.mediatype = mediatype
 
-        # Calculate the SHA-256 hash of the body as the signature
-        self.alg = "sha256"
-        self.encoding = "base64url"
-        self.signature = base64.urlsafe_b64encode(
-            hashlib.sha256(response.text.encode()).digest()
+        # Calculate the content hash for external data
+        raw_content = response.content
+        self.content_hash = base64.urlsafe_b64encode(
+            hashlib.sha256(raw_content).digest()
         ).decode()
 
-    def add_inline_data(self, body: str, filename: str, mimetype: str) -> None:
+    def add_inline_data(self, body: str, filename: str, mediatype: str) -> None:
         """
         Add inline data to the dialog.
 
@@ -390,17 +384,16 @@ class Dialog:
         :type body: str
         :param filename: the filename of the inline data
         :type filename: str
-        :param mimetype: the mimetype of the inline data
-        :type mimetype: str
+        :param mediatype: the mediatype of the inline data
+        :type mediatype: str
         :return: None
         :rtype: None
         """
         self.body = body
-        self.mimetype = mimetype
+        self.mediatype = mediatype
         self.filename = filename
-        self.alg = "sha256"
         self.encoding = "base64url"
-        self.signature = base64.urlsafe_b64encode(
+        self.content_hash = base64.urlsafe_b64encode(
             hashlib.sha256(self.body.encode()).digest()
         ).decode()
 
@@ -460,7 +453,7 @@ class Dialog:
         :return: True if the dialog has audio content, False otherwise
         :rtype: bool
         """
-        return self.mimetype in [
+        return self.mediatype in [
             "audio/x-wav",
             "audio/wav",
             "audio/wave",
@@ -477,13 +470,13 @@ class Dialog:
         Check if the dialog has video content.
         
         Args:
-            content_type: Optional content type to check. If None, use the dialog's mimetype.
+            content_type: Optional content type to check. If None, use the dialog's mediatype.
         
         Returns:
             True if the content is a video format, False otherwise
         """
-        # Use provided content_type or dialog's mimetype
-        check_type = content_type if content_type is not None else getattr(self, "mimetype", None)
+        # Use provided content_type or dialog's mediatype
+        check_type = content_type if content_type is not None else getattr(self, "mediatype", None)
         
         if not check_type:
             return False
@@ -505,14 +498,14 @@ class Dialog:
         
         return check_type in video_types
 
-    def add_video_data(self, video_data, filename=None, mimetype=None, inline=True, metadata=None) -> None:
+    def add_video_data(self, video_data, filename=None, mediatype=None, inline=True, metadata=None) -> None:
         """
         Add video data to the dialog.
         
         Args:
             video_data: Binary video data or URL to video
             filename: Name of the video file
-            mimetype: MIME type of the video, or auto-detected from filename if None
+            mediatype: MIME type of the video, or auto-detected from filename if None
             inline: Whether to include the video as inline content (True) or external reference (False)
             metadata: Optional video metadata to include
             
@@ -522,10 +515,10 @@ class Dialog:
         # Set dialog type to video
         self.type = "video"
         
-        # Auto-detect mimetype from filename if not provided
-        if not mimetype and filename:
+        # Auto-detect mediatype from filename if not provided
+        if not mediatype and filename:
             ext = filename.split('.')[-1].lower()
-            ext_to_mimetype = {
+            ext_to_mediatype = {
                 'mp4': 'video/mp4',
                 'mov': 'video/quicktime',
                 'webm': 'video/webm',
@@ -536,7 +529,7 @@ class Dialog:
                 'flv': 'video/x-flv',
                 'ogg': 'video/ogg'
             }
-            mimetype = ext_to_mimetype.get(ext, 'video/mp4')  # Default to MP4 if unknown
+            mediatype = ext_to_mediatype.get(ext, 'video/mp4')  # Default to MP4 if unknown
         
         # Handle external vs inline data
         if inline:
@@ -547,16 +540,16 @@ class Dialog:
             # Add inline data
             if isinstance(video_data, bytes):
                 # Base64 encode the binary data
-                encoded_data = base64.b64encode(video_data).decode()
-                self.add_inline_data(encoded_data, filename, mimetype)
+                encoded_data = base64.urlsafe_b64encode(video_data).decode()
+                self.add_inline_data(encoded_data, filename, mediatype)
             else:
                 # Assume it's already base64 encoded
-                self.add_inline_data(video_data, filename, mimetype)
+                self.add_inline_data(video_data, filename, mediatype)
         else:
             # External data
             if isinstance(video_data, str) and (video_data.startswith('http://') or video_data.startswith('https://')):
                 # It's a URL, use it directly
-                self.add_external_data(video_data, filename, mimetype)
+                self.add_external_data(video_data, filename, mediatype)
             else:
                 # Cannot use non-URL as external data
                 raise ValueError("External video references must be URLs")
@@ -589,14 +582,14 @@ class Dialog:
             if video_path is None:
                 if self.is_inline_data():
                     # Decode base64 content to temporary file
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                     video_data = base64.urlsafe_b64decode(self.body.encode())
                     temp_file.write(video_data)
                     temp_file.close()
                     video_path = temp_file.name
                 elif self.is_external_data():
                     # Download from URL to temporary file
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                     response = requests.get(self.url)
                     temp_file.write(response.content)
                     temp_file.close()
@@ -655,7 +648,7 @@ class Dialog:
             # Return minimal metadata on error
             return {
                 "error": str(e),
-                "format": self.get_video_format_from_mimetype(),
+                "format": self.get_video_format_from_mediatype(),
                 "timestamp": datetime.now().isoformat()
             }
         
@@ -710,13 +703,13 @@ class Dialog:
         try:
             # Setup source video file
             if self.is_inline_data():
-                temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                 video_data = base64.urlsafe_b64decode(self.body.encode())
                 temp_video.write(video_data)
                 temp_video.close()
                 video_path = temp_video.name
             elif self.is_external_data():
-                temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                 response = requests.get(self.url)
                 temp_video.write(response.content)
                 temp_video.close()
@@ -786,13 +779,13 @@ class Dialog:
             if temp_thumb and os.path.exists(temp_thumb.name):
                 os.unlink(temp_thumb.name)
 
-    def add_streaming_video_reference(self, reference_id, mimetype, metadata=None) -> None:
+    def add_streaming_video_reference(self, reference_id, mediatype, metadata=None) -> None:
         """
         Add a reference to a streamable video.
         
         Args:
             reference_id: Unique identifier for the streamable video
-            mimetype: MIME type of the video
+            mediatype: MIME type of the video
             metadata: Optional video metadata
             
         Returns:
@@ -800,7 +793,7 @@ class Dialog:
         """
         self.type = "video"
         self.url = f"stream://{reference_id}"
-        self.mimetype = mimetype
+        self.mediatype = mediatype
         
         # Add streaming-specific metadata
         if not hasattr(self, "metadata"):
@@ -820,17 +813,17 @@ class Dialog:
             self.meta["video"] = metadata
     
 
-    def get_video_format_from_mimetype(self, mimetype) -> str:
+    def get_video_format_from_mediatype(self, mediatype) -> str:
         """
         Get the video format name from a MIME type.
         
         Args:
-            mimetype: MIME type of the video
+            mediatype: MIME type of the video
             
         Returns:
             Format name (mp4, mov, etc.)
         """
-        mimetype_to_format = {
+        mediatype_to_format = {
             'video/mp4': 'mp4',
             'video/x-mp4': 'mp4',
             'video/quicktime': 'mov',
@@ -842,7 +835,7 @@ class Dialog:
             'video/ogg': 'ogg'
         }
         
-        return mimetype_to_format.get(mimetype, 'unknown')
+        return mediatype_to_format.get(mediatype, 'unknown')
     
     def has_thumbnail(self) -> bool:
         """
@@ -855,14 +848,14 @@ class Dialog:
             return "thumbnail" in self.metadata["video"]
         return False
     
-    def add_video_with_optimal_storage(self, video_data, filename, mimetype=None, size_threshold_mb=10) -> None:
+    def add_video_with_optimal_storage(self, video_data, filename, mediatype=None, size_threshold_mb=10) -> None:
         """
         Add video with the optimal storage method based on size.
         
         Args:
             video_data: Binary video data or URL
             filename: Name of the video file
-            mimetype: MIME type of the video (optional)
+            mediatype: MIME type of the video (optional)
             size_threshold_mb: Size threshold in MB for inline vs external storage
             
         Returns:
@@ -874,7 +867,7 @@ class Dialog:
             
             # Use inline for small videos, external for larger ones
             if size_mb <= size_threshold_mb:
-                self.add_video_data(video_data, filename, mimetype, inline=True)
+                self.add_video_data(video_data, filename, mediatype, inline=True)
             else:
                 # For larger videos, we would typically upload to external storage
                 # and then reference the URL, but this is a placeholder
@@ -884,7 +877,7 @@ class Dialog:
                 )
         elif isinstance(video_data, str) and (video_data.startswith('http://') or video_data.startswith('https://')):
             # It's already a URL, use external reference
-            self.add_video_data(video_data, filename, mimetype, inline=False)
+            self.add_video_data(video_data, filename, mediatype, inline=False)
         else:
             # Unknown format
             raise ValueError("video_data must be binary data or a URL")
@@ -915,13 +908,13 @@ class Dialog:
         try:
             # Get source video
             if self.is_inline_data():
-                temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                 video_data = base64.urlsafe_b64decode(self.body.encode())
                 temp_input.write(video_data)
                 temp_input.close()
                 input_path = temp_input.name
             elif self.is_external_data():
-                temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mimetype()}")
+                temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
                 response = requests.get(self.url)
                 temp_input.write(response.content)
                 temp_input.close()
@@ -955,7 +948,7 @@ class Dialog:
                 new_video_data = f.read()
             
             # Update the dialog with the new video
-            ext_to_mimetype = {
+            ext_to_mediatype = {
                 'mp4': 'video/mp4',
                 'mov': 'video/quicktime',
                 'webm': 'video/webm',
@@ -967,7 +960,7 @@ class Dialog:
                 'ogg': 'video/ogg'
             }
             
-            new_mimetype = ext_to_mimetype.get(target_format, f'video/{target_format}')
+            new_mediatype = ext_to_mediatype.get(target_format, f'video/{target_format}')
             new_filename = f"{os.path.splitext(self.filename)[0]}.{target_format}" if hasattr(self, "filename") else f"video.{target_format}"
             
             # Extract metadata from new video
@@ -975,8 +968,8 @@ class Dialog:
             
             # Use add_video_data to replace current content (maintaining inline/external status)
             if self.is_inline_data():
-                encoded_data = base64.b64encode(new_video_data).decode()
-                self.add_inline_data(encoded_data, new_filename, new_mimetype)
+                encoded_data = base64.urlsafe_b64encode(new_video_data).decode()
+                self.add_inline_data(encoded_data, new_filename, new_mediatype)
                 
                 # Update metadata to include transcoding info
                 if not hasattr(self, "metadata"):
@@ -986,7 +979,7 @@ class Dialog:
                     
                 self.metadata["video"] = metadata
                 self.metadata["video"]["transcoded"] = {
-                    "original_format": self.get_video_format_from_mimetype(),
+                    "original_format": self.get_video_format_from_mediatype(),
                     "target_format": target_format,
                     "codec": codec,
                     "bit_rate": bit_rate,
@@ -1019,7 +1012,7 @@ class Dialog:
         :return: True if the dialog is an email dialog, False otherwise
         :rtype: bool
         """
-        return hasattr(self, "mimetype") and self.mimetype == "message/rfc822"
+        return hasattr(self, "mediatype") and self.mediatype == "message/rfc822"
     
     def is_image(self) -> bool:
         """
@@ -1028,7 +1021,7 @@ class Dialog:
         :return: True if the dialog has image content, False otherwise
         :rtype: bool
         """
-        return hasattr(self, "mimetype") and self.mimetype in [
+        return hasattr(self, "mediatype") and self.mediatype in [
             "image/jpeg", 
             "image/tiff", 
             "application/pdf"
@@ -1041,27 +1034,27 @@ class Dialog:
         :return: True if the dialog has PDF content, False otherwise
         :rtype: bool
         """
-        return hasattr(self, "mimetype") and self.mimetype == "application/pdf"
+        return hasattr(self, "mediatype") and self.mediatype == "application/pdf"
 
-    def add_image_data(self, image_path: str, mimetype: Optional[str] = None) -> None:
+    def add_image_data(self, image_path: str, mediatype: Optional[str] = None) -> None:
         """
         Add image data to the dialog from a local file.
         
         :param image_path: Path to the image file
         :type image_path: str
-        :param mimetype: MIME type of the image (optional, auto-detected if not provided)
-        :type mimetype: str or None
+        :param mediatype: MIME type of the image (optional, auto-detected if not provided)
+        :type mediatype: str or None
         :return: None
         :rtype: None
         """
         import os
         import mimetypes
         
-        # Auto-detect mimetype if not provided
-        if not mimetype:
-            mimetype, _ = mimetypes.guess_type(image_path)
+        # Auto-detect mediatype if not provided
+        if not mediatype:
+            mediatype, _ = mimetypes.guess_type(image_path)
             
-            if not mimetype or mimetype not in ["image/jpeg", "image/tiff", "application/pdf"]:
+            if not mediatype or mediatype not in ["image/jpeg", "image/tiff", "application/pdf"]:
                 raise ValueError(f"Unsupported image format. Must be JPEG, TIFF, or PDF.")
         
         # Read image data
@@ -1072,32 +1065,31 @@ class Dialog:
         filename = os.path.basename(image_path)
         
         # Add as inline data
-        self.body = base64.b64encode(image_data).decode('utf-8')
-        self.mimetype = mimetype
+        self.body = base64.urlsafe_b64encode(image_data).decode('utf-8')
+        self.mediatype = mediatype
         self.filename = filename
-        self.encoding = "base64"
-        
+        self.encoding = "base64url"
+
         # Calculate hash for integrity validation
-        self.alg = "sha256"
-        self.signature = base64.urlsafe_b64encode(
+        self.content_hash = base64.urlsafe_b64encode(
             hashlib.sha256(image_data).digest()
         ).decode()
         
         # Extract metadata if possible
         try:
-            self.extract_image_metadata(image_data, mimetype)
+            self.extract_image_metadata(image_data, mediatype)
         except Exception as e:
             # Log the error but don't fail if metadata extraction fails
             print(f"Warning: Could not extract image metadata: {str(e)}")
             
-    def extract_image_metadata(self, image_data: bytes, mimetype: str) -> None:
+    def extract_image_metadata(self, image_data: bytes, mediatype: str) -> None:
         """
         Extract metadata from image data and add it to the dialog metadata.
         
         :param image_data: Raw image data
         :type image_data: bytes
-        :param mimetype: MIME type of the image
-        :type mimetype: str
+        :param mediatype: MIME type of the image
+        :type mediatype: str
         :return: None
         :rtype: None
         """
@@ -1108,7 +1100,7 @@ class Dialog:
         if "image" not in self.metadata:
             self.metadata["image"] = {}
         
-        if mimetype == "application/pdf":
+        if mediatype == "application/pdf":
             # Extract PDF metadata
             try:
                 import io
@@ -1126,7 +1118,7 @@ class Dialog:
                 # PyPDF not installed
                 self.metadata["image"]["note"] = "Install PyPDF for enhanced PDF metadata"
         
-        elif mimetype in ["image/jpeg", "image/tiff"]:
+        elif mediatype in ["image/jpeg", "image/tiff"]:
             # Extract image metadata
             try:
                 import io
@@ -1171,8 +1163,8 @@ class Dialog:
             
             # Get image data
             if hasattr(self, "body") and self.body:
-                if self.encoding in ["base64", "base64url"]:
-                    image_data = base64.b64decode(self.body)
+                if self.encoding in ["base64url"]:
+                    image_data = base64.urlsafe_b64decode(self.body)
                 else:
                     # If not base64 encoded, assume it's already raw data
                     image_data = self.body.encode() if isinstance(self.body, str) else self.body
@@ -1187,7 +1179,7 @@ class Dialog:
                     return None
             
             # For PDFs, just return None as they require special handling
-            if self.mimetype == "application/pdf":
+            if self.mediatype == "application/pdf":
                 return None
                 
             # Generate thumbnail
@@ -1207,8 +1199,7 @@ class Dialog:
     
     def is_external_data_changed(self) -> bool:
         """
-        Check to see if it's an external data dialog, that the contents are valid by
-        checking the hash of the body against the signature.
+        Check to see if it's an external data dialog and verify the content hash.
 
         :return: True if the dialog is an external data dialog and the contents are valid, False otherwise
         :rtype: bool
@@ -1216,8 +1207,15 @@ class Dialog:
         if not self.is_external_data():
             return False
         try:
-            body_hash = base64.urlsafe_b64decode(self.signature.encode())
-            return hashlib.sha256(self.body.encode()).digest() != body_hash
+            if not hasattr(self, "content_hash"):
+                return True
+            response = requests.get(self.url)
+            if response.status_code != 200:
+                return True
+            calculated = base64.urlsafe_b64encode(
+                hashlib.sha256(response.content).digest()
+            ).decode()
+            return calculated != self.content_hash
         except Exception as e:
             print(e)
             return True
@@ -1239,14 +1237,13 @@ class Dialog:
             raw_content = response.content
             # Base64url encode the body
             self.body = base64.urlsafe_b64encode(raw_content).decode()
-            self.mimetype = response.headers.get("Content-Type")
+            self.mediatype = response.headers.get("Content-Type")
         else:
             raise Exception(f"Failed to fetch external data: {response.status_code}")
 
-        # Calculate the SHA-256 hash of the original binary content
-        self.alg = "sha256"
+        # Calculate the content hash of the original binary content
         self.encoding = "base64url"
-        self.signature = base64.urlsafe_b64encode(
+        self.content_hash = base64.urlsafe_b64encode(
             hashlib.sha256(raw_content).digest()
         ).decode()
 
@@ -1257,18 +1254,18 @@ class Dialog:
         # Remove the url since this is now inline data
         delattr(self, "url")
 
-    def set_session_id(self, session_id: str) -> None:
+    def set_session_id(self, session_id: Union[Dict[str, str], List[Dict[str, str]]]) -> None:
         """
         Set the session identifier for this dialog.
 
-        :param session_id: The session identifier
-        :type session_id: str
+        :param session_id: The session identifier (SessionId or list of SessionId)
+        :type session_id: dict or list
         :return: None
         :rtype: None
         """
         self.session_id = session_id
 
-    def get_session_id(self) -> Optional[str]:
+    def get_session_id(self) -> Optional[Union[Dict[str, str], List[Dict[str, str]]]]:
         """
         Get the session identifier for this dialog.
 
@@ -1315,7 +1312,7 @@ class Dialog:
                 hash_obj.update(self.body.encode())
             else:
                 hash_obj.update(self.body)
-            return hash_obj.hexdigest()
+            return base64.urlsafe_b64encode(hash_obj.digest()).decode()
         else:
             raise ValueError(f"Unsupported hash algorithm: {algorithm}")
 

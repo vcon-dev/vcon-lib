@@ -63,9 +63,9 @@ class LawfulBasisValidator(ExtensionValidator):
         """Validate a lawful basis attachment."""
         result = ValidationResult(True)
         
-        # Check attachment type
-        if attachment.get("type") != "lawful_basis":
-            result.add_error("Invalid attachment type for lawful basis extension")
+        # Check attachment purpose
+        if attachment.get("purpose") != "lawful_basis":
+            result.add_error("Invalid attachment purpose for lawful basis extension")
             return result
         
         # Check encoding
@@ -100,7 +100,7 @@ class LawfulBasisValidator(ExtensionValidator):
         attachments = vcon_dict.get("attachments", [])
         lawful_basis_attachments = [
             att for att in attachments 
-            if att.get("type") == "lawful_basis"
+            if att.get("purpose") == "lawful_basis"
         ]
         
         for i, attachment in enumerate(lawful_basis_attachments):

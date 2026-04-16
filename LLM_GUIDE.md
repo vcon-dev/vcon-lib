@@ -4,7 +4,7 @@ This guide provides a comprehensive overview of the vCon (Virtual Conversation) 
 
 ## Overview
 
-The vCon library is a Python implementation of the vCon 0.3.0 specification for structuring, managing, and manipulating conversation data in a standardized format. It enables the creation, validation, and manipulation of digital representations of conversations with rich metadata, supporting all modern conversation features including multimedia content, security, and extensibility.
+The vCon library is a Python implementation of the vCon 0.4.0 specification for structuring, managing, and manipulating conversation data in a standardized format. It enables the creation, validation, and manipulation of digital representations of conversations with rich metadata, supporting all modern conversation features including multimedia content, security, and extensibility.
 
 ### Key Concepts
 
@@ -26,9 +26,6 @@ The vCon library is a Python implementation of the vCon 0.3.0 specification for 
 # Basic installation
 pip install vcon
 
-# With image processing support (Pillow, PyPDF)
-pip install vcon[image]
-
 # From source
 git clone https://github.com/vcon-dev/vcon-lib.git
 cd vcon-lib
@@ -39,7 +36,7 @@ pip install -e .
 
 - Python 3.12+
 - Core dependencies: authlib, uuid6, requests, pydash, python-dateutil
-- Optional: mutagen (audio metadata), ffmpeg (video processing), Pillow (image processing), PyPDF (PDF processing)
+- Media and document dependencies: mutagen, ffmpeg (ffmpeg-python), pillow, pypdf
 
 ## Core Classes and Usage Patterns
 
@@ -100,7 +97,7 @@ dialog_list = vcon.dialog
 attachments_list = vcon.attachments
 analysis_list = vcon.analysis
 extensions_list = vcon.extensions
-must_support_list = vcon.must_support
+critical_list = vcon.critical
 ```
 
 ### 2. Party Class
@@ -133,7 +130,7 @@ party_index = vcon.find_party_index("name", "Alice Smith")  # Returns index (0-b
 - `role`: Role in conversation ("caller", "agent", "bot", etc.)
 - `mailto`: Email address (e.g., "alice@example.com")
 
-**Advanced Contact Methods (vCon 0.3.0):**
+**Advanced Contact Methods (vCon 0.4.0):**
 - `sip`: SIP URI for VoIP communication (e.g., "sip:alice@example.com")
 - `did`: Decentralized Identifier for blockchain-based identity
 - `jCard`: vCard format contact information (RFC 7095)
@@ -165,7 +162,7 @@ text_dialog = Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],  # Indices of parties involved
     originator=0,    # Index of the party that sent the message
-    mimetype="text/plain",
+    mediatype="text/plain",
     body="Hello, I need help with my account."
 )
 
@@ -178,7 +175,7 @@ audio_dialog = Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     originator=0,
-    mimetype="audio/mp3",
+    mediatype="audio/mp3",
     body=base64_encoded_audio,
     encoding="base64",
     filename="recording.mp3"
@@ -295,7 +292,7 @@ vcon.add_attachment(
 )
 
 # Find an attachment
-attachment = vcon.find_attachment_by_type("transcript")
+attachment = vcon.find_attachment_by_purpose("transcript")
 ```
 
 ### 6. Working with Analysis
@@ -316,7 +313,7 @@ vcon.add_analysis(
 analysis = vcon.find_analysis_by_type("sentiment")
 ```
 
-### 7. Extensions and Must-Support (vCon 0.3.0)
+### 7. Extensions and Must-Support (vCon 0.4.0)
 
 Extensions allow vCons to declare optional features they use, while must-support indicates required features.
 
@@ -327,16 +324,16 @@ vcon.add_extension("encryption")
 vcon.add_extension("sentiment_analysis")
 
 # Add extensions that must be supported by consumers
-vcon.add_must_support("encryption")
-vcon.add_must_support("video")
+vcon.add_critical("encryption")
+vcon.add_critical("video")
 
 # Get extensions
 extensions = vcon.get_extensions()  # ['video', 'encryption', 'sentiment_analysis']
-must_support = vcon.get_must_support()  # ['encryption', 'video']
+critical = vcon.get_critical()  # ['encryption', 'video']
 
 # Remove extensions
 vcon.remove_extension("sentiment_analysis")
-vcon.remove_must_support("video")
+vcon.remove_critical("video")
 ```
 
 ### 7.1. Lawful Basis Extension
@@ -688,7 +685,7 @@ processing_results = vcon.process_extensions()
 print("Extension processing completed")
 ```
 
-### 8. Civic Address Support (vCon 0.3.0)
+### 8. Civic Address Support (vCon 0.4.0)
 
 Civic addresses provide location information for parties using the GEOPRIV standard.
 
@@ -716,7 +713,7 @@ party = Party(
 address_dict = address.to_dict()
 ```
 
-### 9. Party History Events (vCon 0.3.0)
+### 9. Party History Events (vCon 0.4.0)
 
 Track when parties join, leave, or change state during conversations.
 
@@ -744,7 +741,7 @@ dialog = Dialog(
 # Valid event types: "join", "drop", "hold", "unhold", "mute", "unmute"
 ```
 
-### 10. Advanced Dialog Features (vCon 0.3.0)
+### 10. Advanced Dialog Features (vCon 0.4.0)
 
 New dialog fields for enhanced functionality.
 
@@ -756,7 +753,7 @@ dialog = Dialog(
     parties=[0, 1],
     originator=0,
     body="Hello, this is a test message!",
-    session_id="session-12345",
+    session_id={"local": "local-uuid", "remote": "remote-uuid"},
     content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
     application="chat-app",
     message_id="<message-id@example.com>"
@@ -767,7 +764,7 @@ video_dialog = Dialog(
     type="video",
     start=datetime.now(),
     parties=[0, 1],
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     resolution="1920x1080",
     frame_rate=30.0,
     codec="H.264",
@@ -839,7 +836,7 @@ vcon.add_dialog(Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     originator=0,  # Caller
-    mimetype="text/plain",
+    mediatype="text/plain",
     body="Hello, I need help with my account."
 ))
 
@@ -848,7 +845,7 @@ vcon.add_dialog(Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     originator=1,  # Agent
-    mimetype="text/plain",
+    mediatype="text/plain",
     body="I'd be happy to help. Can you provide your account number?"
 ))
 
@@ -879,7 +876,7 @@ audio_dialog = Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     originator=0,
-    mimetype="audio/mp3",
+    mediatype="audio/mp3",
     body=audio_base64,
     encoding="base64",
     filename="recording.mp3"
@@ -896,7 +893,7 @@ external_dialog = Dialog(
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     url="https://example.com/recordings/call123.mp3",
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 
 # Check if dialog refers to external content
@@ -917,7 +914,7 @@ video_dialog = Dialog(
     type="video",
     start=datetime.now(),
     parties=[0, 1],
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     resolution="1920x1080",
     frame_rate=30.0,
     codec="H.264"
@@ -927,7 +924,7 @@ video_dialog = Dialog(
 video_dialog.add_video_data(
     video_data=binary_video_data,  # or URL string
     filename="recording.mp4",
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     inline=True,  # False for external reference
     metadata={"duration": 120, "quality": "high"}
 )
@@ -966,7 +963,7 @@ image_dialog = Dialog(
 # Add image from file
 image_dialog.add_image_data(
     image_path="screenshot.png",
-    mimetype="image/jpeg"  # Optional, auto-detected if not provided
+    mediatype="image/jpeg"  # Optional, auto-detected if not provided
 )
 
 # Generate thumbnail
@@ -1100,7 +1097,7 @@ def create_multimedia_conversation():
         type="recording",
         start=datetime.now().isoformat(),
         parties=[0, 1],
-        mimetype="audio/mp3",
+        mediatype="audio/mp3",
         filename="conversation.mp3"
     ))
     
@@ -1145,7 +1142,7 @@ def create_extension_enabled_conversation():
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
-        mimetype="audio/mp3"
+        mediatype="audio/mp3"
     )
     vcon.add_dialog(dialog)
     
@@ -1239,7 +1236,7 @@ def create_privacy_compliant_conversation():
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
-        mimetype="audio/mp3"
+        mediatype="audio/mp3"
     )
     vcon.add_dialog(dialog)
     
@@ -1340,7 +1337,7 @@ def create_transcription_enabled_conversation():
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
-        mimetype="audio/mp3"
+        mediatype="audio/mp3"
     )
     vcon.add_dialog(dialog)
     
@@ -1814,4 +1811,4 @@ The vCon library provides a comprehensive framework for working with conversatio
 14. **Export Transcriptions**: Leverage WTF export capabilities for subtitle formats
 15. **Check Permissions**: Use lawful basis permission checking for privacy compliance
 
-The vCon 0.3.0 specification provides a robust foundation for modern conversation data management with support for multimedia content, security, and extensibility.
+The vCon 0.4.0 specification provides a robust foundation for modern conversation data management with support for multimedia content, security, and extensibility.

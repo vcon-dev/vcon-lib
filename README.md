@@ -10,7 +10,7 @@ The vCon library provides a complete implementation of the vCon format for repre
 - **Contact Information**: Multiple contact methods (tel, email, SIP, DID)
 - **Media Support**: Audio, video, text, and image formats
 - **Security**: Digital signatures and content hashing
-- **Extensibility**: Extensions and must_support fields
+- **Extensibility**: Extensions and critical fields
 - **Location Data**: Civic address information (GEOPRIV)
 - **Event Tracking**: Party history with join/drop/hold/mute events
 - **Privacy Compliance**: Lawful Basis extension for GDPR compliance
@@ -132,7 +132,7 @@ dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
-    mimetype="audio/mp3"
+    mediatype="audio/mp3"
 )
 vcon.add_dialog(dialog)
 
@@ -202,7 +202,8 @@ This library implements the latest vCon specification with the following feature
 
 ### Enhanced Party Information
 ```python
-from vcon import Vcon, Party
+from vcon import Vcon
+from vcon.party import Party
 
 # Create a party with enhanced contact information
 party = Party(
@@ -228,15 +229,15 @@ vcon.add_extension("video")
 vcon.add_extension("encryption")
 
 # Add extensions that must be supported
-vcon.add_must_support("encryption")
+vcon.add_critical("encryption")
 
 print(vcon.get_extensions())  # ['video', 'encryption']
-print(vcon.get_must_support())  # ['encryption']
+print(vcon.get_critical())  # ['encryption']
 ```
 
 ### Enhanced Dialog Support
 ```python
-from vcon import Dialog
+from vcon.dialog import Dialog
 from datetime import datetime
 
 # Create dialog with new fields
@@ -244,7 +245,7 @@ dialog = Dialog(
     type="text",
     start=datetime.now(),
     parties=[0, 1],
-    session_id="session-12345",
+    session_id={"local": "local-uuid", "remote": "remote-uuid"},
     content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
     application="chat-app",
     message_id="<message-id@example.com>"
@@ -253,7 +254,7 @@ dialog = Dialog(
 
 ### Party History Events
 ```python
-from vcon import PartyHistory
+from vcon.party import PartyHistory
 from datetime import datetime
 
 # Track party events
@@ -279,7 +280,7 @@ incomplete_dialog = Dialog(
 
 ### Civic Address Support
 ```python
-from vcon import CivicAddress
+from vcon.civic_address import CivicAddress
 
 # Create civic address with GEOPRIV fields
 address = CivicAddress(
@@ -415,7 +416,9 @@ pip install vcon
 ### Creating a vCon
 
 ```python
-from vcon import Vcon, Party, Dialog
+from vcon import Vcon
+from vcon.party import Party
+from vcon.dialog import Dialog
 from datetime import datetime
 
 # Create a new vCon
@@ -478,7 +481,7 @@ audio_dialog = Dialog(
     start=datetime.now(),
     parties=[0, 1],
     url="https://example.com/recording.wav",
-    mimetype="audio/x-wav"
+    mediatype="audio/x-wav"
 )
 
 # Add video with metadata
@@ -487,7 +490,7 @@ video_dialog = Dialog(
     start=datetime.now(),
     parties=[0, 1],
     url="https://example.com/video.mp4",
-    mimetype="video/mp4",
+    mediatype="video/mp4",
     resolution="1920x1080",
     frame_rate=30.0,
     codec="H.264"
@@ -585,7 +588,7 @@ This library implements the latest vCon specification with:
 - ✅ Party history event tracking
 - ✅ Transfer dialog support
 - ✅ Content hashing and security
-- ✅ Extensions and must_support
+- ✅ Extensions and critical
 - ✅ Flexible versioning (version field is optional)
 - ✅ Backward compatibility
 - ✅ **Lawful Basis Extension** - GDPR-compliant privacy management

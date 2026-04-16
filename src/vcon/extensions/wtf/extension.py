@@ -94,7 +94,7 @@ class WTFExtension:
         
         # Return as attachment dictionary
         return {
-            "type": "wtf_transcription",
+            "purpose": "wtf_transcription",
             "encoding": "json",
             "body": attachment.to_dict()
         }
@@ -108,7 +108,7 @@ class WTFExtension:
         wtf_attachment = self.processor.convert_from_provider(provider_data, provider)
         
         return {
-            "type": "wtf_transcription",
+            "purpose": "wtf_transcription",
             "encoding": "json",
             "body": wtf_attachment.to_dict()
         }

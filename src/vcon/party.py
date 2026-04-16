@@ -34,7 +34,7 @@ class Party:
     - contact_list: Reference to contact list
     - meta: Additional metadata
     
-    New in vCon 0.3.0:
+    New in vCon 0.4.0:
     - sip: SIP URI for the party
     - did: Decentralized Identifier
     - jCard: vCard format contact information
@@ -128,7 +128,7 @@ class PartyHistory:
     a conversation. This is useful for understanding the flow of multi-party
     conversations where participants may not all join and leave at the same time.
     
-    Supported event types (vCon 0.3.0 specification):
+    Supported event types (vCon 0.4.0 specification):
     - join: When the party joins the dialog
     - drop: When the party drops out of the dialog
     - hold: When the party is put on hold

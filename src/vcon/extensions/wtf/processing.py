@@ -46,7 +46,7 @@ class WTFProcessor(ExtensionProcessor):
             attachments = vcon_dict.get("attachments", [])
             wtf_attachments = [
                 att for att in attachments 
-                if att.get("type") == "wtf_transcription"
+                if att.get("purpose") == "wtf_transcription"
             ]
             
             if not wtf_attachments:
