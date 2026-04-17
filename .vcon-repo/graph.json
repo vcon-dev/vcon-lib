@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0.0",
   "repo": "vcon-lib",
-  "repo_version": "0.9.0",
+  "repo_version": "0.9.1",
   "archetype": "python-library",
-  "generated_at": "2026-04-16T15:15:46.025228+00:00",
+  "generated_at": "2026-04-17T12:29:50.987268+00:00",
   "stats": {
     "node_count": 59,
     "edge_count": 23
@@ -406,14 +406,14 @@
       "type": "class",
       "name": "Attachment",
       "file": "src/vcon/vcon.py",
-      "line": 79
+      "line": 81
     },
     {
       "id": "class:Vcon",
       "type": "class",
       "name": "Vcon",
       "file": "src/vcon/vcon.py",
-      "line": 188
+      "line": 199
     },
     {
       "id": "document:readme-md",
