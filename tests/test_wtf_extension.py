@@ -587,7 +587,71 @@ class TestWTFExtension:
         srt_content = extension.export_transcription(attachment, "srt")
         assert "1" in srt_content
         assert "Hello world" in srt_content
-        
+
         vtt_content = extension.export_transcription(attachment, "vtt")
         assert "WEBVTT" in vtt_content
         assert "Hello world" in vtt_content
+
+
+class TestWTFTranscriptionAnalysis:
+    """Tests for the add_wtf_transcription_analysis() Vcon helper."""
+
+    def _payload(self):
+        return {
+            "transcript": {
+                "text": "Hello world",
+                "language": "en",
+                "duration": 2.0,
+                "confidence": 0.95,
+            },
+            "segments": [{
+                "id": 0,
+                "start": 0.0,
+                "end": 2.0,
+                "text": "Hello world",
+                "confidence": 0.95,
+            }],
+            "metadata": {
+                "created_at": "2026-05-10T00:00:00Z",
+                "processed_at": "2026-05-10T00:00:01Z",
+                "provider": "whisper",
+                "model": "whisper-1",
+            },
+        }
+
+    def test_add_wtf_transcription_analysis_basic(self):
+        from vcon import Vcon
+
+        vcon = Vcon.build_new()
+        vcon.add_wtf_transcription_analysis(**self._payload(), dialog_index=0)
+
+        assert len(vcon.vcon_dict["analysis"]) == 1
+        assert vcon.vcon_dict["attachments"] == []
+
+        entry = vcon.vcon_dict["analysis"][0]
+        assert entry["type"] == "transcription"
+        assert entry["vendor"] == "whisper"
+        assert entry["product"] == "whisper-1"
+        assert entry["encoding"] == "json"
+        assert entry["schema"] == Vcon.WTF_SCHEMA_URL
+        assert entry["dialog"] == [0]
+
+        body = json.loads(entry["body"])
+        assert body["transcript"]["text"] == "Hello world"
+
+    def test_add_wtf_transcription_analysis_registers_extension(self):
+        from vcon import Vcon
+
+        vcon = Vcon.build_new()
+        vcon.add_wtf_transcription_analysis(**self._payload())
+        assert "wtf_transcription" in vcon.get_extensions()
+
+    def test_attachment_helper_unchanged_regression(self):
+        """Sanity: the existing _attachment helper still writes to attachments[]."""
+        from vcon import Vcon
+
+        vcon = Vcon.build_new()
+        vcon.add_wtf_transcription_attachment(**self._payload(), dialog_index=0)
+        assert len(vcon.vcon_dict["attachments"]) == 1
+        assert vcon.vcon_dict["analysis"] == []
+        assert vcon.vcon_dict["attachments"][0]["purpose"] == "wtf_transcription"

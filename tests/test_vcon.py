@@ -158,8 +158,10 @@ def test_build_from_json() -> None:
 def test_build_new() -> None:
     vcon = Vcon.build_new()
     assert vcon.uuid is not None
-    assert vcon.vcon is None  # vcon field is now optional and not set by default
+    assert vcon.vcon == "0.4.0"
     assert vcon.created_at is not None
+    assert "group" not in vcon.vcon_dict
+    assert "redacted" not in vcon.vcon_dict
 
 
 def test_tags() -> None:
@@ -1368,11 +1370,14 @@ def test_version_field_optional_load_from_file(tmp_path) -> None:
     assert "vcon" not in vcon.vcon_dict
 
 
-def test_build_new_no_version_field() -> None:
-    """Test that build_new creates vCons without version field."""
+def test_build_new_sets_version_field() -> None:
+    """build_new() sets vcon: '0.4.0' per draft-ietf-vcon-vcon-core-02 §4.1.1.
+
+    The field is deprecated in the draft but retained for parser compat;
+    the library emits it by default to avoid surprises with strict parsers.
+    """
     vcon = Vcon.build_new()
-    # Version field should not be automatically added
-    assert "vcon" not in vcon.vcon_dict
+    assert vcon.vcon_dict["vcon"] == "0.4.0"
 
 
 def test_no_version_field_remains_absent() -> None:
@@ -1508,3 +1513,35 @@ def test_extensions_property_handling():
     assert vcon.get_extensions() == ["video"]
     assert vcon.get_critical() == ["encryption"]
     assert vcon.vcon_dict.get("meta", {}).get("custom_field") == "value"
+
+
+def test_build_new_emits_vcon_syntax_param() -> None:
+    """build_new() should emit vcon: '0.4.0' and round-trip through JSON."""
+    vcon = Vcon.build_new()
+    serialized = vcon.to_json()
+    reloaded = Vcon.build_from_json(serialized)
+    assert reloaded.vcon_dict["vcon"] == "0.4.0"
+
+
+def test_build_new_omits_empty_group_and_redacted() -> None:
+    """build_new() should not seed empty group/redacted defaults."""
+    vcon = Vcon.build_new()
+    assert "group" not in vcon.vcon_dict
+    assert "redacted" not in vcon.vcon_dict
+
+
+def test_is_valid_with_new_defaults() -> None:
+    """A minimally-populated build_new() vCon should pass is_valid()."""
+    from vcon.party import Party
+    from vcon.dialog import Dialog
+
+    vcon = Vcon.build_new()
+    vcon.add_party(Party(name="Alice"))
+    vcon.add_dialog(Dialog(
+        type="recording",
+        start="2026-05-10T12:00:00Z",
+        parties=[0],
+        mediatype="audio/wav",
+    ))
+    valid, errors = vcon.is_valid()
+    assert valid, f"Expected valid, got errors: {errors}"
