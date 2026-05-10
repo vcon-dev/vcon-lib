@@ -453,9 +453,8 @@ class Vcon:
         logger.debug(f"Generated UUID8: {uuid}")
     
         vcon_dict = {
+            "vcon": "0.4.0",
             "uuid": uuid,
-            "redacted": {},
-            "group": [],
             "parties": [],
             "dialog": [],
             "attachments": [],
@@ -774,7 +773,72 @@ class Vcon:
                 self.add_extension("wtf_transcription")
             
             logger.info("Added WTF transcription attachment")
-            
+
+        except ImportError:
+            raise RuntimeError("WTF extension not available")
+
+    WTF_SCHEMA_URL = "https://datatracker.ietf.org/doc/html/draft-howe-vcon-wtf-extension"
+
+    def add_wtf_transcription_analysis(
+        self,
+        transcript: Dict[str, Any],
+        segments: List[Dict[str, Any]],
+        metadata: Dict[str, Any],
+        dialog_index: Optional[int] = None,
+        **kwargs
+    ) -> None:
+        """
+        Add a WTF transcription as an analysis entry (vs. an attachment).
+
+        Use ``add_wtf_transcription_attachment`` for canonical placement
+        (matches the speckit example, attachments[]). Use this method if your
+        pipeline treats transcripts as derived analysis output and prefers
+        analysis[] placement.
+
+        Emits a spec-shaped analysis entry: ``type="transcription"``,
+        ``vendor`` and ``product`` taken from ``metadata["provider"]`` /
+        ``metadata["model"]``, ``schema`` set to the WTF draft URL,
+        ``encoding="json"``, and ``body`` as a JSON-serialized WTF document.
+
+        Args:
+            transcript: Transcript information dictionary
+            segments: List of segment dictionaries
+            metadata: Metadata dictionary; ``provider`` and ``model`` keys
+                map to ``vendor`` and ``product`` on the analysis entry
+            dialog_index: Index of the dialog this transcription applies to
+            **kwargs: Additional WTF parameters (words, speakers, quality, etc.)
+        """
+        if not EXTENSIONS_AVAILABLE:
+            raise RuntimeError("Extensions not available")
+
+        try:
+            from .extensions.wtf import WTFExtension
+            extension = WTFExtension()
+            wtf_attachment = extension.create_wtf_attachment(
+                transcript=transcript,
+                segments=segments,
+                metadata=metadata,
+                **kwargs
+            )
+
+            wtf_body = wtf_attachment["body"]
+            dialog_ref = [dialog_index] if dialog_index is not None else []
+
+            self.add_analysis(
+                type="transcription",
+                dialog=dialog_ref,
+                vendor=metadata.get("provider", "unknown"),
+                product=metadata.get("model"),
+                body=json.dumps(wtf_body),
+                encoding="json",
+                schema=self.WTF_SCHEMA_URL,
+            )
+
+            if "wtf_transcription" not in self.get_extensions():
+                self.add_extension("wtf_transcription")
+
+            logger.info("Added WTF transcription analysis entry")
+
         except ImportError:
             raise RuntimeError("WTF extension not available")
 

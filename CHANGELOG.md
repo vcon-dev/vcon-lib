@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.2] - 2026-05-10
+
+### Fixed
+- `Vcon.build_new()` now emits `"vcon": "0.4.0"` per `draft-ietf-vcon-vcon-core-02` §4.1.1. The field is deprecated in the draft but retained for parser compatibility; emitting it by default avoids surprises with strict parsers.
+- `Vcon.build_new()` no longer initializes empty `"group": []` and `"redacted": {}`. The speckit reserves `group`, and downstream consumers no longer need to strip these defaults before serializing. Both fields are still populated lazily by their setters.
+
+### Added
+- `add_wtf_transcription_analysis()` — sibling helper to `add_wtf_transcription_attachment` that places the WTF transcription into `analysis[]` as a spec-shaped analysis entry (`type: "transcription"`, `vendor`, `product`, `schema`, `encoding: "json"`, JSON-stringified body). Use this when your pipeline treats transcripts as derived analysis output; use the existing `_attachment` helper for the canonical attachments[] placement shown in the speckit example.
+
 ## [0.9.0] - 2025-01-26
 
 ### 🎉 Major Release: Extension Framework and Privacy Compliance
