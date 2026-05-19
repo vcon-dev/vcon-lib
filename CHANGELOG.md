@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.3] - 2026-05-19
+
+### Fixed
+- `Vcon.add_tag()` now correctly includes `party: 0` and `dialog: 0` on the created `tags`-purpose attachment. Previously the attachment was emitted without these spec-required indices, producing non-compliant vCon output. Test coverage added to `test_tags` to prevent regression.
+
 ## [0.9.2] - 2026-05-10
 
 ### Fixed

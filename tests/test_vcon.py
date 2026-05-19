@@ -171,6 +171,12 @@ def test_tags() -> None:
     vcon.add_tag("test_tag", "test_value")
     assert vcon.get_tag("test_tag") == "test_value"
 
+    tags_att = next(
+        a for a in vcon.vcon_dict["attachments"] if a.get("purpose") == "tags"
+    )
+    assert "party" in tags_att, "tags attachment missing required 'party' index"
+    assert "dialog" in tags_att, "tags attachment missing required 'dialog' index"
+
 
 def test_add_attachment():
     vcon = Vcon()
