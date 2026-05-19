@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.4] - 2026-05-19
+
+### Security
+- Bumped dependencies to resolve Dependabot alerts: `authlib`, `requests`, `pydash`, `python-dateutil`, `mutagen`, `pypdf`, `pillow`, `uuid6`.
+
 ## [0.9.3] - 2026-05-19
 
 ### Fixed
