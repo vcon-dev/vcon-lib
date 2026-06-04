@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.6] - 2026-06-04
+
+### Security
+- Bumped `requests` to `^2.33.0` (locked 2.34.2). This was the only Dependabot-flagged runtime dependency still vulnerable at the locked version; all others (authlib 1.7.2, cryptography 48.0.0, urllib3 2.7.0, idna 3.15) were already at patched versions in `poetry.lock` from the v0.9.4 bump.
+- Removed the committed `requirements.txt`. It was a stale, hash-pinned export (last regenerated 2026-04-16) pinning vulnerable versions (authlib 1.3.2, cryptography 45.0.4, urllib3 2.2.2, idna 3.8, certifi 2024.7.4) and was the source of roughly half the open Dependabot alerts. `pyproject.toml` / `poetry.lock` are now the single source of truth; `environment.yml` installs the project directly via `pip: ["."]`. No GitHub workflow used `requirements.txt` (all use `poetry install`).
+
+### Fixed
+- Removed a misconfigured `[[tool.poetry.source]]` block that declared TestPyPI with `priority = "primary"` ahead of PyPI, which caused `poetry lock` / `poetry install` to query the TestPyPI sandbox first. Dependency resolution now defaults to PyPI.
+
 ## [0.9.5] - 2026-06-04
 
 ### Changed

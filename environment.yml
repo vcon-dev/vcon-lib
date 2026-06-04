@@ -4,15 +4,9 @@ channels:
   - defaults
 dependencies:
   - python=3.12
+  - pip
   - pip:
-    - -r requirements.txt
-  - requests
-  - cryptography
-  - authlib
-  - pydash
-  - uuid6
-  - pytest
-  - packaging
-  - pluggy
-  - pycparser
-  - iniconfig
+    # Install the project (and its dependencies) from pyproject.toml.
+    # pyproject.toml / poetry.lock are the single source of truth for deps;
+    # there is no committed requirements.txt to drift out of date.
+    - .
