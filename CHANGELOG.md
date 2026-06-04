@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.5] - 2026-06-04
+
+### Changed
+- `Dialog` now computes and emits `content_hash` in the spec-compliant `sha512-<base64url>` form with no base64 padding, per `draft-ietf-vcon-vcon-core-02` (matching the canonical `vcon-info` examples and the `vcon-js` v0.4.0 validator). Previously these helpers emitted an unprefixed, padded base64url **SHA-256** digest, which strict parsers reject. Affected helpers: `add_external_data()`, `add_inline_data()`, `add_image_data()`, and `to_inline_data()`.
+- `Dialog.calculate_content_hash()` now defaults to `sha512` and returns the algorithm-prefixed form; `sha256` is still accepted and returns a `sha256-` prefixed value.
+
+### Fixed
+- `Dialog.is_external_data_changed()` and `Dialog.verify_content_hash()` now parse the algorithm prefix (`sha512-` / `sha256-`) of the stored hash and recompute with the matching algorithm. They previously always recomputed SHA-256, so they could not verify a spec-compliant SHA-512 hash. Legacy unprefixed (padded SHA-256) hashes emitted by earlier releases still verify, so existing vCons are unaffected.
+
+### Added
+- `vcon.compute_content_hash(data, algorithm="sha512")` and `vcon.parse_content_hash_algorithm(content_hash)` — reusable, spec-formatting content-hash helpers exported from the package root so adapters and generators can hash external/inline media via the library instead of hand-rolling base64url.
+
 ## [0.9.4] - 2026-05-19
 
 ### Security

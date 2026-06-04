@@ -41,6 +41,61 @@ MIME_TYPES = [
 ]
 
 
+# Content-hash format for external and inline media (draft-ietf-vcon-vcon-core-02).
+# A content_hash is "<algorithm>-<base64url-of-digest>" with NO base64 padding,
+# e.g. "sha512-GLy6IPa...". SHA-512 is the spec default; SHA-256 is still accepted
+# so hashes emitted by older releases of this library continue to verify.
+DEFAULT_CONTENT_HASH_ALGORITHM = "sha512"
+SUPPORTED_CONTENT_HASH_ALGORITHMS = ("sha512", "sha256")
+
+
+def _b64url_no_padding(data: bytes) -> str:
+    """Base64url-encode ``data`` without trailing ``=`` padding (per the spec)."""
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def compute_content_hash(
+    data: bytes, algorithm: str = DEFAULT_CONTENT_HASH_ALGORITHM
+) -> str:
+    """Compute a spec-formatted content hash for raw bytes.
+
+    Returns ``"<algorithm>-<base64url-no-padding>"`` as required by
+    draft-ietf-vcon-vcon-core-02 (e.g. ``"sha512-GLy6IPa..."``).
+
+    :param data: the raw bytes to hash
+    :type data: bytes
+    :param algorithm: the hash algorithm to use (default: ``"sha512"``);
+        ``"sha256"`` is also supported for backwards compatibility
+    :type algorithm: str
+    :return: the algorithm-prefixed, unpadded base64url content hash
+    :rtype: str
+    :raises ValueError: if ``algorithm`` is not a supported algorithm
+    """
+    if algorithm not in SUPPORTED_CONTENT_HASH_ALGORITHMS:
+        raise ValueError(
+            f"Unsupported hash algorithm: {algorithm}. "
+            f"Must be one of {SUPPORTED_CONTENT_HASH_ALGORITHMS}"
+        )
+    digest = hashlib.new(algorithm, data).digest()
+    return f"{algorithm}-{_b64url_no_padding(digest)}"
+
+
+def parse_content_hash_algorithm(content_hash: str) -> Optional[str]:
+    """Return the algorithm prefix of ``content_hash``.
+
+    :param content_hash: a content hash value, optionally prefixed
+    :type content_hash: str
+    :return: ``"sha512"`` or ``"sha256"`` for a prefixed value, or ``None`` for a
+        legacy unprefixed hash (which this library historically emitted as a
+        padded base64url SHA-256 digest)
+    :rtype: str or None
+    """
+    for algorithm in SUPPORTED_CONTENT_HASH_ALGORITHMS:
+        if content_hash.startswith(f"{algorithm}-"):
+            return algorithm
+    return None
+
+
 class Dialog:
     """
     A class representing a dialog segment in a vCon conversation.
@@ -372,9 +427,7 @@ class Dialog:
 
         # Calculate the content hash for external data
         raw_content = response.content
-        self.content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(raw_content).digest()
-        ).decode()
+        self.content_hash = compute_content_hash(raw_content)
 
     def add_inline_data(self, body: str, filename: str, mediatype: str) -> None:
         """
@@ -393,9 +446,7 @@ class Dialog:
         self.mediatype = mediatype
         self.filename = filename
         self.encoding = "base64url"
-        self.content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(self.body.encode()).digest()
-        ).decode()
+        self.content_hash = compute_content_hash(self.body.encode())
 
     def is_external_data(self) -> bool:
         """
@@ -1071,9 +1122,7 @@ class Dialog:
         self.encoding = "base64url"
 
         # Calculate hash for integrity validation
-        self.content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(image_data).digest()
-        ).decode()
+        self.content_hash = compute_content_hash(image_data)
         
         # Extract metadata if possible
         try:
@@ -1212,9 +1261,16 @@ class Dialog:
             response = requests.get(self.url)
             if response.status_code != 200:
                 return True
-            calculated = base64.urlsafe_b64encode(
-                hashlib.sha256(response.content).digest()
-            ).decode()
+            # Recompute using whatever algorithm the stored hash was emitted
+            # with so both new (sha512-/sha256- prefixed) and legacy
+            # (unprefixed, padded SHA-256) hashes verify correctly.
+            algorithm = parse_content_hash_algorithm(self.content_hash)
+            if algorithm is None:
+                calculated = base64.urlsafe_b64encode(
+                    hashlib.sha256(response.content).digest()
+                ).decode()
+            else:
+                calculated = compute_content_hash(response.content, algorithm)
             return calculated != self.content_hash
         except Exception as e:
             print(e)
@@ -1243,9 +1299,7 @@ class Dialog:
 
         # Calculate the content hash of the original binary content
         self.encoding = "base64url"
-        self.content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(raw_content).digest()
-        ).decode()
+        self.content_hash = compute_content_hash(raw_content)
 
         # Set the filename if it doesn't exist
         if not hasattr(self, "filename"):
@@ -1294,41 +1348,66 @@ class Dialog:
         """
         return getattr(self, "content_hash", None)
 
-    def calculate_content_hash(self, algorithm: str = "sha256") -> str:
+    def calculate_content_hash(
+        self, algorithm: str = DEFAULT_CONTENT_HASH_ALGORITHM
+    ) -> str:
         """
         Calculate the content hash for the dialog body.
 
-        :param algorithm: The hash algorithm to use (default: "sha256")
+        The returned value is spec-formatted as ``"<algorithm>-<base64url>"``
+        with no base64 padding (draft-ietf-vcon-vcon-core-02), e.g.
+        ``"sha512-GLy6IPa..."``.
+
+        :param algorithm: The hash algorithm to use (default: ``"sha512"``).
+            ``"sha256"`` is also supported for backwards compatibility.
         :type algorithm: str
-        :return: The calculated hash value
+        :return: The calculated hash value, prefixed with the algorithm name
         :rtype: str
+        :raises ValueError: if there is no body to hash, or ``algorithm`` is
+            not a supported algorithm
         """
         if not hasattr(self, "body") or not self.body:
             raise ValueError("No body content available to hash")
-        
-        if algorithm == "sha256":
-            hash_obj = hashlib.sha256()
-            if isinstance(self.body, str):
-                hash_obj.update(self.body.encode())
-            else:
-                hash_obj.update(self.body)
-            return base64.urlsafe_b64encode(hash_obj.digest()).decode()
-        else:
-            raise ValueError(f"Unsupported hash algorithm: {algorithm}")
 
-    def verify_content_hash(self, expected_hash: str, algorithm: str = "sha256") -> bool:
+        body_bytes = self.body.encode() if isinstance(self.body, str) else self.body
+        return compute_content_hash(body_bytes, algorithm)
+
+    def verify_content_hash(
+        self, expected_hash: str, algorithm: Optional[str] = None
+    ) -> bool:
         """
         Verify the content hash against the expected value.
 
+        The algorithm is inferred from the ``expected_hash`` prefix
+        (``"sha512-"`` or ``"sha256-"``) so values produced by either this or
+        older releases of the library verify correctly. A legacy unprefixed
+        hash is treated as the padded base64url SHA-256 that vcon-lib emitted
+        prior to the algorithm-prefixed format.
+
         :param expected_hash: The expected hash value
         :type expected_hash: str
-        :param algorithm: The hash algorithm to use (default: "sha256")
-        :type algorithm: str
+        :param algorithm: Optional explicit algorithm override; when omitted the
+            algorithm is taken from the ``expected_hash`` prefix
+        :type algorithm: str or None
         :return: True if the hash matches, False otherwise
         :rtype: bool
         """
         try:
-            calculated_hash = self.calculate_content_hash(algorithm)
-            return calculated_hash == expected_hash
+            if not hasattr(self, "body") or not self.body:
+                return False
+
+            resolved = algorithm or parse_content_hash_algorithm(expected_hash)
+            if resolved is None:
+                # Legacy unprefixed hash: compare against the historical padded
+                # base64url SHA-256 that older releases of this library emitted.
+                body_bytes = (
+                    self.body.encode() if isinstance(self.body, str) else self.body
+                )
+                legacy = base64.urlsafe_b64encode(
+                    hashlib.sha256(body_bytes).digest()
+                ).decode()
+                return legacy == expected_hash
+
+            return self.calculate_content_hash(resolved) == expected_hash
         except ValueError:
             return False

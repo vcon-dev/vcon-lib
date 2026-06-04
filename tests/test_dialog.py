@@ -1,5 +1,9 @@
 import pytest
-from src.vcon.dialog import Dialog
+from src.vcon.dialog import (
+    Dialog,
+    compute_content_hash,
+    parse_content_hash_algorithm,
+)
 import hashlib
 import base64
 from unittest.mock import Mock, patch
@@ -201,9 +205,9 @@ class TestDialog:
         # Assert
         assert dialog.mediatype == "text/plain"
         assert dialog.filename == filename
-        expected_content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(b"sample data").digest()
-        ).decode()
+        # Spec-compliant external-media hash: "sha512-<base64url, no padding>"
+        expected_content_hash = compute_content_hash(b"sample data")
+        assert expected_content_hash.startswith("sha512-")
         assert dialog.content_hash == expected_content_hash
         assert not hasattr(dialog, "body")
 
@@ -291,23 +295,20 @@ class TestDialog:
         assert dialog.body == body
         assert dialog.filename == filename
         assert dialog.mediatype == mediatype
-        assert (
-            dialog.content_hash
-            == base64.urlsafe_b64encode(hashlib.sha256(body.encode()).digest()).decode()
-        )
+        assert dialog.content_hash == compute_content_hash(body.encode())
 
-    # Generates a valid SHA-256 content hash for the body
-    def test_valid_sha256_content_hash(self):
+    # Generates a valid SHA-512 content hash for the body
+    def test_valid_sha512_content_hash(self):
         # Initialize the dialog object
         dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
 
         # Add inline data
         dialog.add_inline_data("example_body", "example_filename", "text/plain")
 
-        # Check if the SHA-256 content hash is valid
-        expected_content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256("example_body".encode()).digest()
-        ).decode()
+        # Check that the content hash is the spec-compliant sha512 form
+        expected_content_hash = compute_content_hash("example_body".encode())
+        assert expected_content_hash.startswith("sha512-")
+        assert "=" not in dialog.content_hash  # no base64 padding
         assert dialog.content_hash == expected_content_hash
 
     # Sets the encoding to "base64url"
@@ -410,10 +411,9 @@ class TestDialog:
         decoded_body = base64.urlsafe_b64decode(dialog.body.encode())
         assert decoded_body == fake_binary_data
 
-        # Verify the content hash matches the content
-        expected_content_hash = base64.urlsafe_b64encode(
-            hashlib.sha256(fake_binary_data).digest()
-        ).decode()
+        # Verify the content hash matches the content (spec-compliant sha512)
+        expected_content_hash = compute_content_hash(fake_binary_data)
+        assert expected_content_hash.startswith("sha512-")
         assert dialog.content_hash == expected_content_hash
 
     def test_to_inline_data_failed_request(self):
@@ -761,12 +761,20 @@ def test_dialog_calculate_content_hash():
         body="Hello, world!"
     )
     
-    # Calculate hash
+    # Calculate hash (default algorithm is sha512, spec-compliant prefixed form)
     hash_value = dialog.calculate_content_hash()
     assert isinstance(hash_value, str)
-    assert len(hash_value) == 44  # Base64url-encoded SHA-256 length
-    
-    # Test with different algorithm
+    assert hash_value.startswith("sha512-")
+    assert "=" not in hash_value  # base64url, no padding
+    # 7-char "sha512-" prefix + 86-char unpadded base64url of a 64-byte digest
+    assert len(hash_value) == 93
+    assert len(base64.urlsafe_b64decode(hash_value.split("-", 1)[1] + "==")) == 64
+
+    # sha256 is still supported and produces the prefixed form
+    sha256_value = dialog.calculate_content_hash("sha256")
+    assert sha256_value.startswith("sha256-")
+
+    # Test with unsupported algorithm
     with pytest.raises(ValueError):
         dialog.calculate_content_hash("md5")
     
@@ -893,3 +901,170 @@ def test_dialog_disposition_validation():
     # Test that non-incomplete dialogs don't require disposition validation
     dialog = Dialog("text", datetime.now(), [0], disposition="invalid")
     assert dialog.disposition == "invalid"
+
+
+# ---------------------------------------------------------------------------
+# content_hash: spec-compliant "sha512-<base64url, no padding>" format
+# (draft-ietf-vcon-vcon-core-02) plus backward compatibility with the
+# unprefixed, padded base64url SHA-256 that older releases emitted.
+# ---------------------------------------------------------------------------
+
+# SHA-512 of the empty byte string, base64url-encoded with no padding. This is
+# a stable, independently verifiable known-answer for the emitted format.
+EMPTY_SHA512 = "sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg_SpIdNs6c5H0NE8XYXysP-DGNKHfuwvY7kxvUdBeoGlODJ6-SfaPg"
+
+# A real content_hash value as it appears in the canonical vcon-info examples.
+SPEC_EXAMPLE_HASH = (
+    "sha512-GLy6IPaIUM1GqzZqfIPZlWjaDsNgNvZM0iCONNThnH0a75fhUM6cYzLZ5GynSURREvZwmOh54-2lRRieyj82UQ"
+)
+
+
+def _decode_digest(content_hash):
+    """Return the raw digest bytes from a prefixed, unpadded content_hash."""
+    encoded = content_hash.split("-", 1)[1]
+    return base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
+
+
+def test_compute_content_hash_known_answer():
+    """compute_content_hash emits the spec format and a correct digest."""
+    assert compute_content_hash(b"") == EMPTY_SHA512
+    # Format invariants: algorithm prefix, no base64 padding, 64-byte digest.
+    h = compute_content_hash(b"some bytes")
+    assert h.startswith("sha512-")
+    assert "=" not in h
+    assert len(_decode_digest(h)) == 64
+    # Matches hashlib computed independently.
+    assert _decode_digest(h) == hashlib.sha512(b"some bytes").digest()
+
+
+def test_compute_content_hash_sha256_and_unsupported():
+    h = compute_content_hash(b"payload", "sha256")
+    assert h.startswith("sha256-")
+    assert "=" not in h
+    assert _decode_digest(h) == hashlib.sha256(b"payload").digest()
+    with pytest.raises(ValueError):
+        compute_content_hash(b"payload", "md5")
+
+
+def test_parse_content_hash_algorithm():
+    assert parse_content_hash_algorithm("sha512-abc") == "sha512"
+    assert parse_content_hash_algorithm("sha256-abc") == "sha256"
+    assert parse_content_hash_algorithm(SPEC_EXAMPLE_HASH) == "sha512"
+    # Legacy unprefixed (padded SHA-256) values have no recognized prefix.
+    assert parse_content_hash_algorithm("JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=") is None
+    assert parse_content_hash_algorithm("md5-abc") is None
+
+
+def test_spec_example_hash_is_well_formed():
+    """The canonical example value parses as a 64-byte SHA-512 digest."""
+    assert parse_content_hash_algorithm(SPEC_EXAMPLE_HASH) == "sha512"
+    assert "=" not in SPEC_EXAMPLE_HASH
+    assert len(_decode_digest(SPEC_EXAMPLE_HASH)) == 64
+
+
+def test_add_inline_data_emits_sha512():
+    dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
+    dialog.add_inline_data("body text", "note.txt", "text/plain")
+    assert dialog.content_hash.startswith("sha512-")
+    assert "=" not in dialog.content_hash
+    assert dialog.content_hash == compute_content_hash(b"body text")
+
+
+def test_add_external_data_emits_sha512(mocker):
+    dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
+    response_mock = mocker.Mock()
+    response_mock.status_code = 200
+    response_mock.headers = {"Content-Type": "text/plain"}
+    response_mock.content = b"external bytes"
+    mocker.patch("requests.get", return_value=response_mock)
+
+    dialog.add_external_data("http://example.com/data", "data.txt", "text/plain")
+    assert dialog.content_hash.startswith("sha512-")
+    assert dialog.content_hash == compute_content_hash(b"external bytes")
+
+
+def test_to_inline_data_emits_sha512():
+    fake_binary_data = b"\x52\x49\x46\x46\x24\x08\x00\x00\x57\x41\x56\x45"
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.content = fake_binary_data
+    mock_response.headers = {"Content-Type": "audio/x-wav"}
+
+    dialog = Dialog(
+        type="audio",
+        start=datetime.now(),
+        parties=[1, 2],
+        url="http://example.com/audio.wav",
+    )
+    with patch("requests.get", return_value=mock_response):
+        dialog.to_inline_data()
+
+    assert dialog.content_hash.startswith("sha512-")
+    assert dialog.content_hash == compute_content_hash(fake_binary_data)
+
+
+def test_verify_content_hash_roundtrip_sha512():
+    dialog = Dialog(type="text", start="2023-01-01T00:00:00Z", parties=[0], body="data")
+    h = dialog.calculate_content_hash()  # sha512 by default
+    assert h.startswith("sha512-")
+    assert dialog.verify_content_hash(h) is True
+
+
+def test_verify_content_hash_accepts_sha256_prefix():
+    dialog = Dialog(type="text", start="2023-01-01T00:00:00Z", parties=[0], body="data")
+    sha256_hash = dialog.calculate_content_hash("sha256")
+    assert sha256_hash.startswith("sha256-")
+    # Algorithm is inferred from the prefix, so verification succeeds.
+    assert dialog.verify_content_hash(sha256_hash) is True
+
+
+def test_verify_content_hash_backward_compatible_legacy():
+    """Legacy unprefixed, padded base64url SHA-256 hashes still verify."""
+    body = "data"
+    dialog = Dialog(type="text", start="2023-01-01T00:00:00Z", parties=[0], body=body)
+    legacy_hash = base64.urlsafe_b64encode(hashlib.sha256(body.encode()).digest()).decode()
+    assert legacy_hash.endswith("=")  # padded, unprefixed form
+    assert parse_content_hash_algorithm(legacy_hash) is None
+    assert dialog.verify_content_hash(legacy_hash) is True
+    # A wrong legacy-looking value does not verify.
+    assert dialog.verify_content_hash("not-the-hash") is False
+
+
+def test_is_external_data_changed_sha512(mocker):
+    content = b"external recording bytes"
+    dialog = Dialog(
+        type="recording",
+        start="2023-01-01T00:00:00Z",
+        parties=[0],
+        url="http://example.com/rec.wav",
+    )
+    response_mock = mocker.Mock()
+    response_mock.status_code = 200
+    response_mock.content = content
+    mocker.patch("requests.get", return_value=response_mock)
+
+    # Stored sha512 hash matches fetched content -> unchanged.
+    dialog.content_hash = compute_content_hash(content)
+    assert dialog.is_external_data_changed() is False
+
+    # Different stored hash -> changed.
+    dialog.content_hash = compute_content_hash(b"something else")
+    assert dialog.is_external_data_changed() is True
+
+
+def test_is_external_data_changed_legacy_hash(mocker):
+    """A legacy unprefixed SHA-256 hash still validates unchanged content."""
+    content = b"external recording bytes"
+    dialog = Dialog(
+        type="recording",
+        start="2023-01-01T00:00:00Z",
+        parties=[0],
+        url="http://example.com/rec.wav",
+    )
+    response_mock = mocker.Mock()
+    response_mock.status_code = 200
+    response_mock.content = content
+    mocker.patch("requests.get", return_value=response_mock)
+
+    dialog.content_hash = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode()
+    assert dialog.is_external_data_changed() is False
