@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional, Union
 import logging
 from datetime import datetime, timezone
 from ..base import ExtensionProcessor, ProcessingResult
+from ...body import decode_body
 from .attachment import (
     LawfulBasisAttachment,
     ProofType,
@@ -165,7 +166,7 @@ class PermissionEvaluator:
             permissions = []
             for attachment_dict in applicable_attachments:
                 try:
-                    attachment = LawfulBasisAttachment.from_dict(attachment_dict["body"])
+                    attachment = LawfulBasisAttachment.from_dict(decode_body(attachment_dict))
                     permission = self._evaluate_attachment_permission(attachment, purpose)
                     permissions.append(permission)
                 except Exception as e:
@@ -212,9 +213,11 @@ class PermissionEvaluator:
                 if attachment_party is not None and attachment_party != party_index:
                     continue
             
-            # Check if attachment has permission for the purpose
-            body = attachment.get("body", {})
-            purpose_grants = body.get("purpose_grants", [])
+            # Check if attachment has permission for the purpose. Accept
+            # both the -04 shape (body already the decoded object) and a
+            # legacy JSON-string body.
+            body = decode_body(attachment) or {}
+            purpose_grants = body.get("purpose_grants", []) if isinstance(body, dict) else []
             
             for grant in purpose_grants:
                 if grant.get("purpose") == purpose:
@@ -279,7 +282,7 @@ class LawfulBasisProcessor(ExtensionProcessor):
             processed_attachments = []
             for i, attachment in enumerate(lawful_basis_attachments):
                 try:
-                    attachment_obj = LawfulBasisAttachment.from_dict(attachment["body"])
+                    attachment_obj = LawfulBasisAttachment.from_dict(decode_body(attachment))
                     processed_attachments.append({
                         "index": i,
                         "lawful_basis": attachment_obj.lawful_basis.value,

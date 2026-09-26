@@ -8,6 +8,7 @@ according to the draft specification.
 from typing import Dict, List, Any, Optional
 import logging
 from ..base import ExtensionValidator, ValidationResult
+from ...body import decode_body
 from .attachment import WTFAttachment, WTFProvider
 
 logger = logging.getLogger(__name__)
@@ -33,8 +34,9 @@ class WTFValidator(ExtensionValidator):
         if attachment.get("encoding") != "json":
             result.add_error("WTF transcription attachment must use 'json' encoding")
         
-        # Validate body structure
-        body = attachment.get("body")
+        # Validate body structure. Accept both the -04 shape (body already
+        # the decoded object) and a legacy JSON-string body.
+        body = decode_body(attachment)
         if not isinstance(body, dict):
             result.add_error("WTF transcription attachment body must be a dictionary")
             return result
