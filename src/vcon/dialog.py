@@ -54,6 +54,41 @@ def _b64url_no_padding(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
 
 
+def b64url_encode(data: bytes) -> str:
+    """Base64url-encode ``data`` without padding.
+
+    ``draft-ietf-vcon-vcon-core-04`` follows the JWS/RFC 7515 base64url
+    convention: no trailing ``=`` padding. Use this (instead of calling
+    ``base64.urlsafe_b64encode`` directly) whenever the library writes an
+    inline ``base64url``-encoded dialog or attachment body.
+
+    :param data: the raw bytes to encode
+    :type data: bytes
+    :return: the unpadded base64url-encoded string
+    :rtype: str
+    """
+    return _b64url_no_padding(data)
+
+
+def b64url_decode(value: Union[str, bytes]) -> bytes:
+    """Base64url-decode ``value``, accepting padded or unpadded input.
+
+    ``base64.urlsafe_b64decode`` requires exact padding, which rejects the
+    unpadded strings this library (and -04-conformant producers) now emits.
+    This re-pads before decoding so both padded (legacy) and unpadded
+    (spec-conformant) base64url bodies decode correctly.
+
+    :param value: the base64url string (or bytes) to decode
+    :type value: str or bytes
+    :return: the decoded raw bytes
+    :rtype: bytes
+    """
+    if isinstance(value, str):
+        value = value.encode("ascii")
+    padded = value + b"=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode(padded)
+
+
 def compute_content_hash(
     data: bytes, algorithm: str = DEFAULT_CONTENT_HASH_ALGORITHM
 ) -> str:
@@ -395,7 +430,14 @@ class Dialog:
                 party_history.to_dict() for party_history in self.party_history
             ]
 
-        return {k: v for k, v in dialog_dict.items() if v is not None}
+        # meta/metadata are always initialized to {} for backward-compat
+        # attribute access (see __init__); omit them from the serialized
+        # form when still empty rather than emitting empty placeholders.
+        return {
+            k: v
+            for k, v in dialog_dict.items()
+            if v is not None and not (k in ("meta", "metadata") and v == {})
+        }
 
     def add_external_data(self, url: str, filename: str, mediatype: str) -> None:
         """
@@ -591,7 +633,7 @@ class Dialog:
             # Add inline data
             if isinstance(video_data, bytes):
                 # Base64 encode the binary data
-                encoded_data = base64.urlsafe_b64encode(video_data).decode()
+                encoded_data = b64url_encode(video_data)
                 self.add_inline_data(encoded_data, filename, mediatype)
             else:
                 # Assume it's already base64 encoded
@@ -634,7 +676,7 @@ class Dialog:
                 if self.is_inline_data():
                     # Decode base64 content to temporary file
                     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
-                    video_data = base64.urlsafe_b64decode(self.body.encode())
+                    video_data = b64url_decode(self.body)
                     temp_file.write(video_data)
                     temp_file.close()
                     video_path = temp_file.name
@@ -755,7 +797,7 @@ class Dialog:
             # Setup source video file
             if self.is_inline_data():
                 temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
-                video_data = base64.urlsafe_b64decode(self.body.encode())
+                video_data = b64url_decode(self.body)
                 temp_video.write(video_data)
                 temp_video.close()
                 video_path = temp_video.name
@@ -960,7 +1002,7 @@ class Dialog:
             # Get source video
             if self.is_inline_data():
                 temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=f".{self.get_video_format_from_mediatype()}")
-                video_data = base64.urlsafe_b64decode(self.body.encode())
+                video_data = b64url_decode(self.body)
                 temp_input.write(video_data)
                 temp_input.close()
                 input_path = temp_input.name
@@ -1019,7 +1061,7 @@ class Dialog:
             
             # Use add_video_data to replace current content (maintaining inline/external status)
             if self.is_inline_data():
-                encoded_data = base64.urlsafe_b64encode(new_video_data).decode()
+                encoded_data = b64url_encode(new_video_data)
                 self.add_inline_data(encoded_data, new_filename, new_mediatype)
                 
                 # Update metadata to include transcoding info
@@ -1116,7 +1158,7 @@ class Dialog:
         filename = os.path.basename(image_path)
         
         # Add as inline data
-        self.body = base64.urlsafe_b64encode(image_data).decode('utf-8')
+        self.body = b64url_encode(image_data)
         self.mediatype = mediatype
         self.filename = filename
         self.encoding = "base64url"
@@ -1213,7 +1255,7 @@ class Dialog:
             # Get image data
             if hasattr(self, "body") and self.body:
                 if self.encoding in ["base64url"]:
-                    image_data = base64.urlsafe_b64decode(self.body)
+                    image_data = b64url_decode(self.body)
                 else:
                     # If not base64 encoded, assume it's already raw data
                     image_data = self.body.encode() if isinstance(self.body, str) else self.body
@@ -1292,7 +1334,7 @@ class Dialog:
             # For binary content, use response.content instead of response.text
             raw_content = response.content
             # Base64url encode the body
-            self.body = base64.urlsafe_b64encode(raw_content).decode()
+            self.body = b64url_encode(raw_content)
             self.mediatype = response.headers.get("Content-Type")
         else:
             raise Exception(f"Failed to fetch external data: {response.status_code}")

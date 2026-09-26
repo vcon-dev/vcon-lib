@@ -8,6 +8,7 @@ functionality with the vCon extension framework.
 from typing import Dict, Any, List, Optional
 import logging
 from ..base import ExtensionInfo, ExtensionType
+from ...body import decode_body
 from .validation import WTFValidator
 from .processing import WTFProcessor
 from .attachment import WTFAttachment
@@ -124,17 +125,17 @@ class WTFExtension:
         format: str = "srt"
     ) -> str:
         """Export transcription in specified format."""
-        wtf_attachment = WTFAttachment.from_dict(attachment["body"])
+        wtf_attachment = WTFAttachment.from_dict(decode_body(attachment))
         return self.processor.export_transcription(wtf_attachment, format)
-    
+
     def analyze_transcription(self, attachment: Dict[str, Any]) -> Dict[str, Any]:
         """Perform analysis on a WTF transcription."""
-        wtf_attachment = WTFAttachment.from_dict(attachment["body"])
+        wtf_attachment = WTFAttachment.from_dict(decode_body(attachment))
         return self.processor.analyze_transcription(wtf_attachment)
-    
+
     def compare_transcriptions(self, attachments: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Compare multiple transcriptions."""
         wtf_attachments = [
-            WTFAttachment.from_dict(att["body"]) for att in attachments
+            WTFAttachment.from_dict(decode_body(att)) for att in attachments
         ]
         return self.processor.compare_transcriptions(wtf_attachments)

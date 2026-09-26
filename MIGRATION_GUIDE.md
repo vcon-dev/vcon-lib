@@ -311,4 +311,28 @@ vcon.save_to_file("conversation.json")
 - Check the full documentation in `docs/source/new_required_fields.rst`
 - Run the example: `python samples/example_new_fields.py`
 - Review the test files for usage examples
-- Open an issue if you encounter problems 
+- Open an issue if you encounter problems
+
+## Migrating to 0.10.0 (draft-ietf-vcon-vcon-core-04)
+
+0.10.0 retargets the library to `draft-ietf-vcon-vcon-core-04`. The
+specification's body semantics did not change from prior guidance in this
+library (a `"json"`-encoded body was always meant to be a JSON value, not a
+string), but two behavior changes follow from aligning with the WG's
+reference JSON schema:
+
+- **Legacy string bodies are now read transparently.** If you (or an
+  adapter) previously wrote a `"json"`-encoded body as a `json.dumps`
+  string -- for example a `tags` attachment body written as
+  `'["category:support"]'` instead of `["category:support"]` -- `get_tag()`,
+  `add_tag()`, and the lawful-basis/WTF extension validators now decode
+  that string automatically. `add_tag()` also normalizes a legacy string
+  body back to a list, in place, the first time you call it on that vCon.
+  You don't need to migrate existing data by hand.
+- **New attachments get more defaults filled in.** `add_attachment()`,
+  `add_lawful_basis_attachment()`, and `add_wtf_transcription_attachment()`
+  now default `party`/`dialog` to `0` and `start` to the vCon's
+  `created_at` when you don't supply them, because the WG JSON schema
+  requires `start`, `party`, and `dialog` on every attachment. If your code
+  checked for the *absence* of these keys (rather than their values), check
+  the CHANGELOG's 0.10.0 entry before upgrading. 

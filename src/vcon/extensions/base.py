@@ -165,9 +165,11 @@ class ExtensionAttachment:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ExtensionAttachment':
         """Create from dictionary representation."""
+        from ..body import decode_body
+
         return cls(
             attachment_purpose=data["purpose"],
-            body=data["body"],
+            body=decode_body(data),
             start=data.get("start"),
             party=data.get("party"),
             dialog=data.get("dialog"),

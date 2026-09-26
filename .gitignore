@@ -129,3 +129,7 @@ cython_debug/
 
 # MAC OS
 .DS_Store
+
+# oh-my-claudecode plugin scratch (session ids, tool throttles, per-machine
+# absolute worktree paths) -- never commit this
+.omc/

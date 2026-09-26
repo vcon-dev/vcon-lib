@@ -8,6 +8,7 @@ including provider integration and analysis capabilities.
 from typing import Dict, List, Any, Optional, Union
 import logging
 from ..base import ExtensionProcessor, ProcessingResult
+from ...body import decode_body
 from .attachment import WTFAttachment, Transcript, Segment, Word, Speaker, Quality
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class WTFProcessor(ExtensionProcessor):
             processed_attachments = []
             for i, attachment in enumerate(wtf_attachments):
                 try:
-                    wtf_obj = WTFAttachment.from_dict(attachment["body"])
+                    wtf_obj = WTFAttachment.from_dict(decode_body(attachment))
                     
                     # Calculate statistics
                     stats = self._calculate_statistics(wtf_obj)

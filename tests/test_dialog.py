@@ -3,6 +3,7 @@ from src.vcon.dialog import (
     Dialog,
     compute_content_hash,
     parse_content_hash_algorithm,
+    b64url_decode,
 )
 import hashlib
 import base64
@@ -407,8 +408,11 @@ class TestDialog:
         assert dialog.encoding == "base64url"
         assert dialog.content_hash is not None
 
-        # Decode the base64url body and verify it matches original content
-        decoded_body = base64.urlsafe_b64decode(dialog.body.encode())
+        # Decode the base64url body and verify it matches original content.
+        # -04 base64url bodies are unpadded (RFC 7515-style); b64url_decode
+        # tolerates both padded and unpadded input.
+        assert "=" not in dialog.body
+        decoded_body = b64url_decode(dialog.body)
         assert decoded_body == fake_binary_data
 
         # Verify the content hash matches the content (spec-compliant sha512)

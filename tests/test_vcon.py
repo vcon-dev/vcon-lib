@@ -183,10 +183,17 @@ def test_add_attachment():
     attachment = vcon.add_attachment(purpose="test_purpose", body="test_body")
 
     assert len(vcon.vcon_dict["attachments"]) == 1
+    # start/party/dialog are required on every attachment by the WG JSON
+    # schema (draft-ietf-vcon-vcon-core-04); add_attachment() fills them in
+    # (start defaults to the vCon's created_at, party/dialog default to 0)
+    # when the caller doesn't supply them.
     assert vcon.vcon_dict["attachments"][0] == {
         "purpose": "test_purpose",
         "body": "test_body",
         "encoding": "none",
+        "start": vcon.created_at,
+        "party": 0,
+        "dialog": 0,
     }
     assert isinstance(attachment, Attachment)
 
@@ -242,6 +249,9 @@ def test_find_attachment_by_purpose() -> None:
         "purpose": "test_purpose",
         "body": {"key": "value"},
         "encoding": "none",
+        "start": vcon.created_at,
+        "party": 0,
+        "dialog": 0,
     }
     assert vcon.find_attachment_by_purpose("nonexistent_purpose") is None
 

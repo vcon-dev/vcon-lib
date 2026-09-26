@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.vcon.dialog import Dialog
+from src.vcon.dialog import Dialog, b64url_decode
 
 
 def test_is_audio_image_pdf_and_frame_rate():
@@ -61,4 +61,7 @@ def test_add_image_data_basic(monkeypatch, tmp_path):
     assert dialog.mediatype == "image/jpeg"
     assert dialog.filename == "image.jpg"
     assert dialog.content_hash
-    assert base64.urlsafe_b64decode(dialog.body.encode()) == b"jpgdata"
+    # -04 base64url bodies are unpadded (RFC 7515-style); b64url_decode
+    # tolerates both padded and unpadded input.
+    assert "=" not in dialog.body
+    assert b64url_decode(dialog.body) == b"jpgdata"

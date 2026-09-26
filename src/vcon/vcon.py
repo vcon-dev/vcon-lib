@@ -18,7 +18,8 @@ from cryptography.hazmat.primitives import serialization
 import requests
 import logging
 from .party import Party
-from .dialog import Dialog
+from .dialog import Dialog, b64url_encode
+from .body import decode_body
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -120,6 +121,15 @@ class Attachment:
         if encoding not in self.VALID_ENCODINGS:
             logger.error(f"Invalid encoding attempted: {encoding}")
             raise ValueError(f"Invalid encoding: {encoding}. Must be one of {self.VALID_ENCODINGS}")
+
+        # Fill in defaults required by the WG JSON schema (every attachment
+        # requires start/party/dialog; inline content requires mediatype).
+        # See CHANGELOG 0.10.0 for the contract note: party/dialog previously
+        # defaulted to being omitted (None) when not supplied; they now
+        # default to 0, matching the existing add_tag() convention.
+        if mediatype is None and encoding == "json":
+            mediatype = "application/json"
+
         self.purpose = purpose
         self.body = body
         self.encoding = encoding
@@ -128,8 +138,8 @@ class Attachment:
         self.url = url
         self.content_hash = content_hash
         self.start = start
-        self.party = party
-        self.dialog = dialog
+        self.party = party if party is not None else 0
+        self.dialog = dialog if dialog is not None else 0
         logger.debug(f"Created new attachment of purpose {purpose} with {encoding} encoding")
 
     def to_dict(self) -> Dict[str, Any]:
@@ -189,7 +199,7 @@ class Attachment:
         # Create and return attachment
         return cls(
             purpose=purpose,
-            body=base64.urlsafe_b64encode(image_data).decode('utf-8'),
+            body=b64url_encode(image_data),
             encoding="base64url",
             mediatype=mimetype,
             filename=filename,
@@ -516,9 +526,16 @@ class Vcon:
         if not tags_attachment:
             logger.debug("No tags attachment found")
             return None
-            
+
+        # Accept both the -04 shape (body is already the list) and legacy
+        # vCons where the tags body was written as a JSON-encoded string.
+        tags = decode_body(tags_attachment)
+        if not isinstance(tags, list):
+            logger.debug("Tags attachment body is not a list")
+            return None
+
         tag = next(
-            (t for t in tags_attachment["body"] if t.startswith(f"{tag_name}:")), None
+            (t for t in tags if isinstance(t, str) and t.startswith(f"{tag_name}:")), None
         )
         if not tag:
             logger.debug(f"Tag {tag_name} not found")
@@ -552,10 +569,22 @@ class Vcon:
                 "purpose": "tags",
                 "body": [],
                 "encoding": "json",
+                "mediatype": "application/json",
+                "start": self.vcon_dict.get("created_at"),
                 "party": 0,
                 "dialog": 0,
             }
             self.vcon_dict["attachments"].append(tags_attachment)
+        else:
+            # Normalize a legacy (pre-0.10.0 / -02 convention) JSON-string
+            # body to the -04 list-valued body in place, preserving
+            # existing tags.
+            current_tags = decode_body(tags_attachment)
+            if not isinstance(current_tags, list):
+                current_tags = []
+            tags_attachment["body"] = current_tags
+            tags_attachment.setdefault("mediatype", "application/json")
+            tags_attachment.setdefault("start", self.vcon_dict.get("created_at"))
         tags_attachment["body"].append(f"{tag_name}:{tag_value}")
         logger.info(f"Added tag {tag_name}:{tag_value}")
 
@@ -702,13 +731,18 @@ class Vcon:
                 purpose_grants=purpose_grants,
                 **kwargs
             )
-            
-            # Add party and dialog references if provided
-            if party_index is not None:
-                attachment["party"] = party_index
-            if dialog_index is not None:
-                attachment["dialog"] = dialog_index
-            
+
+            # Add party and dialog references if provided, defaulting to 0
+            # (matching add_tag()'s existing convention) since the WG JSON
+            # schema requires both on every attachment.
+            attachment["party"] = party_index if party_index is not None else 0
+            attachment["dialog"] = dialog_index if dialog_index is not None else 0
+
+            # Fill in mediatype/start, also required by the schema, unless
+            # already set via **kwargs.
+            attachment.setdefault("mediatype", "application/json")
+            attachment.setdefault("start", self.vcon_dict.get("created_at"))
+
             self.vcon_dict["attachments"].append(attachment)
             
             # Add extension to extensions list if not already present
@@ -761,13 +795,18 @@ class Vcon:
                 metadata=metadata,
                 **kwargs
             )
-            
-            # Add party and dialog references if provided
-            if party_index is not None:
-                attachment["party"] = party_index
-            if dialog_index is not None:
-                attachment["dialog"] = dialog_index
-            
+
+            # Add party and dialog references if provided, defaulting to 0
+            # (matching add_tag()'s existing convention) since the WG JSON
+            # schema requires both on every attachment.
+            attachment["party"] = party_index if party_index is not None else 0
+            attachment["dialog"] = dialog_index if dialog_index is not None else 0
+
+            # Fill in mediatype/start, also required by the schema, unless
+            # already set via **kwargs.
+            attachment.setdefault("mediatype", "application/json")
+            attachment.setdefault("start", self.vcon_dict.get("created_at"))
+
             self.vcon_dict["attachments"].append(attachment)
             
             # Add extension to extensions list if not already present
@@ -962,6 +1001,30 @@ class Vcon:
             logger.error(f"Error processing extensions: {str(e)}")
             return {"error": str(e)}
 
+    @staticmethod
+    def decoded_body(entry: Optional[Dict[str, Any]]) -> Any:
+        """
+        Return the decoded ``body`` of an attachment, analysis, or dialog entry.
+
+        Under ``draft-ietf-vcon-vcon-core-04``, a ``"json"``-encoded body is
+        the JSON value itself, not a ``json.dumps`` string. This accepts
+        both that shape and the JSON-string bodies written under -02
+        conventions (or by this library prior to 0.10.0), so callers don't
+        need to special-case legacy vCons.
+
+        Args:
+            entry: An attachment, analysis, or dialog dictionary
+
+        Returns:
+            The decoded body, or None if there is no body
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_tag("category", "meeting")
+            >>> Vcon.decoded_body(vcon.tags)  # ["category:meeting"]
+        """
+        return decode_body(entry)
+
     def find_attachment_by_purpose(self, purpose: str) -> Optional[Dict[str, Any]]:
         """
         Find an attachment in the vCon by its purpose.
@@ -1034,6 +1097,11 @@ class Vcon:
         """
         logger.debug(f"Creating new attachment of purpose {purpose} with {encoding} encoding")
 
+        # The WG JSON schema requires start on every attachment; default to
+        # this vCon's created_at when the caller doesn't supply one.
+        if start is None:
+            start = self.vcon_dict.get("created_at")
+
         attachment = Attachment(
             purpose=purpose,
             body=body,
@@ -1080,6 +1148,11 @@ class Vcon:
             >>> print(attachment.mediatype)  # Prints "application/pdf"
         """
         attachment = Attachment.from_image(image_path, purpose)
+        # The WG JSON schema requires start on every attachment; default to
+        # this vCon's created_at (party/dialog already default to 0 in
+        # Attachment.__init__).
+        if attachment.start is None:
+            attachment.start = self.vcon_dict.get("created_at")
         self.vcon_dict["attachments"].append(attachment.to_dict())
         logger.info(f"Added new image attachment of purpose {purpose}")
         return attachment
@@ -1646,6 +1719,7 @@ class Vcon:
         ns = time.time_ns()
         if _LAST_V8_TIMESTAMP is not None and ns <= _LAST_V8_TIMESTAMP:
             ns = _LAST_V8_TIMESTAMP + 1
+        _LAST_V8_TIMESTAMP = ns
         timestamp_ms, timestamp_ns = divmod(ns, 10**6)
         subsec = uuid6._subsec_encode(timestamp_ns)
 

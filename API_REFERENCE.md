@@ -218,6 +218,13 @@ sentiment = vcon.find_analysis_by_type("sentiment")
 
 ##### Tag Management
 
+Tags are stored as a `"tags"`-purpose attachment whose body is a list of
+`"name:value"` strings (per `draft-ietf-vcon-vcon-core-04`, a `"json"`-encoded
+body is the JSON value itself, not a serialized string). `get_tag()` and
+`add_tag()` also accept a legacy JSON-*string* tags body -- as written under
+-02 conventions, or by this library prior to 0.10.0 -- decoding it
+automatically; `add_tag()` normalizes it back to a list in place.
+
 ###### `add_tag(tag_name: str, tag_value: str) -> None`
 Add a tag to the vCon.
 
