@@ -1,8 +1,23 @@
 name: Python Package using Poetry
 
-on: [push]
+on:
+  push:
+  pull_request:
 
 jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.12.8'
+
+      - name: Check pyproject.toml / setup.py / CHANGELOG.md versions agree
+        run: python3 scripts/check_version.py
+
   build-linux:
     runs-on: ubuntu-latest
     strategy:
