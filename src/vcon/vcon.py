@@ -1719,6 +1719,7 @@ class Vcon:
         ns = time.time_ns()
         if _LAST_V8_TIMESTAMP is not None and ns <= _LAST_V8_TIMESTAMP:
             ns = _LAST_V8_TIMESTAMP + 1
+        _LAST_V8_TIMESTAMP = ns
         timestamp_ms, timestamp_ns = divmod(ns, 10**6)
         subsec = uuid6._subsec_encode(timestamp_ns)
 
