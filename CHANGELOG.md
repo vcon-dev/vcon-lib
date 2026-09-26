@@ -1,5 +1,84 @@
 # Changelog
 
+## [0.10.0] - Unreleased
+
+Retargets the library to `draft-ietf-vcon-vcon-core-04`. Under -04 section
+2.3.2, a `"json"`-encoded `body` is the JSON *value* itself (object, array,
+string, number, bool, or null), not a `json.dumps` string. `add_tag()`'s
+list body and `add_lawful_basis_attachment()`'s object body were already
+correct under -04; this release brings readers, defaults, and the WTF/
+lawful-basis extensions in line with the same convention, and fixes a
+handful of adjacent spec-compliance gaps.
+
+### Changed
+- **Breaking (output shape):** every attachment created via `add_attachment()`,
+  `add_lawful_basis_attachment()`, and `add_wtf_transcription_attachment()`
+  now defaults `party` and `dialog` to `0` when not supplied (matching
+  `add_tag()`'s existing convention), `start` to the vCon's `created_at`,
+  and `mediatype` to `"application/json"` for `encoding="json"` bodies.
+  The WG JSON schema requires `start`, `party`, `dialog` on every
+  attachment; previously these were omitted unless explicitly passed,
+  producing non-compliant output. Callers that inspected the *absence* of
+  these keys (rather than their values) will see a difference.
+- `Attachment.__init__` applies the same `party`/`dialog`/`mediatype`
+  defaults directly, so `Attachment(...)` constructed outside of a `Vcon`
+  gets the same defaults as `Vcon.add_attachment()`.
+- `Dialog.to_dict()` no longer emits empty `meta: {}` / `metadata: {}`
+  placeholders. Both attributes are still initialized internally for
+  backward-compatible attribute access (`dialog.meta`, `dialog.metadata`);
+  only the serialized form changes.
+- Inline `base64url` bodies written by the library (`Dialog.add_image_data()`,
+  `Dialog.add_video_data()`, `Dialog.transcode_video()`, `Dialog.to_inline_data()`,
+  `Attachment.from_image()`) are now unpadded, per -04's JWS/RFC 7515-style
+  base64url convention. New `vcon.dialog.b64url_encode()` /
+  `vcon.dialog.b64url_decode()` helpers encode without padding and decode
+  padded-or-unpadded input respectively; internal decode call sites
+  (`add_video_data`, `generate_thumbnail`, `extract_video_metadata`,
+  `transcode_video`) were updated to use `b64url_decode()` so both old
+  (padded) and new (unpadded) bodies still decode.
+- `.github/workflows/python-publish.yml` now triggers on `push: tags:
+  ['v*']` instead of `release: published`. The tag push is the release;
+  nothing else should publish. Publishing auth is unchanged (a stored
+  `PYPI_API_TOKEN` secret via `pypa/gh-action-pypi-publish`) -- this repo's
+  existing workflow was not already using PyPI trusted publishing (OIDC),
+  so switching auth methods was out of scope for this change and is left
+  as a separate follow-up.
+
+### Added
+- `vcon.body.decode_body(entry)` (also exposed as `Vcon.decoded_body(entry)`),
+  a shared helper that decodes an attachment/analysis/dialog `body`,
+  accepting both the -04 shape (body already the decoded value) and a
+  legacy JSON-encoded string body (as written under -02 conventions, or by
+  this library prior to 0.10.0). Used by `Vcon.get_tag()`/`add_tag()` and
+  by the lawful-basis and WTF extension validators/processors, so every
+  body-reading call site in the library now accepts both shapes.
+- `vcon.dialog.b64url_encode()` / `vcon.dialog.b64url_decode()`, public
+  unpadded-base64url encode/decode helpers (see Changed, above).
+- `tests/schema/vcon_json_schema.json`, a vendored copy of the vCon working
+  group's reference JSON schema (see `tests/schema/SOURCE.md` for
+  provenance), plus `tests/test_schema_compliance.py`, which builds a vCon
+  using only public helpers (`add_tag`, `add_lawful_basis_attachment`,
+  `add_dialog`, `add_attachment`) and validates it against that schema with
+  no post-processing. `jsonschema` added as a dev dependency.
+- `scripts/check_version.py`, a version-consistency guard: compares
+  `pyproject.toml`'s version against the newest `## [x.y.z]` CHANGELOG
+  heading and (if present) `setup.py`'s hardcoded version, and, given
+  `--tag <ref>`, also checks a release tag against the pyproject version.
+  Wired into CI on every push/PR, and into the publish workflow immediately
+  before publishing so a release cut from the wrong commit fails loudly.
+
+### Fixed
+- `Vcon.get_tag()` and `Vcon.add_tag()` now accept a legacy JSON-string
+  `tags` body (written under -02 conventions, or by this library prior to
+  0.10.0) as well as the -04 list-valued body. `add_tag()` normalizes a
+  legacy string body to a list in place, preserving existing tags, before
+  appending the new one.
+- The lawful-basis and WTF extension validators/processors
+  (`extensions/lawful_basis/validation.py`, `extensions/lawful_basis/processing.py`,
+  `extensions/wtf/validation.py`, `extensions/wtf/processing.py`,
+  `extensions/wtf/extension.py`) now decode a legacy JSON-string attachment
+  body before working with it, instead of assuming it is already a `dict`.
+
 ## [0.9.6] - 2026-06-04
 
 ### Security
