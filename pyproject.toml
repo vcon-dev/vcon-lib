@@ -20,7 +20,7 @@ mutagen = "^1.47.0"
 ffmpeg = "^1.4"
 logger = "^1.4"
 pypdf = "^6.10.2"
-pillow = "^12.2.0"
+pillow = ">=12.2,<14.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.3"
