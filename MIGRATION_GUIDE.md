@@ -23,7 +23,11 @@ The migration follows Appendix A.1 of the draft, one function per step (`vcon.mi
 Removed `transfer` and `recording-set` Dialogs become empty Dialog Objects (`{}`) in place, so every dialog,
 analysis, attachment and event index stays valid. Where A.1 is silent the migration applies a documented default and
 lists it in the report (`report.inferred`); anything it cannot resolve is in `report.unresolved`. Signed input is
-migrated as its unsigned payload; sign the result again (`report.resign_required`).
+not migrated on load, because migrating drops the signature: verify it, then call
+`Vcon.migrate_0_4_0_to_0_5_0(signed)` (or the function), which migrates the unsigned payload; sign the result again
+(`report.resign_required`). Input with no `vcon` parameter that already has `sessions`, `events`, `redacted_from`,
+`amended_from` or `redacted_strings` is 0.5.0 and is refused. Persist `report.to_dict()` next to each migrated
+record: it holds the original content of every removed Dialog and every value that was inferred or dropped.
 
 Code that changes:
 

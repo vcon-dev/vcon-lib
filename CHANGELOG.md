@@ -34,9 +34,20 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
 
 ### Changed
 - **Breaking:** `build_new()` emits `"vcon": "0.5.0"`.
-- **Breaking:** a vCon that declares `"vcon": "0.4.0"` (or a signed vCon whose
-  payload does) is migrated on load, so `vcon.vcon` reads `"0.5.0"` and indices
-  are preserved. Use `migrate_legacy=False` to keep the raw 0.4.0 dict.
+- **Breaking:** a vCon that declares `"vcon": "0.4.0"` is migrated on load, so
+  `vcon.vcon` reads `"0.5.0"` and indices are preserved. Use
+  `migrate_legacy=False` to keep the raw 0.4.0 dict (property handling is not
+  applied to it, so legacy parameters survive). A signed 0.4.0 vCon is kept
+  signed on load; migrate it explicitly after verifying.
+- Migration details: recording-set membership is the union of `recordings` and
+  the recordings' `recording_set`; a nested recording-set becomes a `child`
+  Session_Reference; party_history Events list every Session of their Dialog,
+  including Sessions made for a transfer's calls; a missing Event time falls
+  back to the Dialog start, then `created_at`; party_history extension
+  parameters are carried onto the Event; a null first party on a text or
+  incomplete Dialog becomes an empty Party Object instead of promoting a
+  receiver; an attachment with no scope gets the only Session when exactly one
+  exists (step T10c). Every one of these is listed in the report.
 - **Breaking:** `Vcon.redacted` and `Vcon.amended` are now `redacted_from` and
   `amended_from`; the old names remain as deprecated aliases.
 - **Breaking:** Dialog types are `recording`, `text` and `incomplete`.
