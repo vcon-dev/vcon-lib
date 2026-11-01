@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import requests
 import logging
+import warnings
 from .party import Party
 from .dialog import Dialog, b64url_encode
 from .body import decode_body
@@ -1677,6 +1678,20 @@ class Vcon:
         logger.info(f"Added dialog of type {getattr(dialog, 'type', 'placeholder')}")
         return index
 
+    def add_transfer_dialog(self, *args: Any, **kwargs: Any) -> None:
+        """Removed: core-05 has no transfer Dialog type.
+
+        Raises ``NotImplementedError`` with the replacement: a transfer is one
+        or two transfer Events (``blind-transfer``, ``consultation-start`` plus
+        ``consultative-transfer``, or ``transfer-abandoned``) added with
+        ``add_event(Event(...))``, whose ``sessions``/``consultation``/
+        ``target_session`` reference Sessions for the calls involved.
+        """
+        raise NotImplementedError(
+            "add_transfer_dialog() was removed in vCon 0.5.0: record a transfer as transfer "
+            "Events with add_event(Event(type='blind-transfer', ...)); see vcon.event"
+        )
+
     def add_session(self, session: Union[Session, Dict[str, Any], None] = None) -> int:
         """
         Add a Session Object and return its index in the ``sessions`` array.
@@ -1945,6 +1960,18 @@ class Vcon:
     def events(self) -> List[Dict[str, Any]]:
         """The ``events`` array (Event Objects)."""
         return self.vcon_dict.get("events", [])
+
+    @property
+    def redacted(self):
+        """Deprecated 0.4.0 name; returns ``redacted_from``."""
+        warnings.warn("Vcon.redacted is deprecated; use Vcon.redacted_from (core-05)", DeprecationWarning, stacklevel=2)
+        return self.redacted_from
+
+    @property
+    def amended(self):
+        """Deprecated 0.4.0 name; returns ``amended_from``."""
+        warnings.warn("Vcon.amended is deprecated; use Vcon.amended_from (core-05)", DeprecationWarning, stacklevel=2)
+        return self.amended_from
 
     @property
     def redacted_from(self):

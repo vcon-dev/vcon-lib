@@ -1,4 +1,5 @@
-from typing import Optional
+import warnings
+from typing import Any, Dict, List, Optional, Union
 from vcon.civic_address import CivicAddress
 from datetime import datetime
 
@@ -118,3 +119,45 @@ class Party:
                 else:
                     party_dict[key] = value
         return party_dict
+
+
+class PartyHistory:
+    """Deprecated 0.4.0 Party_History Object, kept so old imports keep working.
+
+    core-05 replaced Dialog ``party_history`` with Event Objects. Build an
+    ``Event`` directly, or convert with :meth:`to_event`, which needs the
+    Session index (or indices) the event belongs to. A ``PartyHistory`` can no
+    longer be attached to a Dialog.
+    """
+
+    VALID_EVENTS = ["join", "drop", "hold", "unhold", "mute", "unmute", "keydown", "keyup"]
+
+    def __init__(self, party: int, event: str, time: Union[datetime, str], button: Optional[str] = None):
+        warnings.warn(
+            "PartyHistory is deprecated: use vcon.event.Event (core-05 Event Object)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if event not in PartyHistory.VALID_EVENTS:
+            raise ValueError(f"Invalid event '{event}'. Must be one of: {PartyHistory.VALID_EVENTS}")
+        self.party = party
+        self.event = event
+        self.time = time
+        self.button = button
+
+    def to_dict(self) -> Dict[str, Any]:
+        """The 0.4.0 shape (``event``, not ``type``)."""
+        out: Dict[str, Any] = {
+            "party": self.party,
+            "event": self.event,
+            "time": self.time.isoformat() if hasattr(self.time, "isoformat") else self.time,
+        }
+        if self.button is not None:
+            out["button"] = self.button
+        return out
+
+    def to_event(self, sessions: Union[int, List[int]]):
+        """The equivalent core-05 Event (``event`` renamed ``type``, no ``dialog``)."""
+        from .event import Event
+
+        return Event(type=self.event, time=self.time, sessions=sessions, party=self.party, button=self.button)

@@ -29,8 +29,7 @@ class TestRedactedFromAmendedFrom:
         v = Vcon({"uuid": "a", "created_at": T, "redacted_from": {"uuid": "b", "type": "PII"}})
         assert v.redacted_from == {"uuid": "b", "type": "PII"}
         assert v.amended_from is None
-        assert not hasattr(v, "redacted")
-        assert not hasattr(v, "amended")
+        # the 0.4.0 names remain as deprecated aliases (TestDeprecatedApi)
         w = Vcon({"uuid": "a", "created_at": T, "amended_from": {"uuid": "b"}})
         assert w.amended_from == {"uuid": "b"}
 
@@ -203,7 +202,8 @@ class TestDialog:
         assert any("'party_history', which was removed" in e for e in errors)
 
     def test_no_transfer_dialog_helper(self):
-        assert not hasattr(Vcon, "add_transfer_dialog")
+        with pytest.raises(NotImplementedError):
+            Vcon.build_new().add_transfer_dialog()
 
     def test_multipart_alternative_mediatype_with_parameters(self):
         v = _base()
@@ -448,3 +448,27 @@ class TestValidationWarnings:
         w = v.get_validation_warnings()
         assert any("lists dialog 0, which is an empty placeholder" in x for x in w)
         assert any("Attachment at index 0 references dialog 0" in x for x in w)
+
+
+class TestDeprecatedApi:
+    def test_redacted_and_amended_aliases(self):
+        v = Vcon({"uuid": "a", "created_at": T, "redacted_from": {"uuid": "b", "type": "PII"}})
+        with pytest.warns(DeprecationWarning):
+            assert v.redacted == {"uuid": "b", "type": "PII"}
+        with pytest.warns(DeprecationWarning):
+            assert v.amended is None
+
+    def test_add_transfer_dialog_points_at_events(self):
+        with pytest.raises(NotImplementedError, match="add_event"):
+            Vcon.build_new().add_transfer_dialog(start=T, transfer_data={}, parties=[0, 1])
+
+    def test_is_transfer_is_false(self):
+        with pytest.warns(DeprecationWarning):
+            assert Dialog(type="text", start=T, parties=[0]).is_transfer() is False
+
+    def test_party_history_converts_to_event(self):
+        from vcon.party import PartyHistory
+        with pytest.warns(DeprecationWarning):
+            ph = PartyHistory(0, "keydown", T, button="5")
+        assert ph.to_dict()["event"] == "keydown"
+        assert ph.to_event(sessions=0).to_dict() == {"type": "keydown", "time": T, "sessions": 0, "party": 0, "button": "5"}

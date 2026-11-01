@@ -38,7 +38,7 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
   payload does) is migrated on load, so `vcon.vcon` reads `"0.5.0"` and indices
   are preserved. Use `migrate_legacy=False` to keep the raw 0.4.0 dict.
 - **Breaking:** `Vcon.redacted` and `Vcon.amended` are now `redacted_from` and
-  `amended_from`.
+  `amended_from`; the old names remain as deprecated aliases.
 - **Breaking:** Dialog types are `recording`, `text` and `incomplete`.
   `Dialog(type="audio" | "video")` still works but warns (DeprecationWarning)
   and builds a `recording`; the video helpers also write `recording`. On read,
@@ -46,8 +46,10 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
   `recording-set` type are gone, as are the Dialog parameters `party_history`,
   `originator`, `transferee`, `transferor`, `transfer_target`, `original`,
   `consultation`, `target_dialog`, `transfer`, `recordings` and `recording_set`;
-  passing one to `Dialog()` raises `ValueError`. `PartyHistory` and
-  `Vcon.add_transfer_dialog()` were removed; use `Event`.
+  passing one to `Dialog()` raises `ValueError`. `PartyHistory` is deprecated
+  (it warns and converts with `to_event(sessions)`); `Vcon.add_transfer_dialog()`
+  raises `NotImplementedError` pointing at `Event`; `Dialog.is_transfer()` warns
+  and returns False.
 - **Breaking:** Dialog `parties` are the contributors only; the receivers are
   the `parties` of the Session that lists the Dialog.
 - **Breaking:** `add_incomplete_dialog()` no longer writes a `body` (an

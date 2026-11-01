@@ -531,6 +531,13 @@ class Dialog:
         """
         return hasattr(self, "type") and self.type == "recording"
     
+    def is_transfer(self) -> bool:
+        """Deprecated: core-05 has no transfer Dialog type, so this is always False."""
+        warnings.warn(
+            "Dialog.is_transfer() is deprecated: transfers are Events in core-05", DeprecationWarning, stacklevel=2
+        )
+        return False
+
     def is_placeholder(self) -> bool:
         """
         Check if the dialog is an empty placeholder Dialog Object (``{}``).
