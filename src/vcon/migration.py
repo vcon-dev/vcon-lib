@@ -10,7 +10,11 @@ Execution order (the draft gives none; this order is inferred so that every
 run before any array is rewritten, and ``T10`` blanks the removed Dialogs in
 place at the end, so the array length and every other index are unchanged.
 
-    T13 T15 T1  ->  T8 T9 T9b T6  ->  T2 T7 T3 T4(+T5)  ->  T10 T10b  ->  T11 T12 T14
+    T13 T15 T1  ->  T8 T9 T9b T6  ->  T2 T7 T4(+T5) T3  ->  T10 T10b T10c  ->  T11 T12 T14
+
+T4 runs before T3 so that the Sessions T5 creates for a transfer's original,
+consultation and target calls are known when T3 builds the party_history
+Events: an Event lists every Session of the Dialog it came from (AMB-3).
 
 Nothing is invented silently. Every value the draft does not dictate is listed
 in the :class:`MigrationReport` (kind ``inferred``), every field that had to be
@@ -34,12 +38,18 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from dateutil import parser
 
+from .event import EVENT_PARAMETERS as _EVENT_PARAMS
 from .validation import extensions_in_use, validate_vcon_dict
 
 logger = logging.getLogger(__name__)
 
 SOURCE_VERSION = "0.4.0"
 TARGET_VERSION = "0.5.0"
+
+#: Top-level parameters that exist only in 0.5.0. Input that has one of them is
+#: already 0.5.0 even when it omits the (optional, deprecated) ``vcon`` parameter;
+#: migrating it again would overwrite its ``sessions`` and ``events``.
+_V050_ONLY_KEYS = ("sessions", "events", "redacted_from", "amended_from", "redacted_strings")
 
 
 class MigrationError(ValueError):
@@ -428,16 +438,21 @@ def _step_t3_party_history(ctx: _Context) -> None:
                 if _parse_dt(entry.get("time")):
                     ev["time"] = entry["time"]
                 else:
-                    fb = src_d.get("start")
+                    # MUST field: Dialog start, then the vCon created_at.
+                    fb, src = src_d.get("start"), "Dialog start"
+                    if not _parse_dt(fb):
+                        fb, src = ctx.out.get("created_at"), "vCon created_at"
+                    if not _parse_dt(fb):
+                        raise MigrationError(
+                            f"T3: dialog[{i}].party_history[{n}] has no time, and neither the Dialog start "
+                            "nor the vCon created_at can stand in"
+                        )
                     ctx.need_fallback(
                         "T3",
-                        f"dialog[{i}].party_history[{n}] has no usable time; used the Dialog start "
-                        f"({fb!r}) as the Event time.", None, dialog=i,
+                        f"dialog[{i}].party_history[{n}] has no usable time ({entry.get('time')!r}); used the "
+                        f"{src} ({fb!r}) as the Event time.", None, dialog=i, entry=n,
+                        original_time=entry.get("time"), source=src, time=fb,
                     )
-                    if fb is None:
-                        raise MigrationError(
-                            f"T3: dialog[{i}].party_history[{n}] has no time and the Dialog has no start"
-                        )
                     ev["time"] = fb
                 if sess:
                     ev["sessions"] = sess[0] if len(sess) == 1 else sess
@@ -456,7 +471,22 @@ def _step_t3_party_history(ctx: _Context) -> None:
                     ctx.report.add(
                         "T3", UNRESOLVED,
                         f"dialog[{i}].party_history[{n}] has 'button' on a '{entry['event']}' event "
-                        "(only keydown and keyup carry it); button not migrated.", None, dialog=i,
+                        "(only keydown and keyup carry it); button not migrated.", None, dialog=i, entry=n,
+                        dropped={"button": entry["button"]},
+                    )
+                # Parameters a 0.4.0 extension added to the entry: carried onto the Event
+                # unless the name is a core Event parameter (which would change its meaning).
+                unknown = {k: v for k, v in entry.items() if k not in ("party", "time", "event", "button")}
+                if unknown:
+                    carried = {k: v for k, v in unknown.items() if k not in _EVENT_PARAMS}
+                    dropped = {k: v for k, v in unknown.items() if k in _EVENT_PARAMS}
+                    ev.update(carried)
+                    ctx.report.add(
+                        "T3", UNRESOLVED,
+                        f"dialog[{i}].party_history[{n}] had non-core parameter(s) {sorted(unknown)}; "
+                        f"carried onto the Event: {sorted(carried)}, dropped (name clashes with a core Event "
+                        f"parameter): {sorted(dropped)}. List the defining extension in 'extensions'.",
+                        None, dialog=i, entry=n, carried=carried, dropped=dropped,
                     )
                 ctx.events.append(ev)
         if src_d.get("type") != "recording-set" and isinstance(dialogs[i], dict):
@@ -628,7 +658,7 @@ def _step_t4_transfers(ctx: _Context) -> None:
             ctx.events.append(ev)
         extra = sorted(
             set(tr)
-            - {"type", "start", "transferee", "transferor", "transfer_target", "original", "consultation", "target_dialog", "parties", "originator", "party_history"}
+            - {"type", "start", "transferee", "transferor", "transfer_target", "original", "consultation", "target_dialog", "parties", "party_history"}
         )
         if extra or tr.get("parties"):
             ctx.report.add(
@@ -636,6 +666,7 @@ def _step_t4_transfers(ctx: _Context) -> None:
                 f"transfer dialog[{k}] had parameters with no Event equivalent "
                 f"({extra + (['parties'] if tr.get('parties') else [])}); not migrated. "
                 "Original kept in report.removed_dialogs.", None, dialog=k,
+                dropped={f: tr[f] for f in extra + (["parties"] if tr.get("parties") else [])},
             )
 
 
@@ -660,23 +691,60 @@ def _step_t7_recording_sets(ctx: _Context) -> None:
     The recording-set's own start, duration, parties, session_id and originator
     move to the Session (A.1 is silent: AMB-4). ``recording_set`` is removed from
     each recording.
+
+    Membership is the union of the set's ``recordings`` list and the recordings
+    whose ``recording_set`` points at it (core-04 made ``recordings`` MUST and
+    ``recording_set`` SHOULD, so stored data can carry either side only). A
+    recording-set listed in another recording-set's ``recordings`` becomes a
+    ``child`` Session_Reference of that set's Session. Every Session index is
+    allocated before any is filled, so a nested set can point forward.
     """
     dialogs = ctx.out.get("dialog")
-    for k, kind in ctx.removed.items():
-        if kind != "recording-set":
+    rs_ids = [k for k, kind in ctx.removed.items() if kind == "recording-set"]
+    for k in rs_ids:
+        ctx.rs_session[k] = ctx.new_session({})
+
+    # recording_set back-references from kept Dialogs.
+    back: Dict[int, List[int]] = {}
+    for i in ctx.kept():
+        ref = ctx.dialogs[i].get("recording_set")
+        if ref is None:
             continue
+        if _is_int(ref) and ref in ctx.rs_session:
+            back.setdefault(ref, []).append(i)
+        else:
+            ctx.report.add(
+                "T7", UNRESOLVED,
+                f"dialog[{i}] recording_set={ref!r} does not reference a recording-set Dialog; "
+                "parameter removed, no Session membership derived from it.", None, dialog=i, recording_set=ref,
+            )
+
+    for k in rs_ids:
         rs = ctx.dialogs[k]
+        sidx = ctx.rs_session[k]
         recs_raw = rs.get("recordings")
         recs: List[int] = []
+        children: List[int] = []
         if isinstance(recs_raw, list):
             for r in recs_raw:
-                if _is_int(r) and 0 <= r < len(ctx.dialogs) and r not in ctx.removed and isinstance(ctx.dialogs[r], dict):
+                if _is_int(r) and r in ctx.rs_session and r != k:
+                    if ctx.rs_session[r] not in children:
+                        children.append(ctx.rs_session[r])
+                elif _is_int(r) and 0 <= r < len(ctx.dialogs) and r not in ctx.removed and isinstance(ctx.dialogs[r], dict) and ctx.dialogs[r]:
                     if r not in recs:
                         recs.append(r)
                 else:
-                    ctx.report.add("T7", UNRESOLVED, f"recording-set dialog[{k}] lists recordings entry {r!r}, which is not a kept Dialog; left out of the Session.", None, dialog=k)
+                    ctx.report.add("T7", UNRESOLVED, f"recording-set dialog[{k}] lists recordings entry {r!r}, which is not a kept Dialog or another recording-set; left out of the Session.", None, dialog=k, entry=r)
         else:
-            ctx.report.add("T7", UNRESOLVED, f"recording-set dialog[{k}] has no recordings list; Session has no dialog.", None, dialog=k)
+            ctx.report.add("T7", UNRESOLVED, f"recording-set dialog[{k}] has no recordings list.", None, dialog=k)
+        added_back = [i for i in back.get(k, []) if i not in recs]
+        if added_back:
+            recs.extend(added_back)
+            ctx.report.add(
+                "T7", INFERRED,
+                f"dialog(s) {added_back} name recording-set dialog[{k}] in recording_set but are not in its "
+                f"recordings list; added to Session {sidx}.", None, dialog=k, added=added_back, session=sidx,
+            )
         sess: Dict[str, Any] = {}
         d_start, d_dur = ctx.span(recs) if recs else (None, None)
         if _parse_dt(rs.get("start")):
@@ -694,6 +762,8 @@ def _step_t7_recording_sets(ctx: _Context) -> None:
         orig = rs.get("originator")
         if _is_int(orig) and (not parties or orig != parties[0]):
             sess["originator"] = orig
+        elif orig is not None and not _is_int(orig):
+            ctx.report.add("T7", UNRESOLVED, f"recording-set dialog[{k}] originator {orig!r} is not a party index; dropped.", None, dialog=k)
         sid = rs.get("session_id")
         if isinstance(sid, dict):
             sess["session_id"] = sid
@@ -705,12 +775,17 @@ def _step_t7_recording_sets(ctx: _Context) -> None:
                 f"recording-set dialog[{k}] session_id is not a single SessionId Object; Session.session_id not set.",
                 "AMB-4", dialog=k, session_id=sid,
             )
+        if children:
+            sess["sessions"] = [{"session": c, "type": "child"} for c in children]
+            ctx.report.add(
+                "T7", INFERRED,
+                f"recording-set dialog[{k}] lists other recording-set(s); Session {sidx} references their "
+                f"Session(s) {children} as 'child'.", "AMB-1", dialog=k, session=sidx, children=children,
+            )
         if recs:
             sess["dialog"] = recs
         order = ("start", "duration", "parties", "originator", "session_id", "sessions", "dialog")
-        sess = {key: sess[key] for key in order if key in sess}
-        sidx = ctx.new_session(sess)
-        ctx.rs_session[k] = sidx
+        ctx.sessions[sidx] = {key: sess[key] for key in order if key in sess}
         for r in recs:
             ctx.dialog_sessions.setdefault(r, []).append(sidx)
         fields_moved = [f for f in ("start", "duration", "parties", "session_id", "originator") if f in rs]
@@ -720,21 +795,54 @@ def _step_t7_recording_sets(ctx: _Context) -> None:
             "(A.1 silent about them); Session start/duration/parties fall back to values derived from the recordings when absent.",
             "AMB-4", dialog=k, session=sidx,
         )
-        if ctx.catch_all is not None:
+        extra = sorted(
+            set(rs) - {"type", "recordings", "start", "duration", "parties", "session_id", "originator", "party_history"}
+        )
+        if extra:
+            ctx.report.add(
+                "T7", UNRESOLVED,
+                f"recording-set dialog[{k}] had parameter(s) {extra} with no Session equivalent; not migrated. "
+                "Original kept in report.removed_dialogs.", None, dialog=k, dropped={f: rs[f] for f in extra},
+            )
+        if ctx.catch_all is not None and recs:
             ctx.report.add(
                 "T7", UNRESOLVED,
                 f"Session {sidx} (recording-set dialog[{k}]) overlaps Session {ctx.catch_all}, which also lists its "
                 "recordings; A.1 does not say whether to relate them, so no Session_Reference was added.",
                 "AMB-1", session=sidx, catch_all=ctx.catch_all,
             )
-        for r in recs:
-            if isinstance(dialogs, list) and isinstance(dialogs[r], dict):
-                dialogs[r].pop("recording_set", None)
-    # Remove any stray recording_set / recordings on kept dialogs.
+    # recording_set has been consumed above; recordings is only legal on recording-sets.
     if isinstance(dialogs, list):
         for i in ctx.kept():
             dialogs[i].pop("recording_set", None)
-            dialogs[i].pop("recordings", None)
+            if "recordings" in dialogs[i]:
+                ctx.report.add(
+                    "T7", UNRESOLVED,
+                    f"dialog[{i}] ({ctx.dialogs[i].get('type')!r}) had a recordings parameter, which only a "
+                    "recording-set may carry; removed.", None, dialog=i, recordings=dialogs[i].pop("recordings"),
+                )
+
+
+def _first_slot_is_null(parties: Any) -> bool:
+    return isinstance(parties, list) and len(parties) > 0 and parties[0] is None
+
+
+def _unknown_first_party(ctx: _Context, step: str, i: int, kind: str, role: str) -> int:
+    """The first party slot of a text/incomplete Dialog is null: its sender is unknown.
+
+    The next party in the list is a receiver, so promoting it would invent a
+    sender. An empty Party Object stands in (4.2.4: "If the originator is not
+    known, an empty Party Object ... may be used"), and it becomes the Session
+    originator so the first receiver is not implied to be the originator.
+    """
+    e = ctx.empty_party(step, role)
+    ctx.originators[i] = e
+    ctx.report.add(
+        step, UNRESOLVED,
+        f"{kind} dialog[{i}] has null as its first party, so its {role} is unknown; an empty Party "
+        f"Object (parties[{e}]) stands in rather than promoting a receiver.", None, dialog=i, party=e,
+    )
+    return e
 
 
 def _step_t8_text_parties(ctx: _Context) -> None:
@@ -750,7 +858,12 @@ def _step_t8_text_parties(ctx: _Context) -> None:
             ctx.report.add("T8", UNRESOLVED, f"text dialog[{i}] has no parties; sender and receivers unknown.", None, dialog=i)
             continue
         orig = ctx.dialogs[i].get("originator")
-        sender = orig if _is_int(orig) else p[0]
+        if _is_int(orig):
+            sender = orig
+        elif _first_slot_is_null(ctx.dialogs[i].get("parties")):
+            sender = _unknown_first_party(ctx, "T8", i, "text", "sender")
+        else:
+            sender = p[0]
         dialogs[i]["parties"] = [sender]
         ctx.receivers[i] = p if sender in p else [sender] + p
 
@@ -767,7 +880,12 @@ def _step_t9_incomplete_parties(ctx: _Context) -> None:
         if not p:
             continue
         orig = ctx.dialogs[i].get("originator")
-        who = orig if _is_int(orig) else p[0]
+        if _is_int(orig):
+            who = orig
+        elif _first_slot_is_null(ctx.dialogs[i].get("parties")):
+            who = _unknown_first_party(ctx, "T9", i, "incomplete", "originator")
+        else:
+            who = p[0]
         dialogs[i]["parties"] = [who]
         ctx.receivers[i] = p if who in p else [who] + p
 
@@ -898,6 +1016,34 @@ def _step_t10b_retarget(ctx: _Context) -> None:
             )
 
 
+def _step_t10c_unscoped_attachments(ctx: _Context) -> None:
+    """Scope an attachment that has neither ``dialog`` nor ``session``.
+
+    Core-04 required ``dialog``, but older writers omitted it, so stored data
+    has such attachments. Core-05 needs one of ``dialog`` or ``session``
+    (4.6.4). Only when the result has exactly one Session is the scope
+    unambiguous (that Session is the whole conversation); it is then set and
+    reported. Otherwise nothing is invented and the gap is reported.
+    """
+    for n, att in enumerate(ctx.out.get("attachments") or []):
+        if not isinstance(att, dict) or "dialog" in att or "session" in att:
+            continue
+        if len(ctx.sessions) == 1:
+            att["session"] = 0
+            ctx.report.add(
+                "T10c", INFERRED,
+                f"attachments[{n}] had neither dialog nor session; scoped to the only Session (session=0).",
+                None, attachment=n, purpose=att.get("purpose"),
+            )
+        else:
+            ctx.report.add(
+                "T10c", UNRESOLVED,
+                f"attachments[{n}] has neither dialog nor session and the vCon has {len(ctx.sessions)} "
+                "Sessions, so its scope cannot be chosen; set dialog or session by hand.",
+                None, attachment=n, purpose=att.get("purpose"),
+            )
+
+
 def _step_t13_unwrap_signed(ctx: _Context) -> None:
     """T13: a signed vCon is migrated as its unsigned payload; it must be signed again.
 
@@ -1012,10 +1158,11 @@ MIGRATION_STEPS: List[MigrationStep] = [
     MigrationStep("T6", "Dialog originator -> Session originator", "A.1 bullet 5", _step_t6_originator),
     MigrationStep("T2", "Add a Session referencing all Dialogs", "A.1 bullet 2", _step_t2_sessions),
     MigrationStep("T7", "recording-set Dialog -> Session", "A.1 bullet 9", _step_t7_recording_sets),
-    MigrationStep("T3", "party_history -> Events", "A.1 bullet 3", _step_t3_party_history),
     MigrationStep("T4", "transfer Dialog -> transfer Events (with T5 Session references)", "A.1 bullet 4", _step_t4_transfers),
+    MigrationStep("T3", "party_history -> Events", "A.1 bullet 3", _step_t3_party_history),
     MigrationStep("T10", "Removed Dialogs -> {} in place", "A.1 bullet 10; 4.5.1", _step_t10_blank_removed),
     MigrationStep("T10b", "Re-point analysis/attachment references to removed Dialogs", "AMB-2", _step_t10b_retarget),
+    MigrationStep("T10c", "Scope unscoped attachments to the only Session", "4.6.4 (A.1 silent)", _step_t10c_unscoped_attachments),
     MigrationStep("T11", "redacted -> redacted_from", "A.1 bullet 7", _step_t11),
     MigrationStep("T12", "amended -> amended_from", "A.1 bullet 8", _step_t12),
     MigrationStep("T14", "extensions lists every extension in use", "A.1 bullet 12; 4.1.3", _step_t14_extensions),
@@ -1065,6 +1212,12 @@ def migrate_0_4_0_to_0_5_0(vcon: Any, *, strict: bool = False) -> MigrationResul
             if v is not None and v != SOURCE_VERSION:
                 raise MigrationError(f"cannot migrate: input vcon is {v!r}, expected {SOURCE_VERSION!r}")
             if v is None:
+                markers = sorted(k for k in _V050_ONLY_KEYS if k in ctx.out)
+                if markers:
+                    raise MigrationError(
+                        f"cannot migrate: input has no 'vcon' parameter but has 0.5.0-only "
+                        f"parameter(s) {markers}; it is already 0.5.0 (vcon is optional there)"
+                    )
                 report.add("T13", INFO, "Input has no 'vcon' parameter; treated as 0.4.0.")
 
     out = ctx.out

@@ -70,7 +70,7 @@ class TestTableDriven:
     def test_one_entry_per_transform_step(self):
         ids = [s.id for s in MIGRATION_STEPS]
         assert sorted(ids) == sorted(
-            ["T1", "T2", "T3", "T4", "T6", "T7", "T8", "T9", "T9b", "T10", "T11", "T12", "T13", "T14", "T15", "T10b"]
+            ["T1", "T2", "T3", "T4", "T6", "T7", "T8", "T9", "T9b", "T10", "T11", "T12", "T13", "T14", "T15", "T10b", "T10c"]
         )
         assert len(ids) == len(set(ids))
         assert all(s.source and s.title and callable(s.func) for s in MIGRATION_STEPS)
@@ -627,9 +627,12 @@ class TestT13SignedInput:
     def test_vcon_load_of_a_library_signed_0_4_0_document(self):
         payload = v04(dialog=[rec()])
         signed = self.signed(payload)
+        # Loading keeps the signature (verify first); migration is explicit.
         v = Vcon(signed)
-        assert v.vcon == "0.5.0"
-        assert v.migration_report.resign_required
+        assert v.migration_report is None and v.vcon_dict["payload"] == signed["payload"]
+        m = Vcon.migrate_0_4_0_to_0_5_0(signed)
+        assert m.vcon == "0.5.0"
+        assert m.migration_report.resign_required
 
 
 class TestT14Extensions:
