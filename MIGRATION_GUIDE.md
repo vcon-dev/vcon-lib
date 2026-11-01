@@ -1,4 +1,50 @@
-# Migration Guide: Version Management Changes
+# Migration Guide
+
+## Migrating to vCon 0.5.0 (library 1.0.0)
+
+Library 1.0.0 implements `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`). Readers accept 0.4.0 and 0.5.0;
+writers emit 0.5.0. A vCon that declares `"vcon": "0.4.0"` is migrated when you load it:
+
+```python
+from vcon import Vcon, migrate_0_4_0_to_0_5_0, MigrationError
+
+vcon = Vcon.load("old.vcon.json")      # or Vcon(dict), Vcon.build_from_json(text)
+print(vcon.migration_report.summary())  # what was inferred, what needs a person
+
+# Explicit form: returns the new dict and the report. strict=True raises MigrationError
+# instead of using a documented fallback for a field the spec requires.
+new_dict, report = migrate_0_4_0_to_0_5_0(old_dict, strict=False)
+
+# Opt out and keep the 0.4.0 dict as it is (is_valid() will report it as not 0.5.0)
+vcon = Vcon.load("old.vcon.json", migrate_legacy=False)
+```
+
+The migration follows Appendix A.1 of the draft, one function per step (`vcon.migration.MIGRATION_STEPS`).
+Removed `transfer` and `recording-set` Dialogs become empty Dialog Objects (`{}`) in place, so every dialog,
+analysis, attachment and event index stays valid. Where A.1 is silent the migration applies a documented default and
+lists it in the report (`report.inferred`); anything it cannot resolve is in `report.unresolved`. Signed input is
+migrated as its unsigned payload; sign the result again (`report.resign_required`).
+
+Code that changes:
+
+| 0.4.0 | 0.5.0 |
+| --- | --- |
+| `vcon.redacted`, `vcon.amended` | `vcon.redacted_from`, `vcon.amended_from` |
+| `PartyHistory`, `Dialog(party_history=...)` | `Event` and `Vcon.add_event()` (`event` is now `type`, `sessions` set) |
+| `Vcon.add_transfer_dialog()` | transfer `Event` types |
+| `Dialog(originator=...)` | `Session(originator=...)` |
+| `Dialog(parties=[sender, *receivers])` | `Dialog(parties=[sender])`; receivers in `Session(parties=[...])` |
+| `recording-set` Dialog | `Session(dialog=[...])` |
+| attachments always `dialog=0` by default | attachments default to `session=[all Sessions]`; pass `dialog` or `session` |
+| `vcon.sign(key)` accepts any header | `alg` "none" raises `AlgorithmNotPermittedError` on `sign()` and `verify()` |
+
+Also new: `is_valid()` now reports a missing Session when dialog or events exist, a missing `extensions` entry
+for an extension in use (`lawful_basis`, `wtf_transcription`, or any value outside the core vocabulary), and an
+attachment with inline content but no `mediatype`.
+
+---
+
+# Earlier migration: Version Management Changes
 
 This guide helps you migrate your existing vCon code to work with the updated version management system.
 

@@ -4,7 +4,7 @@ This guide provides a comprehensive overview of the vCon (Virtual Conversation) 
 
 ## Overview
 
-The vCon library is a Python implementation of the vCon 0.4.0 specification for structuring, managing, and manipulating conversation data in a standardized format. It enables the creation, validation, and manipulation of digital representations of conversations with rich metadata, supporting all modern conversation features including multimedia content, security, and extensibility.
+The vCon library is a Python implementation of the vCon 0.5.0 specification (draft-ietf-vcon-vcon-core-05) for structuring, managing, and manipulating conversation data in a standardized format. It enables the creation, validation, and manipulation of digital representations of conversations with rich metadata, supporting all modern conversation features including multimedia content, security, and extensibility.
 
 ### Key Concepts
 
@@ -130,7 +130,7 @@ party_index = vcon.find_party_index("name", "Alice Smith")  # Returns index (0-b
 - `role`: Role in conversation ("caller", "agent", "bot", etc.)
 - `mailto`: Email address (e.g., "alice@example.com")
 
-**Advanced Contact Methods (vCon 0.4.0):**
+**Advanced Contact Methods (vCon 0.5.0):**
 - `sip`: SIP URI for VoIP communication (e.g., "sip:alice@example.com")
 - `did`: Decentralized Identifier for blockchain-based identity
 - `jCard`: vCard format contact information (RFC 7095)
@@ -154,34 +154,38 @@ Represents a message or segment in the conversation.
 
 ```python
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone
 
 # Create a text dialog
 text_dialog = Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
-    parties=[0, 1],  # Indices of parties involved
-    originator=0,    # Index of the party that sent the message
+    parties=[0],     # Contributors only; the receivers are in the Session
     mediatype="text/plain",
-    body="Hello, I need help with my account."
+    body="Hello, I need help with my account.",
+    encoding="none",
 )
 
-# Add to vCon
-vcon.add_dialog(text_dialog)
+# 0.5.0: a Session lists the receivers and the Dialogs it contains.
+# The first Session party is the implied originator (use Session.originator otherwise).
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
+
+# Add to vCon, in Session 0
+vcon.add_dialog(text_dialog, session=0)
 
 # Create an audio dialog
 audio_dialog = Dialog(
     type="audio",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
-    originator=0,
     mediatype="audio/mp3",
     body=base64_encoded_audio,
     encoding="base64",
     filename="recording.mp3"
 )
 
-vcon.add_dialog(audio_dialog)
+vcon.add_dialog(audio_dialog, session=0)
 
 # Find a dialog by property
 found_dialog = vcon.find_dialog("type", "text")
@@ -190,23 +194,27 @@ found_dialog = vcon.find_dialog("type", "text")
 #### Special Dialog Types
 
 ```python
-# Add a transfer dialog
-vcon.add_transfer_dialog(
-    start=datetime.now(timezone.utc).isoformat(),
-    transfer_data={
-        "reason": "Call forwarded",
-        "from": "+1234567890",
-        "to": "+1987654321"
-    },
-    parties=[0, 1]
-)
+# A call transfer is an Event (the "transfer" Dialog type was removed in 0.5.0).
+# `sessions` is the original call, `target_session` the call to the target.
+from vcon.event import Event
+vcon.add_event(Event(
+    type="blind-transfer",
+    time=datetime.now(timezone.utc),
+    sessions=0, party=1,              # party is the Transferor
+    transferee=0, transfer_target=2,
+    target_session=1,
+))
+
+# An empty Dialog Object holds an array position so no other index moves
+vcon.add_dialog(Dialog.placeholder())
 
 # Add an incomplete dialog (for failed conversations)
 vcon.add_incomplete_dialog(
     start=datetime.now(timezone.utc).isoformat(),
-    disposition="NO_ANSWER",
+    disposition="no-answer",
     details={"ringDuration": 45000},
-    parties=[0, 1]
+    parties=[0],                       # the party that attempted the call
+    session=0,
 )
 ```
 
@@ -216,7 +224,6 @@ vcon.add_incomplete_dialog(
 # Check dialog type
 is_text = dialog.is_text()
 is_recording = dialog.is_recording()
-is_transfer = dialog.is_transfer()
 is_incomplete = dialog.is_incomplete()
 is_audio = dialog.is_audio()
 is_video = dialog.is_video()
@@ -228,7 +235,6 @@ is_email = dialog.is_email()
 **Valid Dialog Types:**
 - `"text"`: Text-based communication (chat, SMS, email)
 - `"recording"`: Audio/video recording
-- `"transfer"`: Call transfer operation
 - `"incomplete"`: Failed or incomplete conversation setup
 - `"audio"`: Audio content
 - `"video"`: Video content
@@ -313,7 +319,7 @@ vcon.add_analysis(
 analysis = vcon.find_analysis_by_type("sentiment")
 ```
 
-### 7. Extensions and Must-Support (vCon 0.4.0)
+### 7. Extensions and Must-Support (vCon 0.5.0)
 
 Extensions allow vCons to declare optional features they use, while must-support indicates required features.
 
@@ -685,7 +691,7 @@ processing_results = vcon.process_extensions()
 print("Extension processing completed")
 ```
 
-### 8. Civic Address Support (vCon 0.4.0)
+### 8. Civic Address Support (vCon 0.5.0)
 
 Civic addresses provide location information for parties using the GEOPRIV standard.
 
@@ -713,35 +719,37 @@ party = Party(
 address_dict = address.to_dict()
 ```
 
-### 9. Party History Events (vCon 0.4.0)
+### 9. Events (vCon 0.5.0)
 
-Track when parties join, leave, or change state during conversations.
+Events replace party history. Track when parties join, leave, or change state, key presses and transfers.
 
 ```python
-from vcon.party import PartyHistory
+from vcon.event import Event
 from datetime import datetime
 
-# Create party history events
-history = [
-    PartyHistory(0, "join", datetime.now()),    # Party 0 joins
-    PartyHistory(1, "join", datetime.now()),    # Party 1 joins
-    PartyHistory(0, "hold", datetime.now()),    # Party 0 on hold
-    PartyHistory(0, "unhold", datetime.now()),  # Party 0 off hold
-    PartyHistory(1, "drop", datetime.now())     # Party 1 drops
-]
+vcon.add_event(Event(type="join", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="join", time=datetime.now(), sessions=0, party=1))
+vcon.add_event(Event(type="hold", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="unhold", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="drop", time=datetime.now(), sessions=0, party=1))
 
-# Add to dialog
-dialog = Dialog(
-    type="recording",
-    start=datetime.now(),
-    parties=[0, 1],
-    party_history=history
-)
-
-# Valid event types: "join", "drop", "hold", "unhold", "mute", "unmute"
+# Types: join, drop, hold, unhold, mute, unmute, keydown, keyup,
+# consultation-start, blind-transfer, consultative-transfer, transfer-abandoned,
+# channel-contributors. Each type has required, optional and forbidden
+# parameters (vcon.event.EVENT_PARAMETER_RULES); Event() and is_valid() enforce them.
 ```
 
-### 10. Advanced Dialog Features (vCon 0.4.0)
+### 9b. Migrating a 0.4.0 vCon
+
+```python
+from vcon import Vcon, migrate_0_4_0_to_0_5_0
+
+vcon = Vcon.load("old.vcon.json")          # "vcon": "0.4.0" is migrated on load
+report = vcon.migration_report             # inferred values, fallbacks, unresolved items
+new_dict, report = migrate_0_4_0_to_0_5_0(old_dict, strict=True)  # raises MigrationError if a required field has no source
+```
+
+### 10. Advanced Dialog Features (vCon 0.5.0)
 
 New dialog fields for enhanced functionality.
 
@@ -750,9 +758,9 @@ New dialog fields for enhanced functionality.
 dialog = Dialog(
     type="text",
     start=datetime.now(),
-    parties=[0, 1],
-    originator=0,
+    parties=[0],
     body="Hello, this is a test message!",
+    encoding="none",
     session_id={"local": "local-uuid", "remote": "remote-uuid"},
     content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
     application="chat-app",
@@ -835,7 +843,6 @@ vcon.add_dialog(Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
-    originator=0,  # Caller
     mediatype="text/plain",
     body="Hello, I need help with my account."
 ))
@@ -844,7 +851,6 @@ vcon.add_dialog(Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
-    originator=1,  # Agent
     mediatype="text/plain",
     body="I'd be happy to help. Can you provide your account number?"
 ))
@@ -875,7 +881,6 @@ audio_dialog = Dialog(
     type="audio",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
-    originator=0,
     mediatype="audio/mp3",
     body=audio_base64,
     encoding="base64",
@@ -1054,7 +1059,6 @@ def create_basic_conversation():
         type="text",
         start=datetime.now().isoformat(),
         parties=[0, 1],
-        originator=0,
         body="Hello, I need help."
     ))
     
@@ -1088,7 +1092,6 @@ def create_multimedia_conversation():
         type="text",
         start=datetime.now().isoformat(),
         parties=[0, 1],
-        originator=0,
         body="Hello, I need help with my account."
     ))
     
@@ -1465,7 +1468,6 @@ def chat_to_vcon(chat_messages, participants):
             type="text",
             start=message["timestamp"],
             parties=[party_map[message["sender_id"]]],
-            originator=party_map[message["sender_id"]],
             body=message["content"]
         ))
     
@@ -1715,7 +1717,7 @@ def validate_and_fix_vcon(vcon):
         elif "invalid dialog type" in error.lower():
             # Try to fix invalid dialog types
             for dialog in vcon.dialog:
-                if dialog.get("type") not in ["text", "recording", "transfer", "incomplete", "audio", "video"]:
+                if dialog.get("type") not in ["text", "recording", "incomplete", "audio", "video"]:
                     dialog["type"] = "text"  # Default to text
                     fixes_applied.append(f"Fixed invalid dialog type: {dialog.get('type')}")
     
@@ -1811,4 +1813,4 @@ The vCon library provides a comprehensive framework for working with conversatio
 14. **Export Transcriptions**: Leverage WTF export capabilities for subtitle formats
 15. **Check Permissions**: Use lawful basis permission checking for privacy compliance
 
-The vCon 0.4.0 specification provides a robust foundation for modern conversation data management with support for multimedia content, security, and extensibility.
+The vCon 0.5.0 specification (draft-ietf-vcon-vcon-core-05) provides a robust foundation for modern conversation data management with support for multimedia content, security, and extensibility.
