@@ -472,3 +472,17 @@ class TestDeprecatedApi:
             ph = PartyHistory(0, "keydown", T, button="5")
         assert ph.to_dict()["event"] == "keydown"
         assert ph.to_event(sessions=0).to_dict() == {"type": "keydown", "time": T, "sessions": 0, "party": 0, "button": "5"}
+
+
+class TestLawfulBasisValidatorScope:
+    def test_missing_party_and_session_are_flagged(self):
+        from vcon.extensions.lawful_basis.validation import LawfulBasisValidator
+        att = {"purpose": "lawful_basis", "encoding": "json", "dialog": 0,
+               "body": {"lawful_basis": "consent", "expiration": "2030-01-01T00:00:00Z",
+                        "purpose_grants": [{"purpose": "recording", "granted": True, "granted_at": T}]}}
+        r = LawfulBasisValidator().validate_attachment(att)
+        assert any("no party" in w for w in r.warnings)
+        assert any("no session" in w for w in r.warnings)
+        att.update(party=0, session=0)
+        r = LawfulBasisValidator().validate_attachment(att)
+        assert not any("party" in w or "session" in w for w in r.warnings)
