@@ -765,3 +765,42 @@ class TestReadersAcceptBothVersions:
     def test_writers_emit_0_5_0(self):
         v = Vcon.build_from_json(json.dumps(v04(dialog=[rec()])))
         assert json.loads(v.to_json())["vcon"] == "0.5.0"
+
+
+class TestNullPartiesAndNonRfcDates:
+    """Regressions from a differential run against the TypeScript port."""
+
+    @pytest.mark.parametrize("top", [None, "absent"])
+    def test_null_parties_treated_like_absent(self, top):
+        d = v04(dialog=[text(parties=[None, 1])])
+        if top == "absent":
+            del d["parties"]
+        else:
+            d["parties"] = None
+        res = migrate_0_4_0_to_0_5_0(d)
+        assert res.vcon["parties"] == [{}]
+        assert any("empty Party" in e.message for e in res.report.entries)
+        migrate_0_4_0_to_0_5_0(d, strict=True)
+
+    def test_null_dialog_parties_does_not_raise(self):
+        res = migrate_0_4_0_to_0_5_0(v04(dialog=[text(parties=None), rec(parties=None)]))
+        assert res.vcon["vcon"] == "0.5.0"
+
+    def test_free_form_date_not_used_as_session_start(self):
+        res = migrate_0_4_0_to_0_5_0(v04(dialog=[rec(start="Jan 1 2022 10:00")]))
+        assert "start" not in res.vcon["sessions"][0]
+        assert any(e.step == "T1" and "RFC 3339" in e.message for e in res.report.unresolved)
+
+    def test_free_form_date_strict_raises(self):
+        with pytest.raises(MigrationError, match="RFC 3339"):
+            migrate_0_4_0_to_0_5_0(v04(dialog=[rec(start="Jan 1 2022 10:00")]), strict=True)
+
+    @pytest.mark.parametrize("start", ["2022-02-30T00:00:00Z", "2022-01-01T24:00:00Z", "2022-01-01T00:00:00+24:00"])
+    def test_out_of_range_date_rejected(self, start):
+        res = migrate_0_4_0_to_0_5_0(v04(dialog=[rec(start=start)]))
+        assert "start" not in res.vcon["sessions"][0]
+
+    def test_microseconds_kept(self):
+        res = migrate_0_4_0_to_0_5_0(v04(dialog=[
+            rec(start="2022-01-01T00:00:00.123456Z", duration=10), rec(start="2022-01-01T00:00:00.5Z", duration=10)]))
+        assert res.vcon["sessions"][0]["duration"] == 10.376544

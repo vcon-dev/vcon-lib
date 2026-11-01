@@ -32,11 +32,10 @@ import base64
 import copy
 import json
 import logging
+import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
-
-from dateutil import parser
 
 from .event import EVENT_PARAMETERS as _EVENT_PARAMS
 from .validation import extensions_in_use, validate_vcon_dict
@@ -166,16 +165,39 @@ def _is_int(v: Any) -> bool:
     return isinstance(v, int) and not isinstance(v, bool)
 
 
+_DATE_RE = re.compile(
+    r"^(\d{4})-(\d{2})-(\d{2})(?:[Tt ](\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?\s*(Z|z|[+-]\d{2}(?::?\d{2})?)?)?$"
+)
+
+
 def _parse_dt(value: Any) -> Optional[datetime]:
+    """Parse an RFC 3339 / ISO 8601 date-time, or return None.
+
+    Free-form strings such as ``"Jan 1 2022 10:00"`` and out-of-range fields
+    (February 30, hour 24) are rejected, matching the TypeScript port. A value
+    with no offset is read as UTC. Fractional seconds keep microseconds.
+    """
     if not isinstance(value, str):
         return None
-    try:
-        dt = parser.parse(value)
-    except Exception:
+    m = _DATE_RE.match(value.strip())
+    if not m:
         return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    ys, mos, ds, hs, mis, ss, frac, tz = m.groups()
+    try:
+        offset = timedelta(0)
+        if tz and tz.upper() != "Z":
+            digits = tz[1:].replace(":", "")
+            oh, om = int(digits[:2]), int(digits[2:] or "0")
+            if oh > 23 or om > 59:
+                return None
+            offset = timedelta(hours=oh, minutes=om) * (-1 if tz[0] == "-" else 1)
+        micro = int(frac[1:7].ljust(6, "0")) if frac else 0
+        return datetime(
+            int(ys), int(mos), int(ds), int(hs or 0), int(mis or 0), int(ss or 0), micro,
+            tzinfo=timezone(offset),
+        )
+    except ValueError:
+        return None
 
 
 def _num(seconds: float) -> Any:
@@ -263,7 +285,14 @@ class _Context:
     def empty_party(self, step: str, role: str) -> int:
         """Index of an empty Party Object, appended once (4.3.9: unknown party)."""
         if self._empty_party is None:
-            parties = self.out.setdefault("parties", [])
+            parties = self.out.get("parties")
+            if not isinstance(parties, list):
+                # Absent or null `parties` is treated alike (as the TypeScript port does).
+                if "parties" in self.out:
+                    self.report.add(
+                        step, INFERRED, "vCon 'parties' was not an array (null); treated as absent.", None,
+                    )
+                parties = self.out["parties"] = []
             parties.append({})
             self._empty_party = len(parties) - 1
             self.report.add(
@@ -365,8 +394,25 @@ class _Context:
 # ---------------------------------------------------------------------------
 
 
+def _check_dialog_dates(ctx: _Context) -> None:
+    """core-05 Date is RFC 3339: a Dialog start that is not one is never used as a Session start.
+
+    Strict mode raises; otherwise the value is reported as unresolved.
+    """
+    for i, d in enumerate(ctx.dialogs):
+        if not isinstance(d, dict) or d.get("start") is None or _parse_dt(d["start"]):
+            continue
+        msg = f"dialog[{i}] start {d['start']!r} is not an RFC 3339 date-time"
+        if ctx.strict:
+            raise MigrationError(f"T1: {msg} (strict mode)")
+        ctx.report.add(
+            "T1", UNRESOLVED, f"{msg}; not used to derive a Session start.", None, dialog=i, start=d["start"],
+        )
+
+
 def _step_t1_version(ctx: _Context) -> None:
     """T1: ``vcon`` "0.4.0" -> "0.5.0"."""
+    _check_dialog_dates(ctx)
     if "vcon" not in ctx.out:
         ctx.report.add("T1", INFERRED, "Input had no 'vcon' parameter; set to '0.5.0' (AMB-12: writers emit it).", "AMB-12")
     ctx.out["vcon"] = TARGET_VERSION
