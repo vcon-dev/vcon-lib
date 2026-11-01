@@ -4,6 +4,7 @@ import base64
 import os
 import logger
 import tempfile
+import warnings
 from datetime import datetime
 from typing import Optional, List, Dict, Union, Any, Tuple
 from dateutil import parser
@@ -146,6 +147,10 @@ def _reject_removed_parameters(kwargs: Dict[str, Any]) -> None:
             "parameters are Event Objects; recordings/recording_set are replaced by "
             "the Session Object."
         )
+
+
+#: Accepted on input for backward compatibility, normalized to "recording".
+LEGACY_MEDIA_DIALOG_TYPES = ("audio", "video")
 
 
 class Dialog:
@@ -355,6 +360,19 @@ class Dialog:
         for key, value in kwargs.items():
             if value is not None:
                 setattr(self, key, value)
+
+        # "audio" and "video" are not core-05 Dialog types (4.5.1: recording,
+        # text, incomplete or an extension value). They are accepted for
+        # backward compatibility but never emitted: the Dialog is a recording,
+        # and the media kind stays in mediatype.
+        if type in LEGACY_MEDIA_DIALOG_TYPES:
+            warnings.warn(
+                f'Dialog type "{type}" is not a core-05 type; using "recording" '
+                "(the media kind is carried by mediatype)",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.type = "recording"
 
         # Handling for specific dialog types
         if type == "incomplete" and not hasattr(self, "disposition"):
@@ -605,8 +623,8 @@ class Dialog:
         Returns:
             None
         """
-        # Set dialog type to video
-        self.type = "video"
+        # A video is a "recording" Dialog in core-05; mediatype says it is video.
+        self.type = "recording"
         
         # Auto-detect mediatype from filename if not provided
         if not mediatype and filename:
@@ -884,7 +902,7 @@ class Dialog:
         Returns:
             None
         """
-        self.type = "video"
+        self.type = "recording"
         self.url = f"stream://{reference_id}"
         self.mediatype = mediatype
         

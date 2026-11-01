@@ -17,7 +17,8 @@ from .session import SESSION_REFERENCE_TYPES, validate_session
 SYNTAX_VERSION = "0.5.0"
 
 CORE_DIALOG_TYPES = ("recording", "text", "incomplete")
-#: Dialog types the library itself builds although core-05 does not define them.
+#: Dialog types older versions of this library wrote although core-05 does not
+#: define them. Accepted on read with a warning; the library never writes them.
 LIBRARY_DIALOG_TYPES = ("audio", "video")
 CORE_ENCODINGS = ("base64url", "json", "none")
 CORE_DISPOSITIONS = (
@@ -285,6 +286,11 @@ def validate_vcon_dict(
                 f"Dialog at index {i} has type '{dialog_type}', which was removed in 0.5.0 "
                 "(use Events and Sessions; migrate with migrate_0_4_0_to_0_5_0())."
             )
+        elif dialog_type in LIBRARY_DIALOG_TYPES and not ext_listed:
+            warnings.append(
+                f"Dialog at index {i} has type '{dialog_type}', which core-05 does not define; "
+                "it is read as 'recording' (written by older library versions)."
+            )
         elif (
             dialog_type not in CORE_DIALOG_TYPES
             and dialog_type not in LIBRARY_DIALOG_TYPES
@@ -371,6 +377,16 @@ def validate_vcon_dict(
     for i, d in enumerate(dialogs):
         if isinstance(d, dict) and d and i not in referenced_dialogs:
             warnings.append(f"Dialog at index {i} is not referenced by any Session Object.")
+    empty_dialogs = {i for i, d in enumerate(dialogs) if isinstance(d, dict) and not d}
+    for n, s in enumerate(sessions):
+        if isinstance(s, dict):
+            if isinstance(s.get("parties"), list) and s["parties"] and s.get("originator") == s["parties"][0]:
+                warnings.append(
+                    f"Session at index {n} has originator equal to its first party; originator is "
+                    "only provided when the first party is not the originator (4.2.4)."
+                )
+            for x in sorted(empty_dialogs & set(x for x in (s.get("dialog") or []) if _is_index(x))):
+                warnings.append(f"Session at index {n} lists dialog {x}, which is an empty placeholder Dialog.")
 
     # --- events -----------------------------------------------------------
     for i, ev in enumerate(events):
@@ -421,6 +437,8 @@ def validate_vcon_dict(
             dv = attachment["dialog"]
             if not _is_index(dv) or dv >= dialog_count:
                 errors.append(f"Attachment at index {i} references invalid dialog index: {dv}")
+            elif dv in empty_dialogs:
+                warnings.append(f"Attachment at index {i} references dialog {dv}, an empty placeholder Dialog.")
         if "session" in attachment:
             sv = attachment["session"]
             vals = sv if isinstance(sv, list) else [sv]

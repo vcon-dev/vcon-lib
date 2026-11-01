@@ -409,3 +409,42 @@ class TestVersionHandling:
     def test_other_versions_are_not_valid(self):
         v = Vcon({"uuid": "a", "created_at": T, "vcon": "0.3.0"})
         assert not v.is_valid()[0]
+
+
+class TestLegacyMediaDialogTypes:
+    """audio/video: accepted on read with a warning, never written (core-05 4.5.1)."""
+
+    @pytest.mark.parametrize("kind", ["audio", "video"])
+    def test_constructor_normalizes_to_recording(self, kind):
+        with pytest.warns(DeprecationWarning, match="not a core-05 type"):
+            d = Dialog(type=kind, start=T, parties=[0], mediatype=f"{kind}/mp4" if kind == "video" else "audio/wav",
+                       url="https://e.com/x", content_hash="sha512-x")
+        assert d.to_dict()["type"] == "recording"
+
+    def test_video_helpers_emit_recording(self):
+        d = Dialog(type="recording", start=T, parties=[0])
+        d.add_streaming_video_reference("ref", "video/mp4")
+        assert d.type == "recording" and d.is_video()
+
+    def test_read_is_a_warning_not_an_error(self):
+        v = _base()
+        v.vcon_dict["dialog"].append({"type": "video", "start": T, "parties": [0], "mediatype": "video/mp4",
+                                      "url": "https://e.com/v.mp4", "content_hash": "sha512-x"})
+        v.vcon_dict["sessions"][0]["dialog"] = [0]
+        assert v.is_valid() == (True, [])
+        assert any("type 'video'" in w for w in v.get_validation_warnings())
+
+
+class TestValidationWarnings:
+    def test_redundant_session_originator_warns(self):
+        v = _base()
+        v.vcon_dict["sessions"][0]["originator"] = 0
+        assert any("originator equal to its first party" in w for w in v.get_validation_warnings())
+
+    def test_reference_to_empty_dialog_warns(self):
+        v = _base()
+        v.add_dialog(Dialog.placeholder(), session=0)
+        v.add_attachment("x", body="b", dialog=0, mediatype="text/plain")
+        w = v.get_validation_warnings()
+        assert any("lists dialog 0, which is an empty placeholder" in x for x in w)
+        assert any("Attachment at index 0 references dialog 0" in x for x in w)

@@ -39,8 +39,10 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
   are preserved. Use `migrate_legacy=False` to keep the raw 0.4.0 dict.
 - **Breaking:** `Vcon.redacted` and `Vcon.amended` are now `redacted_from` and
   `amended_from`.
-- **Breaking:** Dialog types are `recording`, `text` and `incomplete` (plus the
-  library's `audio` and `video` conveniences). The `transfer` type and the
+- **Breaking:** Dialog types are `recording`, `text` and `incomplete`.
+  `Dialog(type="audio" | "video")` still works but warns (DeprecationWarning)
+  and builds a `recording`; the video helpers also write `recording`. On read,
+  `audio`/`video` Dialogs are accepted and `get_validation_warnings()` notes them. The `transfer` type and the
   `recording-set` type are gone, as are the Dialog parameters `party_history`,
   `originator`, `transferee`, `transferor`, `transfer_target`, `original`,
   `consultation`, `target_dialog`, `transfer`, `recordings` and `recording_set`;

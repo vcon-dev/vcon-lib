@@ -61,7 +61,7 @@ class TestDialog:
         )
 
         # When & Then
-        assert dialog.type == "audio"
+        assert dialog.type == "recording"  # audio/video normalize to recording
         assert not hasattr(dialog, "duration")
         assert not hasattr(dialog, "mediatype")
 
@@ -141,7 +141,7 @@ class TestDialog:
 
         dialog = Dialog(type=type, start=start, parties=parties, meta=meta)
 
-        assert dialog.type == type
+        assert dialog.type == "recording"  # audio/video normalize to recording
         assert dialog.start == start
         assert dialog.parties == parties
         assert dialog.meta == meta
@@ -452,7 +452,7 @@ class TestDialog:
         )
         
         assert dialog.is_video()
-        assert dialog.type == "video"
+        assert dialog.type == "recording"  # audio/video normalize to recording
         
         # Check mediatype by using the to_dict method if direct attribute access isn't possible
         dialog_dict = dialog.to_dict()
@@ -509,7 +509,7 @@ class TestDialog:
         
         # Verify via to_dict
         dialog_dict = dialog.to_dict()
-        assert dialog_dict.get("type") == "video"
+        assert dialog_dict.get("type") == "recording"  # audio/video normalize to recording
         assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "test_video.mp4"
         assert "body" in dialog_dict
@@ -575,7 +575,7 @@ class TestDialog:
         
         # Verify the dialog has the expected attributes
         dialog_dict = dialog.to_dict()
-        assert dialog_dict.get("type") == "video"
+        assert dialog_dict.get("type") == "recording"  # audio/video normalize to recording
         assert dialog_dict.get("url") == url
         assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "remote_video.mp4"

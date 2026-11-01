@@ -1006,7 +1006,7 @@ def test_add_video_dialog():
     
     # Verify it was added correctly
     assert len(vcon.dialog) == 1
-    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
 @pytest.mark.parametrize("format_name,mediatype", [
@@ -1071,7 +1071,7 @@ def test_dialog_property_handling():
     
     # Verify properties are preserved
     dialog_dict = new_vcon.dialog[0]
-    assert dialog_dict["type"] == "video"
+    assert dialog_dict["type"] == "recording"  # audio/video normalize to recording
     assert dialog_dict["mediatype"] == "video/mp4"
     assert dialog_dict["filename"] == "test_video.mp4"
 
@@ -1253,7 +1253,7 @@ def test_video_metadata_in_vcon():
     vcon.add_dialog(dialog)
     
     # Verify the basic properties
-    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
 @pytest.mark.skip("Property handling mode tests need vCon implementation check")
@@ -1298,7 +1298,7 @@ def test_load_save_file_with_videos(tmp_path):
     loaded_vcon = Vcon.load_from_file(str(temp_file))
     
     # Verify video properties were preserved
-    assert loaded_vcon.dialog[0]["type"] == "video"
+    assert loaded_vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert loaded_vcon.dialog[0]["mediatype"] == "video/mp4"
     assert loaded_vcon.dialog[0]["filename"] == "test_video.mp4"
 
@@ -1351,7 +1351,7 @@ def test_integration_basic_video_workflow():
     # Verify the conversation flow
     assert len(vcon.dialog) == 3
     assert vcon.dialog[0]["type"] == "text"
-    assert vcon.dialog[1]["type"] == "video"
+    assert vcon.dialog[1]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[2]["type"] == "text"
     
     # Verify the video properties
@@ -1365,7 +1365,7 @@ def test_integration_basic_video_workflow():
     
     # Verify everything is preserved
     assert len(new_vcon.dialog) == 3
-    assert new_vcon.dialog[1]["type"] == "video"
+    assert new_vcon.dialog[1]["type"] == "recording"  # audio/video normalize to recording
     assert new_vcon.dialog[1]["mediatype"] == "video/mp4"
 
 def test_version_field_optional() -> None:
