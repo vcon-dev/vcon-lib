@@ -1,5 +1,5 @@
 from datetime import datetime
-from vcon.party import Party, PartyHistory
+from vcon.party import Party
 from vcon.civic_address import CivicAddress
 import pytest
 
@@ -52,48 +52,6 @@ def test_party_with_civic_address():
 
     assert party.tel == "401-456-7890"
     assert party.civicaddress == address
-
-
-def test_party_history():
-    """Test PartyHistory class."""
-    party_history = PartyHistory(0, "join", datetime.now())
-    assert party_history.party == 0
-    assert party_history.event == "join"
-    assert isinstance(party_history.time, datetime)
-
-
-def test_party_history_to_dict():
-    """Test PartyHistory to_dict method with ISO 8601 time serialization."""
-    test_time = datetime(2023, 1, 15, 14, 30, 45, 123456)
-    party_history = PartyHistory(1, "drop", test_time)
-    
-    result = party_history.to_dict()
-    expected = {
-        "party": 1,
-        "event": "drop", 
-        "time": "2023-01-15T14:30:45.123456"
-    }
-    
-    assert result == expected
-    assert isinstance(result["time"], str)
-
-
-def test_party_history_valid_events():
-    """Test that all valid party history events are accepted."""
-    from datetime import datetime
-    
-    # Test all valid events
-    valid_events = [
-        "join", "drop", "hold", "unhold", "mute", "unmute"
-    ]
-    
-    for event in valid_events:
-        party_history = PartyHistory(0, event, datetime.now())
-        assert party_history.event == event
-    
-    # Test invalid event
-    with pytest.raises(ValueError, match="Invalid event"):
-        PartyHistory(0, "invalid", datetime.now())
 
 
 def test_party_new_fields():

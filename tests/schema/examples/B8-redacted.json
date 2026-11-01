@@ -1,0 +1,165 @@
+{
+  "vcon": "0.5.0",
+  "created_at": "2022-06-21T13:53:00-04:00",
+  "parties": [
+    {
+      "name": "Alice"
+    },
+    {
+      "name": "Bob"
+    }
+  ],
+  "dialog": [
+    {
+      "type": "recording",
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "mediatype": "audio/ogg",
+      "filename": "ab_call_2ch.ogg",
+      "content_hash": "sha512-Y-Q9eclT6b5hFyIfLtnFAAXgqFzN5_Cjr3JQ3DMmcnpXHkGMgtvaxrLW2R2OhFTzR-DinyrngBG2w9lTZXr1EQ"
+    }
+  ],
+  "analysis": [
+    {
+      "type": "transcript-redacted",
+      "dialog": 0,
+      "body": [
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:31.520000+00:00",
+          "duration": 0.6400000000000006,
+          "text": "Hi."
+        },
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:32.240000+00:00",
+          "duration": 2.16,
+          "text": "I'd like to add Foo to my service."
+        },
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:39.695001+00:00",
+          "duration": 6.5600000000000005,
+          "text": "My name is Alice and my number is {{BAN}}."
+        },
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:53.820936+00:00",
+          "duration": 0.5600020000000008,
+          "text": "No."
+        },
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:54.380938+00:00",
+          "duration": 0.7999989999999997,
+          "text": "Thank you."
+        },
+        {
+          "parties": 0,
+          "start": "2022-06-21T17:53:55.180937+00:00",
+          "duration": 0.3200000000000003,
+          "text": "Goodbye."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:27.120000+00:00",
+          "duration": 0.5599999999999998,
+          "text": "Hello."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:27.680000+00:00",
+          "duration": 1.5999999999999999,
+          "text": "This is {{URL}}."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:29.280000+00:00",
+          "duration": 0.8800000000000003,
+          "text": "My name is Bob."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:30.160000+00:00",
+          "duration": 1.2000000000000002,
+          "text": "How can I help you?"
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:35.040000+00:00",
+          "duration": 0.7199990000000014,
+          "text": "{{US_STATE}}."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:36.080000+00:00",
+          "duration": 2.959999999999999,
+          "text": "Can you give me your name and phone number so I can look up your account?"
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:46.635000+00:00",
+          "duration": 0.7999999999999972,
+          "text": "Thank you."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:48.795000+00:00",
+          "duration": 0.7199999999999989,
+          "text": "{{US_STATE}}."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:49.994999+00:00",
+          "duration": 1.600002,
+          "text": "I've added food to your service."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:51.595001+00:00",
+          "duration": 1.6799989999999987,
+          "text": "Is there anything else I can help you with?"
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:56.320875+00:00",
+          "duration": 0.6400000000000006,
+          "text": "Goodbye."
+        },
+        {
+          "parties": 1,
+          "start": "2022-06-21T17:53:56.960875+00:00",
+          "duration": 0.8000009999999982,
+          "text": "Have a nice day."
+        }
+      ],
+      "encoding": "json",
+      "vendor": "CapitalOne",
+      "schema": "data_labeler_schema",
+      "product": "dataprofiler"
+    }
+  ],
+  "attachments": [],
+  "sessions": [
+    {
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "dialog": [
+        0
+      ]
+    }
+  ],
+  "uuid": "01928e10-193e-8231-b9a2-279e0d16bc46",
+  "redacted_from": {
+    "uuid": "01a16b86-96e7-80a8-b9a2-279e0d16bc46",
+    "type": "PII Redaction"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "vcon": "0.5.0",
+  "parties": [
+    {
+      "mailto": "a@example.com",
+      "name": "Alice"
+    },
+    {
+      "mailto": "b@example.com",
+      "name": "Bob"
+    }
+  ],
+  "dialog": [
+    {
+      "type": "text",
+      "start": "2022-09-23T23:24:59.000+00:00",
+      "duration": 0,
+      "parties": [
+        0
+      ],
+      "mediatype": "text/plain",
+      "encoding": "none",
+      "body": "Hi Bob:\nI just wanted to follow up to see that your account is ok now.\n\nRegards,\nAlice\n\n",
+      "message_id": "<1402576211.401234.1663975499936@mail.yahoo.com>"
+    },
+    {
+      "type": "text",
+      "start": "2022-09-23T23:34:32.000+00:00",
+      "duration": 0,
+      "parties": [
+        1
+      ],
+      "mediatype": "text/plain; charset=UTF-8",
+      "encoding": "none",
+      "body": "Hi Alice:\nAll is fine. Thanks.\n\n    On Friday, September 23, 2022, 23:24:59 PM UTC, Alice <a@example.com> wrote:  \n \n  Hi Bob:\n  I just wanted to follow up to see that your account is ok now.\n  \n  Regards,\n  Alice\n",
+      "message_id": "<1879233410.402112.1663976072118@mail.yahoo.com>"
+    },
+    {
+      "type": "text",
+      "start": "2022-09-23T23:38:12.000+00:00",
+      "duration": 0,
+      "parties": [
+        0
+      ],
+      "mediatype": "text/plain",
+      "encoding": "none",
+      "body": "Awesome!\n\n    On Friday, September 23, 2022, 23:34: PM UTC, Bob <b@example.com> wrote:  \n\n  Hi Alice:\n  All is fine. Thanks.\n  \n      On Friday, September 23, 2022, 23:24:59 PM UTC, Alice <a@example.com> wrote:  \n   \n    Hi Bob:\n    I just wanted to follow up to see that your account is ok now.\n    \n    Regards,\n    Alice\n",
+      "message_id": "<1535873320.402417.1663976292034@mail.yahoo.com>"
+    }
+  ],
+  "analysis": [],
+  "attachments": [],
+  "created_at": "2026-10-24T01:29:12.007+00:00",
+  "subject": "Account issue followup",
+  "sessions": [
+    {
+      "start": "2022-09-23T23:24:59.000+00:00",
+      "duration": 793,
+      "parties": [
+        0,
+        1
+      ],
+      "dialog": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "uuid": "01a16b86-b24d-8057-b9a2-279e0d16bc46"
+}

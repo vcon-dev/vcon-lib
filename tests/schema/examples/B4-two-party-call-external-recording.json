@@ -1,0 +1,45 @@
+{
+  "vcon": "0.5.0",
+  "created_at": "2022-06-21T13:53:00-04:00",
+  "parties": [
+    {
+      "tel": "+12345678901",
+      "name": "Alice"
+    },
+    {
+      "tel": "+19876543210",
+      "name": "Bob"
+    }
+  ],
+  "dialog": [
+    {
+      "type": "recording",
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "url": "https://github.com/ietf-wg-vcon/draft-ietf-vcon-vcon-core/raw/refs/heads/main/examples/ab_call_2ch.ogg",
+      "mediatype": "audio/ogg",
+      "filename": "ab_call_2ch.ogg",
+      "content_hash": "sha512-Y-Q9eclT6b5hFyIfLtnFAAXgqFzN5_Cjr3JQ3DMmcnpXHkGMgtvaxrLW2R2OhFTzR-DinyrngBG2w9lTZXr1EQ"
+    }
+  ],
+  "analysis": [],
+  "attachments": [],
+  "sessions": [
+    {
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "dialog": [
+        0
+      ]
+    }
+  ],
+  "uuid": "01a16b86-96e7-80a8-b9a2-279e0d16bc46"
+}

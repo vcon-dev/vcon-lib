@@ -1,0 +1,1075 @@
+{
+  "vcon": "0.5.0",
+  "created_at": "2022-06-21T13:53:00-04:00",
+  "parties": [
+    {
+      "tel": "+12345678901",
+      "name": "Alice"
+    },
+    {
+      "tel": "+19876543210",
+      "name": "Bob"
+    }
+  ],
+  "dialog": [
+    {
+      "type": "recording",
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "url": "https://github.com/ietf-wg-vcon/draft-ietf-vcon-vcon-core/raw/refs/heads/main/examples/ab_call_2ch.ogg",
+      "mediatype": "audio/ogg",
+      "filename": "ab_call_2ch.ogg",
+      "content_hash": "sha512-Y-Q9eclT6b5hFyIfLtnFAAXgqFzN5_Cjr3JQ3DMmcnpXHkGMgtvaxrLW2R2OhFTzR-DinyrngBG2w9lTZXr1EQ"
+    }
+  ],
+  "analysis": [
+    {
+      "type": "transcript",
+      "dialog": 0,
+      "body": {
+        "metadata": {
+          "transaction_key": "deprecated",
+          "request_id": "01a16b9c-30a8-7941-9b74-a9c73124938a",
+          "sha256": "460145629244a6c72d4f0b94707ec3ca4e92da1ae11fe1d04a3fc88143795c63",
+          "created": "2026-10-24T01:52:40.996Z",
+          "duration": 32.925938,
+          "channels": 2,
+          "models": [
+            "2187e11a-3532-4498-b076-81fa530bdd49"
+          ],
+          "model_info": {
+            "2187e11a-3532-4498-b076-81fa530bdd49": {
+              "name": "general-nova-3",
+              "version": "2025-07-31.0",
+              "arch": "nova-3"
+            }
+          },
+          "diarize_info": {
+            "model_uuid": "a9f85c2b-5afb-4b9d-b49b-492c43a01cfb",
+            "arch": "v1"
+          }
+        },
+        "results": {
+          "channels": [
+            {
+              "alternatives": [
+                {
+                  "transcript": "Hi. I'd like to add Foo to my service. My name is Alice and my number is 1234567890. No. Thank you. Goodbye.",
+                  "confidence": 0.99609375,
+                  "words": [
+                    {
+                      "word": "hi",
+                      "start": 5.52,
+                      "end": 6.16,
+                      "confidence": 0.8781738,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "Hi."
+                    },
+                    {
+                      "word": "i'd",
+                      "start": 6.24,
+                      "end": 6.56,
+                      "confidence": 0.9951172,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "I'd"
+                    },
+                    {
+                      "word": "like",
+                      "start": 6.56,
+                      "end": 6.72,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "like"
+                    },
+                    {
+                      "word": "to",
+                      "start": 6.72,
+                      "end": 6.7999997,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "to"
+                    },
+                    {
+                      "word": "add",
+                      "start": 6.7999997,
+                      "end": 7.12,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "add"
+                    },
+                    {
+                      "word": "foo",
+                      "start": 7.12,
+                      "end": 7.52,
+                      "confidence": 0.6496582,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "Foo"
+                    },
+                    {
+                      "word": "to",
+                      "start": 7.52,
+                      "end": 7.8399997,
+                      "confidence": 0.9902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "to"
+                    },
+                    {
+                      "word": "my",
+                      "start": 7.8399997,
+                      "end": 8,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "my"
+                    },
+                    {
+                      "word": "service",
+                      "start": 8,
+                      "end": 8.4,
+                      "confidence": 0.99560547,
+                      "speaker": 0,
+                      "speaker_confidence": 0.93691725,
+                      "punctuated_word": "service."
+                    },
+                    {
+                      "word": "my",
+                      "start": 13.695001,
+                      "end": 13.935,
+                      "confidence": 0.99609375,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "My"
+                    },
+                    {
+                      "word": "name",
+                      "start": 13.935,
+                      "end": 14.175,
+                      "confidence": 0.9980469,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "name"
+                    },
+                    {
+                      "word": "is",
+                      "start": 14.175,
+                      "end": 14.255,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "is"
+                    },
+                    {
+                      "word": "alice",
+                      "start": 14.255,
+                      "end": 14.815001,
+                      "confidence": 0.9902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "Alice"
+                    },
+                    {
+                      "word": "and",
+                      "start": 14.815001,
+                      "end": 15.215,
+                      "confidence": 0.7080078,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "and"
+                    },
+                    {
+                      "word": "my",
+                      "start": 15.215,
+                      "end": 15.455,
+                      "confidence": 0.99609375,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "my"
+                    },
+                    {
+                      "word": "number",
+                      "start": 15.455,
+                      "end": 15.695,
+                      "confidence": 0.9970703,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "number"
+                    },
+                    {
+                      "word": "is",
+                      "start": 15.695,
+                      "end": 16.335,
+                      "confidence": 0.9970703,
+                      "speaker": 0,
+                      "speaker_confidence": 0.9877569,
+                      "punctuated_word": "is"
+                    },
+                    {
+                      "word": "1234567890",
+                      "start": 16.335,
+                      "end": 20.255001,
+                      "confidence": 0.9845703,
+                      "speaker": 0,
+                      "speaker_confidence": 0.98775685,
+                      "punctuated_word": "1234567890."
+                    },
+                    {
+                      "word": "no",
+                      "start": 27.820936,
+                      "end": 28.380938,
+                      "confidence": 0.8015137,
+                      "speaker": 0,
+                      "speaker_confidence": 0.89424765,
+                      "punctuated_word": "No."
+                    },
+                    {
+                      "word": "thank",
+                      "start": 28.380938,
+                      "end": 28.700937,
+                      "confidence": 0.9941406,
+                      "speaker": 0,
+                      "speaker_confidence": 0.89424765,
+                      "punctuated_word": "Thank"
+                    },
+                    {
+                      "word": "you",
+                      "start": 28.700937,
+                      "end": 29.180937,
+                      "confidence": 0.98657227,
+                      "speaker": 0,
+                      "speaker_confidence": 0.89424765,
+                      "punctuated_word": "you."
+                    },
+                    {
+                      "word": "goodbye",
+                      "start": 29.180937,
+                      "end": 29.500937,
+                      "confidence": 0.85009766,
+                      "speaker": 0,
+                      "speaker_confidence": 0.89424765,
+                      "punctuated_word": "Goodbye."
+                    }
+                  ],
+                  "paragraphs": {
+                    "transcript": "\nSpeaker 0: Hi. I'd like to add Foo to my service. My name is Alice and my number is 1234567890. No. Thank you.\n\nGoodbye.",
+                    "paragraphs": [
+                      {
+                        "sentences": [
+                          {
+                            "text": "Hi.",
+                            "start": 5.52,
+                            "end": 6.16
+                          },
+                          {
+                            "text": "I'd like to add Foo to my service.",
+                            "start": 6.24,
+                            "end": 8.4
+                          },
+                          {
+                            "text": "My name is Alice and my number is 1234567890.",
+                            "start": 13.695001,
+                            "end": 20.255001
+                          },
+                          {
+                            "text": "No.",
+                            "start": 27.820936,
+                            "end": 28.380938
+                          },
+                          {
+                            "text": "Thank you.",
+                            "start": 28.380938,
+                            "end": 29.180937
+                          }
+                        ],
+                        "speaker": 0,
+                        "num_words": 21,
+                        "start": 5.52,
+                        "end": 29.180937
+                      },
+                      {
+                        "sentences": [
+                          {
+                            "text": "Goodbye.",
+                            "start": 29.180937,
+                            "end": 29.500937
+                          }
+                        ],
+                        "speaker": 0,
+                        "num_words": 1,
+                        "start": 29.180937,
+                        "end": 29.500937
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "alternatives": [
+                {
+                  "transcript": "Hello. This is example.com. My name is Bob. How can I help you? Okay. Can you give me your name and phone number so I can look up your account? Thank you. Okay. I've added food to your service. Is there anything else I can help you with? Goodbye. Have a nice day.",
+                  "confidence": 1,
+                  "words": [
+                    {
+                      "word": "hello",
+                      "start": 1.12,
+                      "end": 1.68,
+                      "confidence": 0.9790039,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "Hello."
+                    },
+                    {
+                      "word": "this",
+                      "start": 1.68,
+                      "end": 2.08,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "This"
+                    },
+                    {
+                      "word": "is",
+                      "start": 2.08,
+                      "end": 2.24,
+                      "confidence": 0.9951172,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "is"
+                    },
+                    {
+                      "word": "example.com",
+                      "start": 2.24,
+                      "end": 3.28,
+                      "confidence": 0.939209,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "example.com."
+                    },
+                    {
+                      "word": "my",
+                      "start": 3.28,
+                      "end": 3.4399998,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "My"
+                    },
+                    {
+                      "word": "name",
+                      "start": 3.4399998,
+                      "end": 3.6,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "name"
+                    },
+                    {
+                      "word": "is",
+                      "start": 3.6,
+                      "end": 3.6799998,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "is"
+                    },
+                    {
+                      "word": "bob",
+                      "start": 3.6799998,
+                      "end": 4.16,
+                      "confidence": 0.99853516,
+                      "speaker": 0,
+                      "speaker_confidence": 0.5035404,
+                      "punctuated_word": "Bob."
+                    },
+                    {
+                      "word": "how",
+                      "start": 4.16,
+                      "end": 4.4,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.24978054,
+                      "punctuated_word": "How"
+                    },
+                    {
+                      "word": "can",
+                      "start": 4.4,
+                      "end": 4.56,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.24978054,
+                      "punctuated_word": "can"
+                    },
+                    {
+                      "word": "i",
+                      "start": 4.56,
+                      "end": 4.64,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.24978054,
+                      "punctuated_word": "I"
+                    },
+                    {
+                      "word": "help",
+                      "start": 4.64,
+                      "end": 4.88,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.24978054,
+                      "punctuated_word": "help"
+                    },
+                    {
+                      "word": "you",
+                      "start": 4.88,
+                      "end": 5.36,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.24978054,
+                      "punctuated_word": "you?"
+                    },
+                    {
+                      "word": "okay",
+                      "start": 9.04,
+                      "end": 9.759999,
+                      "confidence": 0.99853516,
+                      "speaker": 0,
+                      "speaker_confidence": 0.42573488,
+                      "punctuated_word": "Okay."
+                    },
+                    {
+                      "word": "can",
+                      "start": 10.08,
+                      "end": 10.32,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.42573488,
+                      "punctuated_word": "Can"
+                    },
+                    {
+                      "word": "you",
+                      "start": 10.32,
+                      "end": 10.4,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.42573488,
+                      "punctuated_word": "you"
+                    },
+                    {
+                      "word": "give",
+                      "start": 10.4,
+                      "end": 10.559999,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.42573488,
+                      "punctuated_word": "give"
+                    },
+                    {
+                      "word": "me",
+                      "start": 10.559999,
+                      "end": 10.719999,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.42573488,
+                      "punctuated_word": "me"
+                    },
+                    {
+                      "word": "your",
+                      "start": 10.719999,
+                      "end": 10.88,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "your"
+                    },
+                    {
+                      "word": "name",
+                      "start": 10.88,
+                      "end": 11.12,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "name"
+                    },
+                    {
+                      "word": "and",
+                      "start": 11.12,
+                      "end": 11.28,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "and"
+                    },
+                    {
+                      "word": "phone",
+                      "start": 11.28,
+                      "end": 11.5199995,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "phone"
+                    },
+                    {
+                      "word": "number",
+                      "start": 11.5199995,
+                      "end": 11.679999,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "number"
+                    },
+                    {
+                      "word": "so",
+                      "start": 11.679999,
+                      "end": 11.92,
+                      "confidence": 0.9350586,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "so"
+                    },
+                    {
+                      "word": "i",
+                      "start": 11.92,
+                      "end": 12.08,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49732846,
+                      "punctuated_word": "I"
+                    },
+                    {
+                      "word": "can",
+                      "start": 12.08,
+                      "end": 12.16,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.2417295,
+                      "punctuated_word": "can"
+                    },
+                    {
+                      "word": "look",
+                      "start": 12.16,
+                      "end": 12.32,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.2417295,
+                      "punctuated_word": "look"
+                    },
+                    {
+                      "word": "up",
+                      "start": 12.32,
+                      "end": 12.48,
+                      "confidence": 0.9921875,
+                      "speaker": 0,
+                      "speaker_confidence": 0.2417295,
+                      "punctuated_word": "up"
+                    },
+                    {
+                      "word": "your",
+                      "start": 12.48,
+                      "end": 12.639999,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.2417295,
+                      "punctuated_word": "your"
+                    },
+                    {
+                      "word": "account",
+                      "start": 12.639999,
+                      "end": 13.04,
+                      "confidence": 0.9980469,
+                      "speaker": 0,
+                      "speaker_confidence": 0.2417295,
+                      "punctuated_word": "account?"
+                    },
+                    {
+                      "word": "thank",
+                      "start": 20.635,
+                      "end": 20.955,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "Thank"
+                    },
+                    {
+                      "word": "you",
+                      "start": 20.955,
+                      "end": 21.435,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "you."
+                    },
+                    {
+                      "word": "okay",
+                      "start": 22.795,
+                      "end": 23.515,
+                      "confidence": 0.9995117,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "Okay."
+                    },
+                    {
+                      "word": "i've",
+                      "start": 23.994999,
+                      "end": 24.395,
+                      "confidence": 0.99853516,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "I've"
+                    },
+                    {
+                      "word": "added",
+                      "start": 24.395,
+                      "end": 24.715,
+                      "confidence": 0.99902344,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "added"
+                    },
+                    {
+                      "word": "food",
+                      "start": 24.715,
+                      "end": 24.955,
+                      "confidence": 0.9580078,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "food"
+                    },
+                    {
+                      "word": "to",
+                      "start": 24.955,
+                      "end": 25.115,
+                      "confidence": 0.96435547,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "to"
+                    },
+                    {
+                      "word": "your",
+                      "start": 25.115,
+                      "end": 25.275,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "your"
+                    },
+                    {
+                      "word": "service",
+                      "start": 25.275,
+                      "end": 25.595001,
+                      "confidence": 0.99560547,
+                      "speaker": 0,
+                      "speaker_confidence": 0.492307,
+                      "punctuated_word": "service."
+                    },
+                    {
+                      "word": "is",
+                      "start": 25.595001,
+                      "end": 25.755001,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "Is"
+                    },
+                    {
+                      "word": "there",
+                      "start": 25.755001,
+                      "end": 25.915,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "there"
+                    },
+                    {
+                      "word": "anything",
+                      "start": 25.915,
+                      "end": 26.154999,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "anything"
+                    },
+                    {
+                      "word": "else",
+                      "start": 26.154999,
+                      "end": 26.395,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "else"
+                    },
+                    {
+                      "word": "i",
+                      "start": 26.395,
+                      "end": 26.635,
+                      "confidence": 0.97314453,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "I"
+                    },
+                    {
+                      "word": "can",
+                      "start": 26.635,
+                      "end": 26.795,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "can"
+                    },
+                    {
+                      "word": "help",
+                      "start": 26.795,
+                      "end": 26.955,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "help"
+                    },
+                    {
+                      "word": "you",
+                      "start": 26.955,
+                      "end": 27.035,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "you"
+                    },
+                    {
+                      "word": "with",
+                      "start": 27.035,
+                      "end": 27.275,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.49394125,
+                      "punctuated_word": "with?"
+                    },
+                    {
+                      "word": "goodbye",
+                      "start": 30.320875,
+                      "end": 30.960875,
+                      "confidence": 0.99121094,
+                      "speaker": 0,
+                      "speaker_confidence": 0.21964735,
+                      "punctuated_word": "Goodbye."
+                    },
+                    {
+                      "word": "have",
+                      "start": 30.960875,
+                      "end": 31.200874,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.21964735,
+                      "punctuated_word": "Have"
+                    },
+                    {
+                      "word": "a",
+                      "start": 31.200874,
+                      "end": 31.360876,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.21964735,
+                      "punctuated_word": "a"
+                    },
+                    {
+                      "word": "nice",
+                      "start": 31.360876,
+                      "end": 31.520876,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0.21964735,
+                      "punctuated_word": "nice"
+                    },
+                    {
+                      "word": "day",
+                      "start": 31.520876,
+                      "end": 31.760876,
+                      "confidence": 1,
+                      "speaker": 0,
+                      "speaker_confidence": 0,
+                      "punctuated_word": "day."
+                    }
+                  ],
+                  "paragraphs": {
+                    "transcript": "\nSpeaker 0: Hello. This is example.com. My name is Bob. How can I help you? Okay.\n\nCan you give me your name and phone number so I can look up your account? Thank you. Okay. I've added food to your service. Is there anything else I can help you with?\n\nGoodbye. Have a nice day.",
+                    "paragraphs": [
+                      {
+                        "sentences": [
+                          {
+                            "text": "Hello.",
+                            "start": 1.12,
+                            "end": 1.68
+                          },
+                          {
+                            "text": "This is example.com.",
+                            "start": 1.68,
+                            "end": 3.28
+                          },
+                          {
+                            "text": "My name is Bob.",
+                            "start": 3.28,
+                            "end": 4.16
+                          },
+                          {
+                            "text": "How can I help you?",
+                            "start": 4.16,
+                            "end": 5.36
+                          },
+                          {
+                            "text": "Okay.",
+                            "start": 9.04,
+                            "end": 9.759999
+                          }
+                        ],
+                        "speaker": 0,
+                        "num_words": 14,
+                        "start": 1.12,
+                        "end": 9.759999
+                      },
+                      {
+                        "sentences": [
+                          {
+                            "text": "Can you give me your name and phone number so I can look up your account?",
+                            "start": 10.08,
+                            "end": 13.04
+                          },
+                          {
+                            "text": "Thank you.",
+                            "start": 20.635,
+                            "end": 21.435
+                          },
+                          {
+                            "text": "Okay.",
+                            "start": 22.795,
+                            "end": 23.515
+                          },
+                          {
+                            "text": "I've added food to your service.",
+                            "start": 23.994999,
+                            "end": 25.595001
+                          },
+                          {
+                            "text": "Is there anything else I can help you with?",
+                            "start": 25.595001,
+                            "end": 27.275
+                          }
+                        ],
+                        "speaker": 0,
+                        "num_words": 34,
+                        "start": 10.08,
+                        "end": 27.275
+                      },
+                      {
+                        "sentences": [
+                          {
+                            "text": "Goodbye.",
+                            "start": 30.320875,
+                            "end": 30.960875
+                          },
+                          {
+                            "text": "Have a nice day.",
+                            "start": 30.960875,
+                            "end": 31.760876
+                          }
+                        ],
+                        "speaker": 0,
+                        "num_words": 5,
+                        "start": 30.320875,
+                        "end": 31.760876
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "paragraphs": {
+            "transcript": "\nChannel 1: Speaker 0: Hello. This is example.com. My name is Bob. How can I help you?\n\nChannel 0: Hi. I'd like to add Foo to my service.\n\nChannel 1: Okay. Can you give me your name and phone number so I can look up your account?\n\nChannel 0: My name is Alice and my number is 1234567890.\n\nChannel 1: Thank you. Okay. I've added food to your service. Is there anything else I can help you with?\n\nChannel 0: No. Thank you. Goodbye.\n\nChannel 1: Goodbye. Have a nice day.",
+            "paragraphs": [
+              {
+                "sentences": [
+                  {
+                    "text": "Hello.",
+                    "start": 1.12,
+                    "end": 1.68
+                  },
+                  {
+                    "text": "This is example.com.",
+                    "start": 1.68,
+                    "end": 3.28
+                  },
+                  {
+                    "text": "My name is Bob.",
+                    "start": 3.28,
+                    "end": 4.16
+                  },
+                  {
+                    "text": "How can I help you?",
+                    "start": 4.16,
+                    "end": 5.36
+                  }
+                ],
+                "speaker": 0,
+                "channel": 1,
+                "num_words": 13,
+                "start": 1.12,
+                "end": 5.36
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "Hi.",
+                    "start": 5.52,
+                    "end": 6.16
+                  },
+                  {
+                    "text": "I'd like to add Foo to my service.",
+                    "start": 6.24,
+                    "end": 8.4
+                  }
+                ],
+                "speaker": 0,
+                "channel": 0,
+                "num_words": 9,
+                "start": 5.52,
+                "end": 8.4
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "Okay.",
+                    "start": 9.04,
+                    "end": 9.759999
+                  },
+                  {
+                    "text": "Can you give me your name and phone number so I can look up your account?",
+                    "start": 10.08,
+                    "end": 13.04
+                  }
+                ],
+                "speaker": 0,
+                "channel": 1,
+                "num_words": 17,
+                "start": 9.04,
+                "end": 13.04
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "My name is Alice and my number is 1234567890.",
+                    "start": 13.695001,
+                    "end": 20.255001
+                  }
+                ],
+                "speaker": 0,
+                "channel": 0,
+                "num_words": 9,
+                "start": 13.695001,
+                "end": 20.255001
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "Thank you.",
+                    "start": 20.635,
+                    "end": 21.435
+                  },
+                  {
+                    "text": "Okay.",
+                    "start": 22.795,
+                    "end": 23.515
+                  },
+                  {
+                    "text": "I've added food to your service.",
+                    "start": 23.994999,
+                    "end": 25.595001
+                  },
+                  {
+                    "text": "Is there anything else I can help you with?",
+                    "start": 25.595001,
+                    "end": 27.275
+                  }
+                ],
+                "speaker": 0,
+                "channel": 1,
+                "num_words": 18,
+                "start": 20.635,
+                "end": 27.275
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "No.",
+                    "start": 27.820936,
+                    "end": 28.380938
+                  },
+                  {
+                    "text": "Thank you.",
+                    "start": 28.380938,
+                    "end": 29.180937
+                  },
+                  {
+                    "text": "Goodbye.",
+                    "start": 29.180937,
+                    "end": 29.500937
+                  }
+                ],
+                "speaker": 0,
+                "channel": 0,
+                "num_words": 4,
+                "start": 27.820936,
+                "end": 29.500937
+              },
+              {
+                "sentences": [
+                  {
+                    "text": "Goodbye.",
+                    "start": 30.320875,
+                    "end": 30.960875
+                  },
+                  {
+                    "text": "Have a nice day.",
+                    "start": 30.960875,
+                    "end": 31.760876
+                  }
+                ],
+                "speaker": 0,
+                "channel": 1,
+                "num_words": 5,
+                "start": 30.320875,
+                "end": 31.760876
+              }
+            ]
+          }
+        }
+      },
+      "encoding": "json",
+      "vendor": "deepgram",
+      "schema": "deepgram_prerecorded",
+      "product": "transcription"
+    }
+  ],
+  "attachments": [],
+  "sessions": [
+    {
+      "start": "2022-06-21T17:53:26.000+00:00",
+      "duration": 32.932396,
+      "parties": [
+        0,
+        1
+      ],
+      "dialog": [
+        0
+      ]
+    }
+  ],
+  "uuid": "01a16b86-96e7-80a8-b9a2-279e0d16bc46"
+}

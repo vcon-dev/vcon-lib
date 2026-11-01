@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 import pytest
 
 from src.vcon.dialog import Dialog
-from src.vcon.party import PartyHistory
 
 
 class DummyResponse:
@@ -56,20 +55,30 @@ def test_video_mediatype_autodetect():
     assert dialog.mediatype == "video/mp4"
 
 
-def test_to_dict_party_history_serialization():
-    history = [
-        PartyHistory(party=0, event="join", time=datetime(2026, 2, 3, 12, 0, tzinfo=timezone.utc)),
-        PartyHistory(party=1, event="drop", time="2026-02-03T12:05:00Z"),
-    ]
-    dialog = Dialog(
-        type="text",
-        start=datetime.now(timezone.utc),
-        parties=[0, 1],
-        party_history=history,
-    )
-    data = dialog.to_dict()
-    assert data["party_history"][0]["event"] == "join"
-    assert data["party_history"][1]["time"] == "2026-02-03T12:05:00Z"
+def test_removed_dialog_parameters_are_rejected():
+    """party_history, originator and the transfer parameters left Dialog in 0.5.0."""
+    for name, value in (
+        ("party_history", []),
+        ("originator", 0),
+        ("transferor", 0),
+        ("target_dialog", 1),
+        ("recording_set", 0),
+    ):
+        with pytest.raises(ValueError, match="removed in vCon 0.5.0"):
+            Dialog(type="text", start=datetime.now(timezone.utc), parties=[0], **{name: value})
+
+
+def test_transfer_dialog_type_is_gone():
+    with pytest.raises(ValueError, match="Invalid dialog type"):
+        Dialog(type="transfer", start=datetime.now(timezone.utc), parties=[0])
+    with pytest.raises(ValueError, match="Invalid dialog type"):
+        Dialog(type="recording-set", start=datetime.now(timezone.utc), parties=[0])
+
+
+def test_placeholder_dialog_serializes_as_empty_object():
+    placeholder = Dialog.placeholder()
+    assert placeholder.is_placeholder()
+    assert placeholder.to_dict() == {}
 
 
 def test_add_external_data_and_inline_data(monkeypatch):
