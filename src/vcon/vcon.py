@@ -291,10 +291,13 @@ class Vcon:
         """
         Initialize a Vcon object from a dictionary.
 
-        A dict that declares ``"vcon": "0.4.0"`` (or a signed vCon whose payload
-        does) is migrated to 0.5.0 here, using ``migrate_0_4_0_to_0_5_0``. The
-        report is kept in ``self.migration_report``. A dict with any other (or no)
-        ``vcon`` value is taken as is.
+        A dict that declares ``"vcon": "0.4.0"`` is migrated to 0.5.0 here, using
+        ``migrate_0_4_0_to_0_5_0``. The report is kept in ``self.migration_report``.
+        A signed vCon whose payload is 0.4.0 is NOT migrated on load, because
+        migrating drops the signature: verify it, then call
+        ``Vcon.migrate_0_4_0_to_0_5_0()``. An unmigrated 0.4.0 dict (signed, or
+        ``migrate_legacy=False``) is kept as is; ``property_handling`` is not
+        applied to it. A dict with any other (or no) ``vcon`` value is taken as is.
 
         Args:
             vcon_dict: A dictionary representing a vCon. Defaults to an empty dict.
@@ -325,7 +328,18 @@ class Vcon:
 
         #: MigrationReport when the input was migrated from 0.4.0, else None.
         self.migration_report: Optional[MigrationReport] = None
-        if migrate_legacy and self._is_legacy_0_4_0(vcon_dict):
+        legacy = self._is_legacy_0_4_0(vcon_dict)
+        signed_legacy = legacy and "vcon" not in vcon_dict
+        if signed_legacy:
+            # Migrating rewrites the payload, which drops the signature. Doing that
+            # implicitly would make verify() impossible and, on a load-and-save
+            # path, overwrite a signed record with an unsigned one. Keep it signed;
+            # migrate explicitly with Vcon.migrate_0_4_0_to_0_5_0() after verifying.
+            logger.warning(
+                "Signed 0.4.0 vCon loaded unmigrated; verify it, then call "
+                "Vcon.migrate_0_4_0_to_0_5_0() (the result must be signed again)"
+            )
+        elif migrate_legacy and legacy:
             migrated, self.migration_report = _migrate_0_4_0_to_0_5_0(
                 vcon_dict, strict=strict_migration
             )
@@ -335,6 +349,17 @@ class Vcon:
             )
             vcon_dict = migrated
         
+        if legacy and self.migration_report is None:
+            # An unmigrated 0.4.0 (or signed 0.4.0) dict is kept as is: the 0.5.0
+            # allow-lists of property_handling would strip its legacy parameters
+            # (party_history, originator, redacted, ...), which is silent data loss.
+            if self.property_handling != PROPERTY_HANDLING_DEFAULT:
+                logger.warning(
+                    "0.4.0 vCon kept unmigrated: property_handling=%r not applied", self.property_handling
+                )
+            self.vcon_dict = json.loads(json.dumps(vcon_dict))
+            return
+
         # Version field is now optional - no version management required
         
         # Handle created_at
