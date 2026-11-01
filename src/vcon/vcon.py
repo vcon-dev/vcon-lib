@@ -146,8 +146,8 @@ class Attachment:
         Under core-05 (section 4.6) an attachment needs ``party`` and at least
         one of ``dialog`` or ``session``. ``party`` defaults to 0. Neither
         ``dialog`` nor ``session`` is defaulted here, because the right index
-        depends on the vCon; ``Vcon.add_attachment()`` fills in the vCon's
-        Sessions when neither is given.
+        depends on the vCon; ``Vcon.add_attachment()`` defaults it only when the
+        vCon has exactly one Session.
         
         Args:
             purpose: The purpose of the attachment
@@ -689,27 +689,42 @@ class Vcon:
         self,
         dialog: Optional[int] = None,
         session: Optional[Union[int, List[int]]] = None,
+        whole_vcon: bool = False,
     ) -> Dict[str, Any]:
         """
         Work out the ``dialog`` / ``session`` scope for a new attachment.
 
-        Core-05 section 4.6 needs at least one of the two. When the caller gives
-        neither, the attachment is scoped to every Session in the vCon; if the
-        vCon has no Session yet, an empty placeholder Session is added (an empty
-        Session Object is permitted) and referenced.
+        Core-05 section 4.6 needs at least one of the two. The caller's values
+        are used as given. With neither given, the scope is defaulted only when
+        it is unambiguous: the vCon has exactly one Session, which is then the
+        whole conversation. Otherwise ``ValueError`` is raised, because picking
+        a Session (or adding a placeholder one) would invent the scope.
+
+        ``whole_vcon=True`` is for library metadata that describes the whole
+        vCon (``add_tag``): every Session is listed, and an empty placeholder
+        Session is added when there is none.
         """
         scope: Dict[str, Any] = {}
         if dialog is not None:
             scope["dialog"] = dialog
         if session is not None:
             scope["session"] = session
-        if not scope:
-            sessions = self.vcon_dict.setdefault("sessions", [])
+        if scope:
+            return scope
+        sessions = self.vcon_dict.get("sessions") or []
+        if whole_vcon:
             if not sessions:
-                sessions.append({})
-                logger.info("Added placeholder Session to scope an attachment")
-            scope["session"] = list(range(len(sessions)))
-        return scope
+                self.vcon_dict.setdefault("sessions", []).append({})
+                sessions = self.vcon_dict["sessions"]
+                logger.warning("Added an empty placeholder Session to scope the tags attachment")
+            return {"session": list(range(len(sessions)))}
+        if len(sessions) == 1:
+            return {"session": 0}
+        raise ValueError(
+            "An attachment needs dialog or session (core-05 section 4.6). The vCon has "
+            f"{len(sessions)} Sessions, so no default can be chosen; pass dialog= or session= "
+            "(add a Session first with add_session() if the vCon has none)."
+        )
 
     def add_tag(self, tag_name: str, tag_value: str) -> None:
         """
@@ -739,7 +754,7 @@ class Vcon:
                 "start": self.vcon_dict.get("created_at"),
                 "party": 0,
             }
-            tags_attachment.update(self._resolve_attachment_scope())
+            tags_attachment.update(self._resolve_attachment_scope(whole_vcon=True))
             self.vcon_dict["attachments"].append(tags_attachment)
         else:
             # Normalize a legacy (pre-0.10.0 / -02 convention) JSON-string
@@ -868,14 +883,14 @@ class Vcon:
         """
         Add a lawful basis attachment to the vCon.
 
-        The attachment has ``purpose`` ``"lawful_basis"`` and, under core-05,
-        is scoped to Sessions with ``session`` plus ``party``. ``party`` is the
-        party recording the basis (default 0). ``session`` is ``session_index``
-        if given; otherwise the Sessions that list ``dialog_index`` (when given
-        and found); otherwise every Session in the vCon (an empty placeholder
-        Session is added if there is none). ``dialog`` is added only when
-        ``dialog_index`` is given. The ``lawful_basis`` extension name is added
-        to ``extensions``.
+        The attachment has ``purpose`` ``"lawful_basis"``. Under core-05 it is
+        scoped with ``party`` plus ``session``: pass ``session_index`` (and
+        ``party_index``, the party that records the basis). The scope is never
+        widened or invented: ``dialog_index`` alone gives a dialog-only scope (a
+        warning is logged, because 0.5.0 scopes a basis to Sessions), and with
+        neither index the only Session is used when the vCon has exactly one;
+        otherwise ``ValueError`` is raised. ``party`` defaults to 0 with a
+        warning. The ``lawful_basis`` extension name is added to ``extensions``.
 
         Args:
             lawful_basis: The lawful basis type (consent, contract, etc.)
@@ -911,13 +926,19 @@ class Vcon:
 
             # party is required (default 0, add_tag()'s convention); core-05
             # also needs dialog or session, and the basis is scoped to Sessions.
-            attachment["party"] = party_index if party_index is not None else 0
-            attachment.update(
-                self._resolve_attachment_scope(
-                    dialog=dialog_index,
-                    session=session_index if session_index is not None
-                    else self._sessions_for_dialog(dialog_index),
+            if party_index is None:
+                logger.warning(
+                    "lawful_basis attachment: party_index not given, defaulting to 0; "
+                    "it should be the party that records the basis"
                 )
+            attachment["party"] = party_index if party_index is not None else 0
+            if session_index is None and dialog_index is not None:
+                logger.warning(
+                    "lawful_basis attachment scoped by dialog only; core-05 scopes a basis "
+                    "to Sessions, pass session_index"
+                )
+            attachment.update(
+                self._resolve_attachment_scope(dialog=dialog_index, session=session_index)
             )
 
             # Fill in mediatype/start, also required by the schema, unless
@@ -949,8 +970,9 @@ class Vcon:
         """
         Add a WTF transcription attachment to the vCon.
 
-        Scoped like ``add_lawful_basis_attachment``: ``dialog_index`` and/or
-        ``session_index``, else every Session in the vCon.
+        Scoped by ``dialog_index`` and/or ``session_index`` as given; with
+        neither, the only Session when the vCon has exactly one, else
+        ``ValueError`` (see ``add_attachment``).
 
         Args:
             transcript: Transcript information dictionary
@@ -985,11 +1007,7 @@ class Vcon:
 
             attachment["party"] = party_index if party_index is not None else 0
             attachment.update(
-                self._resolve_attachment_scope(
-                    dialog=dialog_index,
-                    session=session_index if session_index is not None
-                    else self._sessions_for_dialog(dialog_index),
-                )
+                self._resolve_attachment_scope(dialog=dialog_index, session=session_index)
             )
 
             # Fill in mediatype/start, also required by the schema, unless
@@ -1072,16 +1090,6 @@ class Vcon:
 
         except ImportError:
             raise RuntimeError("WTF extension not available")
-
-    def _sessions_for_dialog(self, dialog_index: Optional[int]) -> Optional[List[int]]:
-        """Indices of the Sessions that list ``dialog_index``, or None if there are none."""
-        if dialog_index is None:
-            return None
-        found = [
-            n for n, s in enumerate(self.vcon_dict.get("sessions", []))
-            if isinstance(s, dict) and dialog_index in (s.get("dialog") or [])
-        ]
-        return found or None
 
     def find_lawful_basis_attachments(self, party_index: Optional[int] = None) -> List[Dict[str, Any]]:
         """
@@ -1275,8 +1283,8 @@ class Vcon:
 
         Core-05 needs ``party`` plus ``dialog`` or ``session``. ``party`` defaults
         to 0. If neither ``dialog`` nor ``session`` is given, the attachment is
-        scoped to every Session in the vCon (an empty placeholder Session is added
-        if there is none).
+        scoped to the only Session when the vCon has exactly one; otherwise
+        ``ValueError`` is raised rather than inventing a scope.
 
         Args:
             purpose: The purpose of the attachment

@@ -35,7 +35,7 @@ Code that changes:
 | `Dialog(originator=...)` | `Session(originator=...)` |
 | `Dialog(parties=[sender, *receivers])` | `Dialog(parties=[sender])`; receivers in `Session(parties=[...])` |
 | `recording-set` Dialog | `Session(dialog=[...])` |
-| attachments always `dialog=0` by default | attachments default to `session=[all Sessions]`; pass `dialog` or `session` |
+| attachments always `dialog=0` by default | pass `dialog` or `session`; with neither, the only Session is used when exactly one exists, else `ValueError` (`add_tag()` lists every Session) |
 | `vcon.sign(key)` accepts any header | `alg` "none" raises `AlgorithmNotPermittedError` on `sign()` and `verify()` |
 
 Also new: `is_valid()` now reports a missing Session when dialog or events exist, a missing `extensions` entry

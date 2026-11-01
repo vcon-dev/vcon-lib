@@ -226,23 +226,25 @@ def test_tags() -> None:
 
 def test_add_attachment():
     vcon = Vcon()
+    # start and party are required on every attachment, plus dialog or
+    # session (draft-ietf-vcon-vcon-core-05 section 4.6). add_attachment()
+    # fills start (the vCon's created_at) and party (0). The scope is only
+    # defaulted when the vCon has exactly one Session; with none it is an error
+    # rather than an invented placeholder Session.
+    with pytest.raises(ValueError, match="dialog or session"):
+        vcon.add_attachment(purpose="test_purpose", body="test_body")
+    vcon.add_session()
     attachment = vcon.add_attachment(purpose="test_purpose", body="test_body")
 
     assert len(vcon.vcon_dict["attachments"]) == 1
-    # start and party are required on every attachment, plus dialog or
-    # session (draft-ietf-vcon-vcon-core-05 section 4.6). add_attachment()
-    # fills them in: start defaults to the vCon's created_at, party to 0, and
-    # with neither dialog nor session given the attachment is scoped to every
-    # Session (an empty placeholder Session is added when there is none).
     assert vcon.vcon_dict["attachments"][0] == {
         "purpose": "test_purpose",
         "body": "test_body",
         "encoding": "none",
         "start": vcon.created_at,
         "party": 0,
-        "session": [0],
+        "session": 0,
     }
-    assert vcon.vcon_dict["sessions"] == [{}]
     assert isinstance(attachment, Attachment)
 
 
@@ -292,14 +294,14 @@ def test_get_tag() -> None:
 
 def test_find_attachment_by_purpose() -> None:
     vcon = Vcon.build_new()
-    vcon.add_attachment(body={"key": "value"}, purpose="test_purpose")
+    vcon.add_attachment(body={"key": "value"}, purpose="test_purpose", session=0)
     assert vcon.find_attachment_by_purpose("test_purpose") == {
         "purpose": "test_purpose",
         "body": {"key": "value"},
         "encoding": "none",
         "start": vcon.created_at,
         "party": 0,
-        "session": [0],
+        "session": 0,
     }
     assert vcon.find_attachment_by_purpose("nonexistent_purpose") is None
 

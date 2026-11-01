@@ -788,7 +788,7 @@ Attachment(purpose: str, body: Any = None, encoding: str = "none", mediatype=Non
 - `body` (Any): Content of attachment
 - `encoding` (str): Encoding format ("base64url", "json", "none")
 - `party` (int): Party index (default 0)
-- `dialog` (int), `session` (int or list): at least one is required; `Vcon.add_attachment()` fills `session` with every Session when neither is given
+- `dialog` (int), `session` (int or list): at least one is required; `Vcon.add_attachment()` sets `session` to the only Session when the vCon has exactly one and neither is given, and raises `ValueError` otherwise
 
 #### Methods
 

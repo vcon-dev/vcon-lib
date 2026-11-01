@@ -52,10 +52,14 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
   incomplete Dialog has no content); `details` is kept in `metadata["details"]`.
 - **Breaking:** attachments need `party` plus `dialog` or `session`. The
   `dialog` default of 0 is gone. With neither given, `add_attachment()`,
-  `add_tag()`, `add_lawful_basis_attachment()` and
-  `add_wtf_transcription_attachment()` scope the attachment to every Session and
-  add an empty placeholder Session if there is none. `add_lawful_basis_attachment()`
-  and `add_wtf_transcription_attachment()` take `session_index`.
+  `add_lawful_basis_attachment()` and `add_wtf_transcription_attachment()` use
+  the only Session when the vCon has exactly one and raise `ValueError`
+  otherwise; no placeholder Session is added and a given `dialog_index` is never
+  widened to a Session. `add_tag()` (whole-vCon metadata) lists every Session
+  and adds an empty placeholder Session when there is none.
+  `add_lawful_basis_attachment()` and `add_wtf_transcription_attachment()` take
+  `session_index`; `add_lawful_basis_attachment()` logs a warning when the scope
+  is dialog only or `party_index` is defaulted.
 - **Breaking:** `add_analysis()` takes `dialog` as an optional keyword.
 - **Breaking:** `is_valid()` now also checks: a Session exists when there is
   dialog or events; all Session, Event, attachment and analysis references; the

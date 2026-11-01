@@ -108,12 +108,34 @@ class TestAttachments:
         assert any("invalid party index: 7" in e for e in errors)
         assert any("invalid session index: 3" in e for e in errors)
 
-    def test_default_scope_is_every_session(self):
+    def test_default_scope_is_the_only_session(self):
+        v = _base()
+        v.add_attachment("x", body="b")
+        assert v.vcon_dict["attachments"][0]["session"] == 0
+        assert v.vcon_dict["attachments"][0]["party"] == 0
+
+    def test_no_default_scope_with_several_sessions(self):
         v = _base()
         v.add_session(Session(start=T))
-        v.add_attachment("x", body="b")
-        assert v.vcon_dict["attachments"][0]["session"] == [0, 1]
-        assert v.vcon_dict["attachments"][0]["party"] == 0
+        with pytest.raises(ValueError, match="dialog or session"):
+            v.add_attachment("x", body="b")
+        assert v.vcon_dict["attachments"] == []
+
+    def test_no_placeholder_session_is_invented(self):
+        v = Vcon.build_new()
+        with pytest.raises(ValueError, match="dialog or session"):
+            v.add_attachment("x", body="b")
+        assert v.sessions == []
+
+    def test_tags_describe_the_whole_vcon(self):
+        v = Vcon.build_new()
+        v.add_tag("k", "v")
+        assert v.sessions == [{}]
+        assert v.vcon_dict["attachments"][0]["session"] == [0]
+        w = _base()
+        w.add_session(Session(start=T))
+        w.add_tag("k", "v")
+        assert w.vcon_dict["attachments"][0]["session"] == [0, 1]
 
     def test_attachment_class_has_session_and_no_dialog_default(self):
         a = Attachment("p", body="b", session=[0])
@@ -316,23 +338,25 @@ class TestLawfulBasisScope:
         v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS, party_index=1)
         att = v.find_lawful_basis_attachments()[0]
         assert att["purpose"] == "lawful_basis"
-        assert att["session"] == [0]
+        assert att["session"] == 0
         assert att["party"] == 1
         assert "dialog" not in att
 
-    def test_default_scope_is_all_sessions(self):
+    def test_no_default_scope_with_several_sessions(self):
         v = _base()
         v.add_session(Session(start=T))
-        v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS)
-        assert v.find_lawful_basis_attachments()[0]["session"] == [0, 1]
+        with pytest.raises(ValueError, match="dialog or session"):
+            v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS)
+        assert v.find_lawful_basis_attachments() == []
 
-    def test_dialog_index_adds_dialog_and_uses_sessions_listing_it(self):
+    def test_dialog_index_alone_is_not_widened_to_a_session(self):
+        # A consent record for one dialog must not silently cover the whole Session.
         v = _base()
         v.add_session(Session(start=T))
         v.add_dialog(Dialog(type="text", start=T, parties=[0], body="x", mediatype="text/plain", encoding="none"), session=1)
         v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS, dialog_index=0)
         att = v.find_lawful_basis_attachments()[0]
-        assert att["dialog"] == 0 and att["session"] == [1]
+        assert att["dialog"] == 0 and "session" not in att
 
     def test_explicit_session_index(self):
         v = _base()
@@ -340,13 +364,12 @@ class TestLawfulBasisScope:
         v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS, session_index=1)
         assert v.find_lawful_basis_attachments()[0]["session"] == 1
 
-    def test_placeholder_session_is_added_when_there_is_none(self):
+    def test_no_placeholder_session_is_invented(self):
         v = Vcon.build_new()
         v.add_party(Party(name="A"))
-        v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS)
-        assert v.sessions == [{}]
-        assert v.find_lawful_basis_attachments()[0]["session"] == [0]
-        assert v.is_valid() == (True, [])
+        with pytest.raises(ValueError, match="dialog or session"):
+            v.add_lawful_basis_attachment(lawful_basis="consent", expiration="2030-01-01T00:00:00Z", purpose_grants=self.GRANTS)
+        assert v.sessions == []
 
     def test_wtf_attachment_is_scoped_too(self):
         v = _base()
@@ -355,7 +378,7 @@ class TestLawfulBasisScope:
             segments=[{"id": 0, "start": 0.0, "end": 1.0, "text": "hi", "confidence": 0.9}],
             metadata={"created_at": T, "processed_at": T, "provider": "p", "model": "m"},
         )
-        assert v.find_wtf_attachments()[0]["session"] == [0]
+        assert v.find_wtf_attachments()[0]["session"] == 0
 
 
 class TestRedactedStrings:

@@ -108,6 +108,7 @@ def test_library_built_vcon_with_every_object_kind_validates():
     vcon.add_lawful_basis_attachment(
         lawful_basis="consent", expiration="2030-01-01T00:00:00Z",
         purpose_grants=[{"purpose": "recording", "granted": True, "granted_at": T}],
+        party_index=0, session_index=[0, 1, 2],
     )
     vcon.add_analysis(type="summary", vendor="v", body="s", dialog=0, sessions=[0], attachment=0)
     vcon.add_wtf_transcription_analysis(
