@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-11-15
 
 Retargets the library to `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`).
 This is a breaking release: the Dialog Object lost its transfer, recording-set,
@@ -92,7 +92,7 @@ Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
 - Vendored test schema is now the core-05 Appendix C schema, with the Appendix B
   examples under `tests/schema/examples/`.
 
-## [0.10.0] - Unreleased
+## [0.10.0] - 2026-09-26
 
 Retargets the library to `draft-ietf-vcon-vcon-core-04`. Under -04 section
 2.3.2, a `"json"`-encoded `body` is the JSON *value* itself (object, array,
