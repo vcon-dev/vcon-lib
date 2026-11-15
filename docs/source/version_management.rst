@@ -93,8 +93,8 @@ The version field is now optional. You can choose to:
 
     # Option 2: Manually add version field if needed
     vcon = Vcon.build_new()
-    vcon.vcon_dict["vcon"] = "0.4.0"
-    # vcon.vcon will be "0.4.0"
+    vcon.vcon_dict["vcon"] = "0.5.0"
+    # vcon.vcon will be "0.5.0"
 
 Backward Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -120,8 +120,8 @@ Creating Versionless vCons
     print(vcon.vcon)  # None
 
     # Add version field manually if needed
-    vcon.vcon_dict["vcon"] = "0.4.0"
-    print(vcon.vcon)  # "0.4.0"
+    vcon.vcon_dict["vcon"] = "0.5.0"
+    print(vcon.vcon)  # "0.5.0"
 
 Working with Existing vCons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,7 +173,7 @@ Common Issues
 
 2. **Version field not found**:
    - Check if the vCon object has a version field: ``vcon.vcon is not None``
-   - Add version field manually if needed: ``vcon.vcon_dict["vcon"] = "0.4.0"``
+   - Add version field manually if needed: ``vcon.vcon_dict["vcon"] = "0.5.0"``
 
 3. **Validation errors**:
    - Ensure required fields (uuid, created_at) are present

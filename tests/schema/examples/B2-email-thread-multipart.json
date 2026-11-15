@@ -1,0 +1,58 @@
+{
+  "vcon": "0.5.0",
+  "parties": [
+    {
+      "mailto": "b@example.com",
+      "name": "Bob"
+    },
+    {
+      "mailto": "a@example.com",
+      "name": "Alice"
+    }
+  ],
+  "dialog": [
+    {
+      "type": "text",
+      "start": "2022-09-23T21:44:25.000+00:00",
+      "duration": 0,
+      "parties": [
+        0
+      ],
+      "mediatype": "multipart/mixed; boundary=\"----=_Part_388314_1108189513.1663969465698\"",
+      "encoding": "none",
+      "body": "------=_Part_388314_1108189513.1663969465698\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"----=_Part_388313_805631480.1663969465697\"\r\n\r\n------=_Part_388313_805631480.1663969465697\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\nAlice:Please find the image attached.\r\n\r\nRegards,Bob\r\n\r\n------=_Part_388313_805631480.1663969465697\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n<html><head></head><body><div class=\"yahoo-style-wrap\" style=\"font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;\"><div dir=\"ltr\" data-setdir=\"false\"><div><div dir=\"ltr\" style=\"font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px;\">Alice:</div><div dir=\"ltr\" style=\"font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px;\">Please find the image attached.<br></div><div dir=\"ltr\" style=\"font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px;\"><br></div><div dir=\"ltr\" style=\"font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px;\">Regards,</div><div dir=\"ltr\" style=\"font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px;\">Bob</div></div><br></div></div></body></html>\r\n------=_Part_388313_805631480.1663969465697--\r\n\r\n------=_Part_388314_1108189513.1663969465698\r\nContent-Type: image/png\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"=?UTF-8?b?c2NyZWVuc2hvdC5wbmc=?=\"\r\nContent-ID: <c4c28087-6fa1-395e-e50f-dcefd3d6bf96@yahoo.com>\r\n\r\niVBORw0KGgoAAAANSUhEUgAAACYAAAAeCAIAAADPdvs5AAAAA3NCSVQICAjb4U/gAAAAGXRFWHRT\r\nb2Z0d2FyZQBnbm9tZS1zY3JlZW5zaG907wO/PgAAALpJREFUSInl1t0NgzAMBOC7qPvP1gW6Qjdo\r\nj4f0J4qAJI6NROvniE8+mwCvtzv6imTnyf1K/UclHUFWjIvaIL3CHCABSPKKtJckWfY6zw+sj5dq\r\nISdVIzmj2klzTZG2Rme7NKgOwY6qPrMcUs+2PqchL14P+oyz+fHx77K5Sv8xyxAyZ0uBaxn/SpcU\r\n8NxcosAut1Y3NtjVX7UjZlmpgWTSFyvVQPKB16tSqW53bFnKtyyZvYT3rSsAWADWAlOjseYFfwAA\r\nAABJRU5ErkJggg==\r\n\r\n------=_Part_388314_1108189513.1663969465698--\r\n",
+      "message_id": "<1126698042.388315.1663969465698@mail.yahoo.com>"
+    },
+    {
+      "type": "text",
+      "start": "2022-09-23T21:44:59.000+00:00",
+      "duration": 0,
+      "parties": [
+        1
+      ],
+      "mediatype": "multipart/alternative; boundary=\"----=_Part_390234_811845464.1663969499935\"",
+      "encoding": "none",
+      "body": "------=_Part_390234_811845464.1663969499935\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n Hi Bob:Got it. Thanks.\r\n\r\n    On Friday, September 23, 2022, 9:44:40 PM UTC, Bob <b@example.com> wrote:  \r\n \r\n Alice:Please find the image attached.\r\n\r\nRegards,Bob\r\n  \r\n------=_Part_390234_811845464.1663969499935\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n<html><head></head><body><div class=\"ydp89e479a0yahoo-style-wrap\" style=\"font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;\"><div></div>\r\n        <div><div><div dir=\"ltr\" style=\"font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 16px;\">Hi Bob:</div><div dir=\"ltr\" style=\"font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 16px;\">Got it. Thanks.</div></div><br></div><div><br></div>\r\n        \r\n        </div><div id=\"ydpdc5150a3yahoo_quoted_4829810715\" class=\"ydpdc5150a3yahoo_quoted\">\r\n            <div style=\"font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:13px;color:#26282a;\">\r\n                \r\n                <div>\r\n                    On Friday, September 23, 2022, 9:44:40 PM UTC, Bob &lt;b@example.com&gt; wrote:\r\n                </div>\r\n                <div><br></div>\r\n                <div><br></div>\r\n                <div><div id=\"ydpdc5150a3yiv4578005613\"><div><div style=\"font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;\" class=\"ydpdc5150a3yiv4578005613yahoo-style-wrap\"><div dir=\"ltr\"><div><div dir=\"ltr\" style=\"font-family:Helvetica, Arial, sans-serif;font-size:16px;\">Alice:</div><div dir=\"ltr\" style=\"font-family:Helvetica, Arial, sans-serif;font-size:16px;\">Please find the image attached.<br></div><div dir=\"ltr\" style=\"font-family:Helvetica, Arial, sans-serif;font-size:16px;\"><br></div><div dir=\"ltr\" style=\"font-family:Helvetica, Arial, sans-serif;font-size:16px;\">Regards,</div><div dir=\"ltr\" style=\"font-family:Helvetica, Arial, sans-serif;font-size:16px;\">Bob</div></div><br></div></div></div></div></div>\r\n            </div>\r\n        </div></body></html>\r\n------=_Part_390234_811845464.1663969499935--\r\n",
+      "message_id": "<2031327240.390235.1663969499936@mail.yahoo.com>"
+    }
+  ],
+  "analysis": [],
+  "attachments": [],
+  "created_at": "2026-10-24T01:29:10.590+00:00",
+  "subject": "Account problem",
+  "sessions": [
+    {
+      "start": "2022-09-23T21:44:25.000+00:00",
+      "duration": 34,
+      "parties": [
+        0,
+        1
+      ],
+      "dialog": [
+        0,
+        1
+      ]
+    }
+  ],
+  "uuid": "01a16b86-acc8-8c6d-b9a2-279e0d16bc46"
+}

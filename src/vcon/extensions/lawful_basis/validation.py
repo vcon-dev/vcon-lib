@@ -72,6 +72,17 @@ class LawfulBasisValidator(ExtensionValidator):
         # Check encoding
         if attachment.get("encoding") != "json":
             result.add_error("Lawful basis attachment must use 'json' encoding")
+
+        # Core-05 scope (4.6.3 to 4.6.5). Warnings, so a bare body built by
+        # create_lawful_basis_attachment() can still be checked before it is
+        # placed in a vCon; Vcon.is_valid() enforces party and dialog/session.
+        if "party" not in attachment:
+            result.add_warning("Lawful basis attachment has no party (core-05 requires it)")
+        if "session" not in attachment:
+            result.add_warning(
+                "Lawful basis attachment has no session; core-05 scopes a basis to Sessions"
+                + ("" if "dialog" in attachment else " and an attachment needs dialog or session")
+            )
         
         # Validate body structure. Accept both the -04 shape (body already
         # the decoded object) and a legacy JSON-string body.

@@ -35,7 +35,9 @@ def main():
     
     # Add a dialog
     from vcon.dialog import Dialog
+    from vcon.session import Session
     from datetime import datetime, timezone
+    vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0]))
     dialog = Dialog(
         type="recording",
         start=datetime.now(timezone.utc),
@@ -44,7 +46,7 @@ def main():
         body="dGVzdCBhdWRpbyBkYXRh",  # "test audio data" in base64
         encoding="base64url"
     )
-    vcon.add_dialog(dialog)
+    vcon.add_dialog(dialog, session=0)
     print("Added dialog")
     
     # Example 1: Lawful Basis Extension

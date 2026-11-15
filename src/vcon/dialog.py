@@ -4,9 +4,9 @@ import base64
 import os
 import logger
 import tempfile
+import warnings
 from datetime import datetime
 from typing import Optional, List, Dict, Union, Any, Tuple
-from .party import PartyHistory
 from dateutil import parser
 
 MIME_TYPES = [
@@ -131,6 +131,28 @@ def parse_content_hash_algorithm(content_hash: str) -> Optional[str]:
     return None
 
 
+_REMOVED_DIALOG_PARAMETERS = frozenset({
+    "originator", "party_history", "transfer", "transferee", "transferor",
+    "transfer_target", "original", "consultation", "target_dialog",
+    "recordings", "recording_set",
+})
+
+
+def _reject_removed_parameters(kwargs: Dict[str, Any]) -> None:
+    removed = sorted(set(kwargs) & _REMOVED_DIALOG_PARAMETERS)
+    if removed:
+        raise ValueError(
+            f"Dialog parameter(s) {removed} were removed in vCon 0.5.0: "
+            "originator belongs to the Session Object; party_history and the transfer "
+            "parameters are Event Objects; recordings/recording_set are replaced by "
+            "the Session Object."
+        )
+
+
+#: Accepted on input for backward compatibility, normalized to "recording".
+LEGACY_MEDIA_DIALOG_TYPES = ("audio", "video")
+
+
 class Dialog:
     """
     A class representing a dialog segment in a vCon conversation.
@@ -138,7 +160,6 @@ class Dialog:
     A dialog represents a piece of conversation content, which can be:
     - text: Text-based communication (email, chat, SMS)
     - recording: Audio/video recording of the conversation
-    - transfer: Call transfer operation between parties
     - incomplete: Failed or incomplete conversation setup
     - video: Video content with metadata
     
@@ -152,19 +173,16 @@ class Dialog:
     - Text formats: Plain text, multipart messages
     - Images: JPEG, TIFF, PDF
     
-    New in vCon 0.4.0:
-    - session_id: Session identifier for tracking
-    - content_hash: Hash for externally referenced files (replaces alg/signature)
-    - application: Application identifier for the dialog
-    - message_id: Message identifier for email/text dialogs
-    - Updated media type validation with specification-compliant types
-    - New disposition values for incomplete dialogs
-    - Party history with event tracking (join, drop, hold, unhold, mute, unmute)
-    
-    Transfer dialog features:
-    - transfer_target: Target party for transfers
-    - target_dialog: Target dialog reference
-    - Support for consultation and original call tracking
+    Changes in vCon 0.5.0 (draft-ietf-vcon-vcon-core-05):
+    - ``parties`` lists the contributors only. The receivers are in the
+      ``parties`` of the Session Object that references the dialog.
+    - ``originator`` moved to the Session Object.
+    - ``party_history`` was replaced by Event Objects (``vcon.event.Event``).
+    - The ``transfer`` and ``recording-set`` dialog types were removed. Transfers
+      are Events; a recording set is a Session.
+    - An empty Dialog Object (``Dialog.placeholder()``, serialized as ``{}``)
+      holds a position in the dialog array so that indices do not change.
+    - ``redacted_segments`` was added.
     """
 
     MIME_TYPES = [
@@ -204,7 +222,6 @@ class Dialog:
     VALID_TYPES = [
         "recording", 
         "text", 
-        "transfer", 
         "incomplete",
         "audio",
         "video"
@@ -225,20 +242,12 @@ class Dialog:
         type: str,
         start: Union[datetime, str],
         parties: List[int],
-        originator: Optional[int] = None,
         mediatype: Optional[str] = None,
         filename: Optional[str] = None,
         body: Optional[str] = None,
         encoding: Optional[str] = None,
         url: Optional[str] = None,
         disposition: Optional[str] = None,
-        party_history: Optional[List[PartyHistory]] = None,
-        transferee: Optional[int] = None,
-        transferor: Optional[int] = None,
-        transfer_target: Optional[int] = None,
-        original: Optional[int] = None,
-        consultation: Optional[int] = None,
-        target_dialog: Optional[int] = None,
         campaign: Optional[str] = None,
         interaction: Optional[str] = None,
         skill: Optional[str] = None,
@@ -246,7 +255,6 @@ class Dialog:
         meta: Optional[dict] = None,
         # New parameters for signaling and extended functionality
         metadata: Optional[Dict[str, Any]] = None,
-        transfer: Optional[Dict[str, Any]] = None,
         signaling: Optional[Dict[str, Any]] = None,
         # New parameters for video metadata
         resolution: Optional[str] = None,
@@ -260,18 +268,17 @@ class Dialog:
         # Additional fields from specification
         application: Optional[str] = None,
         message_id: Optional[str] = None,
+        redacted_segments: Optional[List[Dict[str, Any]]] = None,
         **kwargs,
     ) -> None:
         """
         Initialize a Dialog object.
-        :param type: the type of the dialog (e.g. "text", "recording", "transfer", "incomplete", "video")
+        :param type: the type of the dialog (e.g. "text", "recording", "incomplete", "video")
         :type type: str
         :param start: the start time of the dialog
         :type start: datetime
-        :param parties: the parties involved in the dialog
+        :param parties: the parties that contributed to the dialog (the receivers are in the Session Object)
         :type parties: List[int]
-        :param originator: the party that originated the dialog
-        :type originator: int or None
         :param mediatype: the MIME type of the dialog body
         :type mediatype: str or None
         :param filename: the filename of the dialog body
@@ -284,20 +291,6 @@ class Dialog:
         :type url: str or None
         :param disposition: the disposition of the dialog
         :type disposition: str or None
-        :param party_history: the history of parties involved in the dialog
-        :type party_history: List[PartyHistory] or None
-        :param transferee: the party that the dialog was transferred to
-        :type transferee: int or None
-        :param transferor: the party that transferred the dialog
-        :type transferor: int or None
-        :param transfer_target: the target of the transfer
-        :type transfer_target: int or None
-        :param original: the original dialog
-        :type original: int or None
-        :param consultation: the consultation dialog
-        :type consultation: int or None
-        :param target_dialog: the target dialog
-        :type target_dialog: int or None
         :param campaign: the campaign that the dialog is associated with
         :type campaign: str or None
         :param interaction: the interaction that the dialog is associated with
@@ -310,8 +303,6 @@ class Dialog:
         :type meta: dict or None
         :param metadata: structured metadata for the dialog (newer format)
         :type metadata: dict or None
-        :param transfer: transfer-specific information
-        :type transfer: dict or None
         :param signaling: signaling-specific information
         :type signaling: dict or None
         :param resolution: video resolution (e.g., "1920x1080")
@@ -332,8 +323,12 @@ class Dialog:
         :type application: str or None
         :param message_id: Message identifier for email/text dialogs
         :type message_id: str or None
+        :param redacted_segments: Redacted_segments Objects (start, end, optional parties)
+        :type redacted_segments: list or None
         :param kwargs: Additional attributes to be set on the dialog
         """
+
+        _reject_removed_parameters(kwargs)
 
         # Validate dialog type
         if type not in self.VALID_TYPES:
@@ -365,6 +360,19 @@ class Dialog:
         for key, value in kwargs.items():
             if value is not None:
                 setattr(self, key, value)
+
+        # "audio" and "video" are not core-05 Dialog types (4.5.1: recording,
+        # text, incomplete or an extension value). They are accepted for
+        # backward compatibility but never emitted: the Dialog is a recording,
+        # and the media kind stays in mediatype.
+        if type in LEGACY_MEDIA_DIALOG_TYPES:
+            warnings.warn(
+                f'Dialog type "{type}" is not a core-05 type; using "recording" '
+                "(the media kind is carried by mediatype)",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.type = "recording"
 
         # Handling for specific dialog types
         if type == "incomplete" and not hasattr(self, "disposition"):
@@ -416,6 +424,10 @@ class Dialog:
         :return: a dictionary containing all non-None Dialog object attributes
         :rtype: dict
         """
+        # An empty placeholder Dialog Object serializes as {}.
+        if getattr(self, "_placeholder", False):
+            return {}
+
         # Check to see if the start time provided. If not,
         # set the start time to the current time
         if not hasattr(self, "start"):
@@ -424,19 +436,14 @@ class Dialog:
         # Get all attributes of the object
         dialog_dict = self.__dict__.copy()
 
-        # Handle party_history specially
-        if hasattr(self, "party_history") and self.party_history:
-            dialog_dict["party_history"] = [
-                party_history.to_dict() for party_history in self.party_history
-            ]
-
         # meta/metadata are always initialized to {} for backward-compat
         # attribute access (see __init__); omit them from the serialized
         # form when still empty rather than emitting empty placeholders.
         return {
             k: v
             for k, v in dialog_dict.items()
-            if v is not None and not (k in ("meta", "metadata") and v == {})
+            if v is not None and k != "_placeholder"
+            and not (k in ("meta", "metadata") and v == {})
         }
 
     def add_external_data(self, url: str, filename: str, mediatype: str) -> None:
@@ -525,13 +532,31 @@ class Dialog:
         return hasattr(self, "type") and self.type == "recording"
     
     def is_transfer(self) -> bool:
+        """Deprecated: core-05 has no transfer Dialog type, so this is always False."""
+        warnings.warn(
+            "Dialog.is_transfer() is deprecated: transfers are Events in core-05", DeprecationWarning, stacklevel=2
+        )
+        return False
+
+    def is_placeholder(self) -> bool:
         """
-        Check if the dialog is a transfer dialog.
-        :return: True if the dialog is a transfer dialog, False otherwise
-        :rtype: bool
+        Check if the dialog is an empty placeholder Dialog Object (``{}``).
         """
-        return hasattr(self, "type") and self.type == "transfer"
-    
+        return getattr(self, "_placeholder", False)
+
+    @classmethod
+    def placeholder(cls) -> "Dialog":
+        """
+        Create an empty Dialog Object (core-05 section 4.5.1).
+
+        It has no parameters and no meaning; it holds a position in the dialog
+        array so that the indices of the other Dialog Objects, and the references
+        to them, do not change. It serializes as ``{}``.
+        """
+        obj = cls.__new__(cls)
+        obj._placeholder = True
+        return obj
+
     def is_incomplete(self) -> bool:
         """
         Check if the dialog is an incomplete dialog.
@@ -605,8 +630,8 @@ class Dialog:
         Returns:
             None
         """
-        # Set dialog type to video
-        self.type = "video"
+        # A video is a "recording" Dialog in core-05; mediatype says it is video.
+        self.type = "recording"
         
         # Auto-detect mediatype from filename if not provided
         if not mediatype and filename:
@@ -884,7 +909,7 @@ class Dialog:
         Returns:
             None
         """
-        self.type = "video"
+        self.type = "recording"
         self.url = f"stream://{reference_id}"
         self.mediatype = mediatype
         

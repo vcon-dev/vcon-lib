@@ -2,7 +2,7 @@
 
 The schema is vendored at tests/schema/vcon_json_schema.json (see
 tests/schema/SOURCE.md for provenance) and matches the appendix schema of
-draft-ietf-vcon-vcon-core-04. This test builds a vCon using only the
+draft-ietf-vcon-vcon-core-05 (Appendix C). This test builds a vCon using only the
 library's public helpers -- add_tag, add_lawful_basis_attachment,
 add_dialog (with and without inline audio), and add_attachment -- and
 checks that the resulting dict validates with no post-processing.
@@ -18,6 +18,8 @@ jsonschema = pytest.importorskip("jsonschema")
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog, b64url_encode
+from vcon.session import Session
+from vcon.event import Event
 
 SCHEMA_PATH = Path(__file__).parent / "schema" / "vcon_json_schema.json"
 
@@ -33,16 +35,20 @@ def test_vcon_built_with_public_helpers_validates_against_wg_schema():
     vcon.add_party(Party(name="Alice", role="caller"))
     vcon.add_party(Party(name="Bob", role="agent"))
 
+    # One Session for the conversation; Dialog parties are contributors only,
+    # the receivers are the Session parties.
+    vcon.add_session(Session(start=vcon.created_at, parties=[0, 1]))
+
     # Dialog without inline audio (plain text).
     text_dialog = Dialog(
         type="text",
         start=vcon.created_at,
-        parties=[0, 1],
+        parties=[0],
         body="Hello, how can I help?",
         encoding="none",
         mediatype="text/plain",
     )
-    vcon.add_dialog(text_dialog)
+    vcon.add_dialog(text_dialog, session=0)
 
     # Dialog with inline audio, base64url-encoded per -04 (unpadded).
     audio_bytes = b"RIFF\x00\x00\x00\x00WAVEfmt fake audio payload"
@@ -54,7 +60,7 @@ def test_vcon_built_with_public_helpers_validates_against_wg_schema():
         encoding="base64url",
         mediatype="audio/x-wav",
     )
-    vcon.add_dialog(audio_dialog)
+    vcon.add_dialog(audio_dialog, session=0)
 
     vcon.add_tag("category", "support")
     vcon.add_tag("priority", "high")
@@ -66,8 +72,8 @@ def test_vcon_built_with_public_helpers_validates_against_wg_schema():
             {"purpose": "recording", "granted": True, "granted_at": vcon.created_at}
         ],
         party_index=0,
-        dialog_index=1,
     )
+    vcon.add_event(Event(type="join", time=vcon.created_at, sessions=0, party=0))
 
     vcon.add_attachment(
         purpose="notes",
@@ -75,6 +81,7 @@ def test_vcon_built_with_public_helpers_validates_against_wg_schema():
         encoding="json",
         party=1,
         dialog=0,
+        session=0,
     )
 
     vcon_dict = vcon.to_dict()
@@ -97,6 +104,7 @@ def test_legacy_string_tags_body_still_validates_after_add_tag():
 
     vcon = Vcon.build_new()
     vcon.add_party(Party(name="Alice"))
+    vcon.add_session(Session(parties=[0]))
 
     # Simulate a vCon written under -02 conventions / by an older release:
     # the tags attachment body is a JSON-encoded string, not a list.
@@ -108,7 +116,7 @@ def test_legacy_string_tags_body_still_validates_after_add_tag():
             "mediatype": "application/json",
             "start": vcon.created_at,
             "party": 0,
-            "dialog": 0,
+            "session": [0],
         }
     )
 

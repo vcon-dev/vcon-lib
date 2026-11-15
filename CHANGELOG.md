@@ -1,6 +1,98 @@
 # Changelog
 
-## [0.10.0] - Unreleased
+## [1.0.0] - 2026-11-15
+
+Retargets the library to `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`).
+This is a breaking release: the Dialog Object lost its transfer, recording-set,
+party history and originator content, which moved to the new Session and Event
+Objects. Readers accept 0.4.0 and 0.5.0; writers emit 0.5.0.
+
+### Added
+- `Session` and `SessionReference` (`vcon.session`), the top-level `sessions`
+  array, `Vcon.add_session()` and `Vcon.sessions`.
+- `Event` (`vcon.event`), the top-level `events` array, `Vcon.add_event()` and
+  `Vcon.events`. The per-event-type parameter table (section 4.3.1.5) is
+  enforced by `Event(...)`, `validate_event()` and `Vcon.is_valid()`.
+- `redacted_from`, `amended_from` and `redacted_strings` top-level parameters
+  and properties; Dialog `redacted_segments`; Attachment `session`; Analysis
+  `sessions`, `attachment` and `analysis`.
+- Empty Dialog Objects: `Dialog.placeholder()` serializes as `{}`.
+- `migrate_0_4_0_to_0_5_0(vcon, strict=False)` (`vcon.migration`), a table
+  driven implementation of Appendix A.1 (`MIGRATION_STEPS`, one entry per step
+  T1 to T15) that returns `MigrationResult(vcon, report)`. The
+  `MigrationReport` lists every inferred value, every fallback for a required
+  field and every unresolved item, and keeps the original content of removed
+  Dialogs. `MigrationError` is raised for input that cannot be migrated and, in
+  strict mode, when a required field has no source. Signed input is migrated as
+  its unsigned payload and the report sets `resign_required`; the library never
+  re-signs.
+- `Vcon.migrate_0_4_0_to_0_5_0()` classmethod, `Vcon.migration_report`, and the
+  `migrate_legacy` and `strict_migration` parameters on `Vcon()`,
+  `build_from_json()`, `load()`, `load_from_file()` and `load_from_url()`.
+- `Vcon.get_validation_warnings()` for SHOULD-level findings.
+- `Vcon.sign(key, alg="RS256")`; `AlgorithmNotPermittedError`.
+
+### Changed
+- **Breaking:** `build_new()` emits `"vcon": "0.5.0"`.
+- **Breaking:** a vCon that declares `"vcon": "0.4.0"` is migrated on load, so
+  `vcon.vcon` reads `"0.5.0"` and indices are preserved. Use
+  `migrate_legacy=False` to keep the raw 0.4.0 dict (property handling is not
+  applied to it, so legacy parameters survive). A signed 0.4.0 vCon is kept
+  signed on load; migrate it explicitly after verifying.
+- Migration details: recording-set membership is the union of `recordings` and
+  the recordings' `recording_set`; a nested recording-set becomes a `child`
+  Session_Reference; party_history Events list every Session of their Dialog,
+  including Sessions made for a transfer's calls; a missing Event time falls
+  back to the Dialog start, then `created_at`; party_history extension
+  parameters are carried onto the Event; a null first party on a text or
+  incomplete Dialog becomes an empty Party Object instead of promoting a
+  receiver; an attachment with no scope gets the only Session when exactly one
+  exists (step T10c). Every one of these is listed in the report.
+- **Breaking:** `Vcon.redacted` and `Vcon.amended` are now `redacted_from` and
+  `amended_from`; the old names remain as deprecated aliases.
+- **Breaking:** Dialog types are `recording`, `text` and `incomplete`.
+  `Dialog(type="audio" | "video")` still works but warns (DeprecationWarning)
+  and builds a `recording`; the video helpers also write `recording`. On read,
+  `audio`/`video` Dialogs are accepted and `get_validation_warnings()` notes them. The `transfer` type and the
+  `recording-set` type are gone, as are the Dialog parameters `party_history`,
+  `originator`, `transferee`, `transferor`, `transfer_target`, `original`,
+  `consultation`, `target_dialog`, `transfer`, `recordings` and `recording_set`;
+  passing one to `Dialog()` raises `ValueError`. `PartyHistory` is deprecated
+  (it warns and converts with `to_event(sessions)`); `Vcon.add_transfer_dialog()`
+  raises `NotImplementedError` pointing at `Event`; `Dialog.is_transfer()` warns
+  and returns False.
+- **Breaking:** Dialog `parties` are the contributors only; the receivers are
+  the `parties` of the Session that lists the Dialog.
+- **Breaking:** `add_incomplete_dialog()` no longer writes a `body` (an
+  incomplete Dialog has no content); `details` is kept in `metadata["details"]`.
+- **Breaking:** attachments need `party` plus `dialog` or `session`. The
+  `dialog` default of 0 is gone. With neither given, `add_attachment()`,
+  `add_lawful_basis_attachment()` and `add_wtf_transcription_attachment()` use
+  the only Session when the vCon has exactly one and raise `ValueError`
+  otherwise; no placeholder Session is added and a given `dialog_index` is never
+  widened to a Session. `add_tag()` (whole-vCon metadata) lists every Session
+  and adds an empty placeholder Session when there is none.
+  `add_lawful_basis_attachment()` and `add_wtf_transcription_attachment()` take
+  `session_index`; `add_lawful_basis_attachment()` logs a warning when the scope
+  is dialog only or `party_index` is defaulted.
+- **Breaking:** `add_analysis()` takes `dialog` as an optional keyword.
+- **Breaking:** `is_valid()` now also checks: a Session exists when there is
+  dialog or events; all Session, Event, attachment and analysis references; the
+  Event parameter table; `redacted_from` and `amended_from` exclusivity; that
+  `extensions` lists every extension in use (`lawful_basis`,
+  `wtf_transcription`, or any value outside the core vocabulary) and every
+  `critical` entry; inline attachment `mediatype`; `__REDACTED_REF_#`
+  references against `redacted_strings`; and that `vcon`, when present, is
+  `"0.5.0"`. Dialog `mediatype` parameters (`; boundary=...`) and `multipart/*`
+  subtypes are accepted; analysis no longer requires `dialog`.
+- **Breaking:** `sign()` and `verify()` reject JWS `alg` "none" with
+  `AlgorithmNotPermittedError`; `verify()` returns False when no `alg` is present.
+- `add_dialog()` and `add_incomplete_dialog()` return the new Dialog's index and
+  take an optional `session`.
+- Vendored test schema is now the core-05 Appendix C schema, with the Appendix B
+  examples under `tests/schema/examples/`.
+
+## [0.10.0] - 2026-09-26
 
 Retargets the library to `draft-ietf-vcon-vcon-core-04`. Under -04 section
 2.3.2, a `"json"`-encoded `body` is the JSON *value* itself (object, array,

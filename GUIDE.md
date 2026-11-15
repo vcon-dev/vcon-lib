@@ -35,7 +35,10 @@ from vcon import Vcon
 - `dialog`: List of dialog entries
 - `attachments`: List of attachments
 - `analysis`: List of analysis entries
-- `redacted`: Redaction information
+- `redacted_from`: Reference to the less redacted vCon (0.5.0; was `redacted`)
+- `amended_from`: Reference to the prior vCon instance (0.5.0; was `amended`)
+- `sessions`: Session Objects grouping dialog and events (0.5.0)
+- `events`: Event Objects (joins, drops, holds, key presses, transfers) (0.5.0)
 - `group`: Group information
 - `meta`: Metadata
 - `tags`: Tags attachment
@@ -67,6 +70,7 @@ Represents a conversation entry.
 
 ```python
 from vcon.dialog import Dialog
+from vcon.session import Session
 ```
 
 #### Supported MIME Types
@@ -188,15 +192,19 @@ index = vcon.find_party_index("tel", "+1234567890")
 
 ### Adding Dialog Entries
 ```python
-# Add a text dialog
+# A Session lists the receivers (0.5.0); Dialog parties are the contributors
+vcon.add_session(Session(start="2024-03-21T10:00:00Z", parties=[0, 1]))
+
+# Add a text dialog to Session 0
 dialog = Dialog(
     type="text",
     start="2024-03-21T10:00:00Z",
-    parties=[0, 1],
+    parties=[0],
     mediatype="text/plain",
-    body="Hello, how can I help?"
+    body="Hello, how can I help?",
+    encoding="none",
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 ```
 
 ### Working with Media
@@ -617,6 +625,7 @@ print("Extension processing completed")
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone, timedelta
 
 # Create comprehensive vCon with extensions
@@ -628,14 +637,15 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add dialog
+# Add a Session and the recording dialog
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
     mediatype="audio/mp3"
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Add lawful basis for consent
 vcon.add_lawful_basis_attachment(

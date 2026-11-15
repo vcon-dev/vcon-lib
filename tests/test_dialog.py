@@ -15,29 +15,19 @@ class TestDialog:
     def test_initialization_with_all_parameters(self):
         from datetime import datetime
         from src.vcon.dialog import Dialog
-        from src.vcon.party import PartyHistory
 
         # Given
-        party_history = [PartyHistory(1, "join", datetime.now())]
         dialog = Dialog(
             type="text",
             start=datetime.now(),
             duration=120.0,
             parties=[1, 2],
-            originator=1,
             mediatype="text/plain",
             filename="example.txt",
             body="Hello, World!",
             encoding="utf-8",
             url="http://example.com",
             disposition="inline",
-            party_history=party_history,
-            transferee=2,
-            transferor=1,
-            transfer_target=3,
-            original=1,
-            consultation=2,
-            target_dialog=3,
             campaign="campaign1",
             interaction="interaction1",
             skill="skill1",
@@ -47,7 +37,6 @@ class TestDialog:
         assert dialog.type == "text"
         assert dialog.duration == 120.0
         assert dialog.parties == [1, 2]
-        assert dialog.party_history == party_history
 
     # Initialization with missing optional parameters
     def test_initialization_with_missing_optional_parameters(self):
@@ -60,29 +49,20 @@ class TestDialog:
             start=datetime.now(),
             duration=None,
             parties=[1, 2],
-            originator=None,
             mediatype=None,
             filename=None,
             body=None,
             encoding=None,
             url=None,
             disposition=None,
-            party_history=None,
-            transferee=None,
-            transferor=None,
-            transfer_target=None,
-            original=None,
-            consultation=None,
-            target_dialog=None,
             campaign=None,
             interaction=None,
             skill=None,
         )
 
         # When & Then
-        assert dialog.type == "audio"
+        assert dialog.type == "recording"  # audio/video normalize to recording
         assert not hasattr(dialog, "duration")
-        assert not hasattr(dialog, "originator")
         assert not hasattr(dialog, "mediatype")
 
     def test_initialization_with_default_optional_parameters(self):
@@ -91,23 +71,20 @@ class TestDialog:
         from src.vcon.dialog import Dialog
 
         dialog = Dialog(
-            type="video", start=datetime.now(), duration=0.0, parties=[1], originator=1
+            type="video", start=datetime.now(), duration=0.0, parties=[1]
         )
 
         # When & Then
         assert dialog.duration == 0.0
         assert dialog.parties == [1]
-        assert dialog.originator == 1
 
         dialog = Dialog(
             type="video",
             start=datetime.now(),
             duration=0.0,
             parties=[1],
-            originator=None,
         )
 
-        assert not hasattr(dialog, "originator")
         assert not hasattr(dialog, "body")
 
         dialog = Dialog(
@@ -115,7 +92,6 @@ class TestDialog:
             start=datetime.now(),
             duration=0.0,
             parties=[1],
-            originator=1,
             mediatype="video/mp4",
         )
 
@@ -127,29 +103,18 @@ class TestDialog:
         # Given
         from datetime import datetime
         from src.vcon.dialog import Dialog
-        from src.vcon.party import PartyHistory
 
-        party_time = datetime.now().isoformat()
-        party_history = [PartyHistory(1, "join", party_time)]
         dialog = Dialog(
             type="text",
             start=datetime.now(),
             duration=120.0,
             parties=[1, 2],
-            originator=1,
             mediatype="text/plain",
             filename="example.txt",
             body="Hello, World!",
             encoding="utf-8",
             url="http://example.com",
             disposition="inline",
-            party_history=party_history,
-            transferee=2,
-            transferor=1,
-            transfer_target=3,
-            original=1,
-            consultation=2,
-            target_dialog=3,
             campaign="campaign1",
             interaction="interaction1",
             skill="skill1",
@@ -162,12 +127,7 @@ class TestDialog:
         assert dialog_dict["type"] == "text"
         assert dialog_dict["duration"] == 120.0
         assert dialog_dict["parties"] == [1, 2]
-        assert dialog_dict["party_history"] == [
-            {"party": 1, "event": "join", "time": party_time}
-        ]
-        assert dialog_dict["party_history"] == [
-            {"party": 1, "event": "join", "time": party_time}
-        ]
+        assert "party_history" not in dialog_dict
 
     # Test the meta variable in the dialog
     def test_meta_variable_in_dialog(self):
@@ -181,7 +141,7 @@ class TestDialog:
 
         dialog = Dialog(type=type, start=start, parties=parties, meta=meta)
 
-        assert dialog.type == type
+        assert dialog.type == "recording"  # audio/video normalize to recording
         assert dialog.start == start
         assert dialog.parties == parties
         assert dialog.meta == meta
@@ -492,7 +452,7 @@ class TestDialog:
         )
         
         assert dialog.is_video()
-        assert dialog.type == "video"
+        assert dialog.type == "recording"  # audio/video normalize to recording
         
         # Check mediatype by using the to_dict method if direct attribute access isn't possible
         dialog_dict = dialog.to_dict()
@@ -549,7 +509,7 @@ class TestDialog:
         
         # Verify via to_dict
         dialog_dict = dialog.to_dict()
-        assert dialog_dict.get("type") == "video"
+        assert dialog_dict.get("type") == "recording"  # audio/video normalize to recording
         assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "test_video.mp4"
         assert "body" in dialog_dict
@@ -615,7 +575,7 @@ class TestDialog:
         
         # Verify the dialog has the expected attributes
         dialog_dict = dialog.to_dict()
-        assert dialog_dict.get("type") == "video"
+        assert dialog_dict.get("type") == "recording"  # audio/video normalize to recording
         assert dialog_dict.get("url") == url
         assert dialog_dict.get("mediatype") == "video/mp4"
         assert dialog_dict.get("filename") == "remote_video.mp4"

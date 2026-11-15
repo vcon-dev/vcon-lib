@@ -17,9 +17,18 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import requests
 import logging
+import warnings
 from .party import Party
 from .dialog import Dialog, b64url_encode
 from .body import decode_body
+from .session import Session
+from .event import Event
+from .migration import (
+    MigrationError,
+    MigrationReport,
+    migrate_0_4_0_to_0_5_0 as _migrate_0_4_0_to_0_5_0,
+)
+from .validation import validate_vcon_dict
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -40,43 +49,67 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 
 # Define allowed properties for each object type
 _ALLOWED_VCON_PROPERTIES = {
-    "uuid", "vcon", "created_at", "updated_at", "redacted",
+    "uuid", "vcon", "created_at", "updated_at", "redacted_from",
     "group", "parties", "dialog", "attachments", "analysis",
-    "signatures", "payload", "meta", "subject", "amended",
-    "extensions", "critical"
+    "signatures", "payload", "meta", "subject", "amended_from",
+    "extensions", "critical", "sessions", "events", "redacted_strings"
+}
+
+_ALLOWED_SESSION_PROPERTIES = {
+    "start", "duration", "parties", "originator", "session_id",
+    "sessions", "dialog"
+}
+
+_ALLOWED_EVENT_PROPERTIES = {
+    "type", "time", "sessions", "party", "dialog", "channel",
+    "contributors", "button", "transferee", "transfer_target",
+    "consultation", "target_session"
 }
 
 _ALLOWED_PARTY_PROPERTIES = {
     "type", "name", "contact", "meta", "external_id", "party_id",
     "tel", "stir", "mailto", "validation", "gmlpos", "civicaddress",
-    "uuid", "role", "contact_list", "sip", "did", "jCard", "timezone"
+    "uuid", "role", "contact_list", "sip", "did", "jCard", "timezone",
+    "org", "dept"
 }
 
 _ALLOWED_DIALOG_PROPERTIES = {
     "type", "start", "parties", "duration", "mediatype", "filename",
     "body", "encoding", "url", "content_hash", "disposition",
-    "party_history", "transferee", "transferor", "transfer_target",
-    "original", "consultation", "target_dialog", "campaign",
-    "interaction", "skill", "meta", "metadata", "transfer",
-    "signaling", "originator", "resolution", "frame_rate",
+    "campaign", "interaction", "skill", "meta", "metadata",
+    "signaling", "resolution", "frame_rate",
     "codec", "bitrate", "thumbnail", "streaming", "video",
-    "session_id", "application", "message_id"
+    "session_id", "application", "message_id", "redacted_segments"
 }
 
 _ALLOWED_ATTACHMENT_PROPERTIES = {
-    "purpose", "body", "encoding", "start", "party", "dialog",
+    "purpose", "body", "encoding", "start", "party", "dialog", "session",
     "mediatype", "filename", "url", "content_hash"
 }
 
 _ALLOWED_ANALYSIS_PROPERTIES = {
-    "type", "dialog", "vendor", "product", "body", "encoding",
-    "schema", "mediatype", "filename", "url", "content_hash"
+    "type", "dialog", "sessions", "attachment", "analysis", "vendor",
+    "product", "body", "encoding", "schema", "mediatype", "filename",
+    "url", "content_hash", "meta"
 }
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 _LAST_V8_TIMESTAMP = None
+
+#: JWS algorithms accepted for signing and verifying. "none" is excluded:
+#: core-05 section 6.2.2, "The alg parameter MUST NOT have the value none".
+PERMITTED_JWS_ALGORITHMS = (
+    "RS256", "RS384", "RS512",
+    "PS256", "PS384", "PS512",
+    "ES256", "ES384", "ES512",
+    "EdDSA",
+)
+
+
+class AlgorithmNotPermittedError(ValueError):
+    """A JWS used ``alg`` "none" (forbidden by core-05) or an unsupported algorithm."""
 
 
 class Attachment:
@@ -106,9 +139,16 @@ class Attachment:
         start: Optional[str] = None,
         party: Optional[int] = None,
         dialog: Optional[int] = None,
+        session: Optional[Union[int, List[int]]] = None,
     ) -> None:
         """
         Initialize an Attachment object.
+
+        Under core-05 (section 4.6) an attachment needs ``party`` and at least
+        one of ``dialog`` or ``session``. ``party`` defaults to 0. Neither
+        ``dialog`` nor ``session`` is defaulted here, because the right index
+        depends on the vCon; ``Vcon.add_attachment()`` defaults it only when the
+        vCon has exactly one Session.
         
         Args:
             purpose: The purpose of the attachment
@@ -123,10 +163,9 @@ class Attachment:
             raise ValueError(f"Invalid encoding: {encoding}. Must be one of {self.VALID_ENCODINGS}")
 
         # Fill in defaults required by the WG JSON schema (every attachment
-        # requires start/party/dialog; inline content requires mediatype).
-        # See CHANGELOG 0.10.0 for the contract note: party/dialog previously
-        # defaulted to being omitted (None) when not supplied; they now
-        # default to 0, matching the existing add_tag() convention.
+        # requires start and party; inline content requires mediatype).
+        # party defaults to 0 (the add_tag() convention). dialog is no longer
+        # defaulted: core-05 allows session in its place.
         if mediatype is None and encoding == "json":
             mediatype = "application/json"
 
@@ -139,7 +178,8 @@ class Attachment:
         self.content_hash = content_hash
         self.start = start
         self.party = party if party is not None else 0
-        self.dialog = dialog if dialog is not None else 0
+        self.dialog = dialog
+        self.session = session
         logger.debug(f"Created new attachment of purpose {purpose} with {encoding} encoding")
 
     def to_dict(self) -> Dict[str, Any]:
@@ -160,6 +200,7 @@ class Attachment:
             "start": self.start,
             "party": self.party,
             "dialog": self.dialog,
+            "session": self.session,
         }
         return {k: v for k, v in attachment_dict.items() if v is not None}
         
@@ -225,16 +266,16 @@ class Vcon:
     - Digital signatures and encryption
     - Extensions and critical for extensibility
     - Civic address information for location data
-    - Party history for tracking join/drop/hold/mute events
+    - Sessions (``sessions``) grouping dialog and events, and Events
+      (``events``) for joins, drops, holds, key presses and transfers
     
-    New in vCon 0.4.0:
-    - Extensions field for listing used extensions
-    - Critical field for incompatible extensions
-    - Enhanced party fields (sip, did, jCard, timezone)
-    - Dialog session_id and content_hash fields
-    - Party history with event tracking
-    - Updated media type validation
-    - New disposition values for incomplete dialogs
+    New in vCon 0.5.0 (draft-ietf-vcon-vcon-core-05):
+    - ``sessions`` and ``events`` arrays; ``Session`` and ``Event`` classes
+    - ``redacted_from`` and ``amended_from`` replace ``redacted`` and ``amended``
+    - Attachments need ``party`` and ``dialog`` or ``session``
+    - ``extensions`` MUST list every extension in use; ``alg: "none"`` is rejected
+    - Dialog ``parties`` are contributors only; empty ``{}`` Dialog placeholders
+    - 0.4.0 input is migrated on load (see ``migrate_0_4_0_to_0_5_0``)
     
     Attributes:
         vcon_dict (Dict): The underlying dictionary containing all vCon data
@@ -245,9 +286,19 @@ class Vcon:
         self,
         vcon_dict: Dict[str, Any] = None,
         property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        migrate_legacy: bool = True,
+        strict_migration: bool = False,
     ) -> None:
         """
         Initialize a Vcon object from a dictionary.
+
+        A dict that declares ``"vcon": "0.4.0"`` is migrated to 0.5.0 here, using
+        ``migrate_0_4_0_to_0_5_0``. The report is kept in ``self.migration_report``.
+        A signed vCon whose payload is 0.4.0 is NOT migrated on load, because
+        migrating drops the signature: verify it, then call
+        ``Vcon.migrate_0_4_0_to_0_5_0()``. An unmigrated 0.4.0 dict (signed, or
+        ``migrate_legacy=False``) is kept as is; ``property_handling`` is not
+        applied to it. A dict with any other (or no) ``vcon`` value is taken as is.
 
         Args:
             vcon_dict: A dictionary representing a vCon. Defaults to an empty dict.
@@ -256,6 +307,11 @@ class Vcon:
                                 - "default": Keep non-standard properties (default)
                                 - "strict": Remove non-standard properties
                                 - "meta": Move non-standard properties to meta object
+            migrate_legacy: Migrate 0.4.0 input to 0.5.0 (default True). When
+                False the 0.4.0 dict is kept untouched and ``is_valid()`` will
+                report it as not 0.5.0.
+            strict_migration: Passed to the migration as ``strict``; raises
+                ``MigrationError`` when a required field has no source.
 
         Example:
                     >>> vcon = Vcon({"uuid": "123", "custom_field": "value"})
@@ -270,7 +326,41 @@ class Vcon:
         # Initialize with empty dict if none provided
         if vcon_dict is None:
             vcon_dict = {}
+
+        #: MigrationReport when the input was migrated from 0.4.0, else None.
+        self.migration_report: Optional[MigrationReport] = None
+        legacy = self._is_legacy_0_4_0(vcon_dict)
+        signed_legacy = legacy and "vcon" not in vcon_dict
+        if signed_legacy:
+            # Migrating rewrites the payload, which drops the signature. Doing that
+            # implicitly would make verify() impossible and, on a load-and-save
+            # path, overwrite a signed record with an unsigned one. Keep it signed;
+            # migrate explicitly with Vcon.migrate_0_4_0_to_0_5_0() after verifying.
+            logger.warning(
+                "Signed 0.4.0 vCon loaded unmigrated; verify it, then call "
+                "Vcon.migrate_0_4_0_to_0_5_0() (the result must be signed again)"
+            )
+        elif migrate_legacy and legacy:
+            migrated, self.migration_report = _migrate_0_4_0_to_0_5_0(
+                vcon_dict, strict=strict_migration
+            )
+            logger.warning(
+                "Migrated vCon %s from 0.4.0 to 0.5.0 on load (%s)",
+                migrated.get("uuid"), self.migration_report.summary(),
+            )
+            vcon_dict = migrated
         
+        if legacy and self.migration_report is None:
+            # An unmigrated 0.4.0 (or signed 0.4.0) dict is kept as is: the 0.5.0
+            # allow-lists of property_handling would strip its legacy parameters
+            # (party_history, originator, redacted, ...), which is silent data loss.
+            if self.property_handling != PROPERTY_HANDLING_DEFAULT:
+                logger.warning(
+                    "0.4.0 vCon kept unmigrated: property_handling=%r not applied", self.property_handling
+                )
+            self.vcon_dict = json.loads(json.dumps(vcon_dict))
+            return
+
         # Version field is now optional - no version management required
         
         # Handle created_at
@@ -308,6 +398,18 @@ class Vcon:
                 for dialog in processed_vcon["dialog"]
             ]
             
+        if "sessions" in processed_vcon:
+            processed_vcon["sessions"] = [
+                self._process_properties(sess, _ALLOWED_SESSION_PROPERTIES)
+                for sess in processed_vcon["sessions"]
+            ]
+
+        if "events" in processed_vcon:
+            processed_vcon["events"] = [
+                self._process_properties(event, _ALLOWED_EVENT_PROPERTIES)
+                for event in processed_vcon["events"]
+            ]
+
         if "attachments" in processed_vcon:
             processed_vcon["attachments"] = [
                 self._process_properties(attachment, _ALLOWED_ATTACHMENT_PROPERTIES)
@@ -322,6 +424,41 @@ class Vcon:
 
         self.vcon_dict = json.loads(json.dumps(processed_vcon))
         logger.info(f"Vcon object initialized with UUID: {processed_vcon.get('uuid', 'not set')}")
+
+    @staticmethod
+    def _is_legacy_0_4_0(vcon_dict: Any) -> bool:
+        """True if the dict declares syntax 0.4.0, directly or in a signed payload."""
+        if not isinstance(vcon_dict, dict):
+            return False
+        if vcon_dict.get("vcon") == "0.4.0":
+            return True
+        if "vcon" not in vcon_dict and isinstance(vcon_dict.get("payload"), str) and "signatures" in vcon_dict:
+            try:
+                raw = vcon_dict["payload"]
+                payload = json.loads(base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)))
+                return isinstance(payload, dict) and payload.get("vcon") == "0.4.0"
+            except Exception:
+                return False
+        return False
+
+    @classmethod
+    def migrate_0_4_0_to_0_5_0(
+        cls,
+        source: Union[str, Dict[str, Any]],
+        strict: bool = False,
+        property_handling: str = PROPERTY_HANDLING_DEFAULT,
+    ) -> "Vcon":
+        """
+        Explicitly migrate a 0.4.0 vCon (dict or JSON string) and return a Vcon.
+
+        The migration report is available as ``vcon.migration_report``. Unlike
+        the implicit migration on load, this also accepts input with no
+        ``vcon`` parameter. See :func:`vcon.migration.migrate_0_4_0_to_0_5_0`.
+        """
+        migrated, report = _migrate_0_4_0_to_0_5_0(source, strict=strict)
+        obj = cls(migrated, property_handling=property_handling, migrate_legacy=False)
+        obj.migration_report = report
+        return obj
 
     def set_created_at(self, created_at: Union[str, datetime]) -> None:
         """
@@ -399,6 +536,8 @@ class Vcon:
         cls,
         json_string: str,
         property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        migrate_legacy: bool = True,
+        strict_migration: bool = False,
     ) -> "Vcon":
         """
         Initialize a Vcon object from a JSON string.
@@ -427,6 +566,8 @@ class Vcon:
             return cls(
                 vcon_dict,
                 property_handling=property_handling,
+                migrate_legacy=migrate_legacy,
+                strict_migration=strict_migration,
             )
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON string: {str(e)}")
@@ -463,7 +604,7 @@ class Vcon:
         logger.debug(f"Generated UUID8: {uuid}")
     
         vcon_dict = {
-            "vcon": "0.4.0",
+            "vcon": "0.5.0",
             "uuid": uuid,
             "parties": [],
             "dialog": [],
@@ -545,6 +686,47 @@ class Vcon:
         logger.debug(f"Found value for tag {tag_name}: {tag_value}")
         return tag_value
 
+    def _resolve_attachment_scope(
+        self,
+        dialog: Optional[int] = None,
+        session: Optional[Union[int, List[int]]] = None,
+        whole_vcon: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Work out the ``dialog`` / ``session`` scope for a new attachment.
+
+        Core-05 section 4.6 needs at least one of the two. The caller's values
+        are used as given. With neither given, the scope is defaulted only when
+        it is unambiguous: the vCon has exactly one Session, which is then the
+        whole conversation. Otherwise ``ValueError`` is raised, because picking
+        a Session (or adding a placeholder one) would invent the scope.
+
+        ``whole_vcon=True`` is for library metadata that describes the whole
+        vCon (``add_tag``): every Session is listed, and an empty placeholder
+        Session is added when there is none.
+        """
+        scope: Dict[str, Any] = {}
+        if dialog is not None:
+            scope["dialog"] = dialog
+        if session is not None:
+            scope["session"] = session
+        if scope:
+            return scope
+        sessions = self.vcon_dict.get("sessions") or []
+        if whole_vcon:
+            if not sessions:
+                self.vcon_dict.setdefault("sessions", []).append({})
+                sessions = self.vcon_dict["sessions"]
+                logger.warning("Added an empty placeholder Session to scope the tags attachment")
+            return {"session": list(range(len(sessions)))}
+        if len(sessions) == 1:
+            return {"session": 0}
+        raise ValueError(
+            "An attachment needs dialog or session (core-05 section 4.6). The vCon has "
+            f"{len(sessions)} Sessions, so no default can be chosen; pass dialog= or session= "
+            "(add a Session first with add_session() if the vCon has none)."
+        )
+
     def add_tag(self, tag_name: str, tag_value: str) -> None:
         """
         Add a tag to the vCon.
@@ -572,8 +754,8 @@ class Vcon:
                 "mediatype": "application/json",
                 "start": self.vcon_dict.get("created_at"),
                 "party": 0,
-                "dialog": 0,
             }
+            tags_attachment.update(self._resolve_attachment_scope(whole_vcon=True))
             self.vcon_dict["attachments"].append(tags_attachment)
         else:
             # Normalize a legacy (pre-0.10.0 / -02 convention) JSON-string
@@ -696,17 +878,28 @@ class Vcon:
         purpose_grants: list,
         party_index: Optional[int] = None,
         dialog_index: Optional[int] = None,
+        session_index: Optional[Union[int, List[int]]] = None,
         **kwargs
     ) -> None:
         """
         Add a lawful basis attachment to the vCon.
 
+        The attachment has ``purpose`` ``"lawful_basis"``. Under core-05 it is
+        scoped with ``party`` plus ``session``: pass ``session_index`` (and
+        ``party_index``, the party that records the basis). The scope is never
+        widened or invented: ``dialog_index`` alone gives a dialog-only scope (a
+        warning is logged, because 0.5.0 scopes a basis to Sessions), and with
+        neither index the only Session is used when the vCon has exactly one;
+        otherwise ``ValueError`` is raised. ``party`` defaults to 0 with a
+        warning. The ``lawful_basis`` extension name is added to ``extensions``.
+
         Args:
             lawful_basis: The lawful basis type (consent, contract, etc.)
             expiration: ISO 8601 timestamp when the lawful basis expires
             purpose_grants: List of purpose grant dictionaries
-            party_index: Index of the party this applies to (optional)
+            party_index: Index of the party that records the basis (default 0)
             dialog_index: Index of the dialog this applies to (optional)
+            session_index: Session index or list of indices this applies to (optional)
             **kwargs: Additional lawful basis parameters
 
         Example:
@@ -732,11 +925,22 @@ class Vcon:
                 **kwargs
             )
 
-            # Add party and dialog references if provided, defaulting to 0
-            # (matching add_tag()'s existing convention) since the WG JSON
-            # schema requires both on every attachment.
+            # party is required (default 0, add_tag()'s convention); core-05
+            # also needs dialog or session, and the basis is scoped to Sessions.
+            if party_index is None:
+                logger.warning(
+                    "lawful_basis attachment: party_index not given, defaulting to 0; "
+                    "it should be the party that records the basis"
+                )
             attachment["party"] = party_index if party_index is not None else 0
-            attachment["dialog"] = dialog_index if dialog_index is not None else 0
+            if session_index is None and dialog_index is not None:
+                logger.warning(
+                    "lawful_basis attachment scoped by dialog only; core-05 scopes a basis "
+                    "to Sessions, pass session_index"
+                )
+            attachment.update(
+                self._resolve_attachment_scope(dialog=dialog_index, session=session_index)
+            )
 
             # Fill in mediatype/start, also required by the schema, unless
             # already set via **kwargs.
@@ -761,10 +965,15 @@ class Vcon:
         metadata: Dict[str, Any],
         party_index: Optional[int] = None,
         dialog_index: Optional[int] = None,
+        session_index: Optional[Union[int, List[int]]] = None,
         **kwargs
     ) -> None:
         """
         Add a WTF transcription attachment to the vCon.
+
+        Scoped by ``dialog_index`` and/or ``session_index`` as given; with
+        neither, the only Session when the vCon has exactly one, else
+        ``ValueError`` (see ``add_attachment``).
 
         Args:
             transcript: Transcript information dictionary
@@ -772,6 +981,7 @@ class Vcon:
             metadata: Metadata dictionary
             party_index: Index of the party this applies to (optional)
             dialog_index: Index of the dialog this applies to (optional)
+            session_index: Session index or list of indices (optional)
             **kwargs: Additional WTF parameters
 
         Example:
@@ -796,11 +1006,10 @@ class Vcon:
                 **kwargs
             )
 
-            # Add party and dialog references if provided, defaulting to 0
-            # (matching add_tag()'s existing convention) since the WG JSON
-            # schema requires both on every attachment.
             attachment["party"] = party_index if party_index is not None else 0
-            attachment["dialog"] = dialog_index if dialog_index is not None else 0
+            attachment.update(
+                self._resolve_attachment_scope(dialog=dialog_index, session=session_index)
+            )
 
             # Fill in mediatype/start, also required by the schema, unless
             # already set via **kwargs.
@@ -863,7 +1072,7 @@ class Vcon:
             )
 
             wtf_body = wtf_attachment["body"]
-            dialog_ref = [dialog_index] if dialog_index is not None else []
+            dialog_ref = [dialog_index] if dialog_index is not None else None
 
             self.add_analysis(
                 type="transcription",
@@ -1065,12 +1274,18 @@ class Vcon:
         start: Optional[str] = None,
         party: Optional[int] = None,
         dialog: Optional[int] = None,
+        session: Optional[Union[int, List[int]]] = None,
     ) -> Attachment:
         """
         Add an attachment to the vCon.
 
         This method creates a new attachment with the specified type, body, and encoding
         and adds it to the vCon's attachments list.
+
+        Core-05 needs ``party`` plus ``dialog`` or ``session``. ``party`` defaults
+        to 0. If neither ``dialog`` nor ``session`` is given, the attachment is
+        scoped to the only Session when the vCon has exactly one; otherwise
+        ``ValueError`` is raised rather than inventing a scope.
 
         Args:
             purpose: The purpose of the attachment
@@ -1081,8 +1296,9 @@ class Vcon:
             url: Optional URL for external attachments
             content_hash: Optional content hash for external attachments
             start: Optional timestamp for the attachment
-            party: Optional party index
+            party: Optional party index (default 0)
             dialog: Optional dialog index
+            session: Optional Session index or list of indices
 
         Returns:
             The created Attachment object
@@ -1102,6 +1318,9 @@ class Vcon:
         if start is None:
             start = self.vcon_dict.get("created_at")
 
+        if dialog is None and session is None:
+            session = self._resolve_attachment_scope()["session"]
+
         attachment = Attachment(
             purpose=purpose,
             body=body,
@@ -1113,6 +1332,7 @@ class Vcon:
             start=start,
             party=party,
             dialog=dialog,
+            session=session,
         )
         attachment_dict = attachment.to_dict()
     
@@ -1189,9 +1409,12 @@ class Vcon:
         self,
         *,
         type: str,
-        dialog: Union[List[int], int],
         vendor: str,
         body: Union[Dict[str, Any], List[Any], str],
+        dialog: Optional[Union[List[int], int]] = None,
+        sessions: Optional[Union[List[int], int]] = None,
+        attachment: Optional[Union[List[int], int]] = None,
+        analysis: Optional[Union[List[int], int]] = None,
         encoding: str = "none",
         mediatype: Optional[str] = None,
         filename: Optional[str] = None,
@@ -1211,7 +1434,10 @@ class Vcon:
 
         Args:
             type: The type of analysis
-            dialog: Index or list of indices of the associated dialog entries
+            dialog: Index or list of indices of the associated dialog entries (optional)
+            sessions: Index or list of indices of the Sessions analysed (optional)
+            attachment: Index or list of indices of the attachments analysed (optional)
+            analysis: Index or list of indices of other Analysis Objects used (optional)
             vendor: The name of the vendor who performed the analysis
             body: The analysis data
             encoding: The encoding format of the body (default: "none")
@@ -1260,13 +1486,21 @@ class Vcon:
                 raise Exception("Invalid base64url body: ", e)
 
         # Build the analysis object
-        analysis = {
-            "type": type,
-            "dialog": dialog,
+        analysis_obj: Dict[str, Any] = {"type": type}
+        if dialog is not None:
+            analysis_obj["dialog"] = dialog
+        if sessions is not None:
+            analysis_obj["sessions"] = sessions
+        if attachment is not None:
+            analysis_obj["attachment"] = attachment
+        if analysis is not None:
+            analysis_obj["analysis"] = analysis
+        analysis_obj.update({
             "vendor": vendor,
             "body": body,
             "encoding": encoding,
-        }
+        })
+        analysis = analysis_obj
 
         if mediatype is not None:
             analysis["mediatype"] = mediatype
@@ -1378,7 +1612,7 @@ class Vcon:
         """
         logger.debug(f"Searching for dialog with {by}={val}")
         dialog = next(
-            (dialog for dialog in self.vcon_dict["dialog"] if _get(dialog, by) == val),
+            (dialog for dialog in self.vcon_dict["dialog"] if dialog and _get(dialog, by) == val),
             None,
         )
         if dialog:
@@ -1398,125 +1632,159 @@ class Vcon:
             A list of matching dialog dictionaries
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_transfer_dialog(start="2023-01-20T14:00:00Z", transfer_data={...})
-            >>> transfer_dialogs = vcon.find_dialogs_by_type("transfer")
+            >>> incomplete = vcon.find_dialogs_by_type("incomplete")
         """
         return [dialog for dialog in self.vcon_dict["dialog"] if dialog.get("type") == type]
 
-    def add_dialog(self, dialog: Dialog) -> None:
+    def add_dialog(self, dialog: Dialog, session: Optional[int] = None) -> int:
         """
         Add a dialog entry to the vCon.
 
         This method adds a Dialog object to the vCon's dialog list. A dialog entry
         represents a segment of the conversation with its associated metadata.
+        Use ``Dialog.placeholder()`` to add an empty Dialog Object (``{}``) that
+        holds an array position.
 
         Args:
             dialog: The Dialog object to add
+            session: Optional index of an existing Session; the new Dialog's
+                index is appended to that Session's ``dialog`` list. Core-05
+                requires at least one Session when the vCon has Dialogs, so add
+                Sessions with ``add_session()``.
+
+        Returns:
+            The index of the new Dialog in the ``dialog`` array.
 
         Example:
             >>> vcon = Vcon.build_new()
             >>> dialog = Dialog(type="text", start="2023-01-01T00:00:00Z", parties=[0])
-            >>> vcon.add_dialog(dialog)
+            >>> index = vcon.add_dialog(dialog)
         """
         logger.debug(f"Adding dialog: {dialog.to_dict()}")
     
         # Process dialog dict according to property handling mode
         dialog_dict = dialog.to_dict()
         processed_dialog = self._process_properties(dialog_dict, _ALLOWED_DIALOG_PROPERTIES)
+
+        if session is not None:
+            sessions = self.vcon_dict.get("sessions", [])
+            if not isinstance(session, int) or not 0 <= session < len(sessions):
+                raise ValueError(f"Invalid session index: {session}")
     
         self.vcon_dict["dialog"].append(processed_dialog)
-        logger.info(f"Added dialog of type {dialog.type}")
+        index = len(self.vcon_dict["dialog"]) - 1
+        if session is not None:
+            self.vcon_dict["sessions"][session].setdefault("dialog", []).append(index)
+        logger.info(f"Added dialog of type {getattr(dialog, 'type', 'placeholder')}")
+        return index
 
-    def add_transfer_dialog(
-        self,
-        start: Union[str, datetime],
-        transfer_data: Dict[str, Any],
-        parties: List[int],
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def add_transfer_dialog(self, *args: Any, **kwargs: Any) -> None:
+        """Removed: core-05 has no transfer Dialog type.
+
+        Raises ``NotImplementedError`` with the replacement: a transfer is one
+        or two transfer Events (``blind-transfer``, ``consultation-start`` plus
+        ``consultative-transfer``, or ``transfer-abandoned``) added with
+        ``add_event(Event(...))``, whose ``sessions``/``consultation``/
+        ``target_session`` reference Sessions for the calls involved.
         """
-        Add a transfer dialog entry to the vCon.
-        This method creates a dialog entry of type "transfer" with the provided
-        transfer data and adds it to the vCon's dialog list.
-        Args:
-            start: When the transfer occurred (ISO 8601 string or datetime)
-            transfer_data: Transfer-specific information
-            parties: List of party indices involved
-            metadata: Additional metadata (optional)
+        raise NotImplementedError(
+            "add_transfer_dialog() was removed in vCon 0.5.0: record a transfer as transfer "
+            "Events with add_event(Event(type='blind-transfer', ...)); see vcon.event"
+        )
+
+    def add_session(self, session: Union[Session, Dict[str, Any], None] = None) -> int:
+        """
+        Add a Session Object and return its index in the ``sessions`` array.
+
+        With no argument an empty placeholder Session (``{}``) is added, which
+        core-05 permits.
+
         Example:
             >>> vcon = Vcon.build_new()
-            >>> vcon.add_transfer_dialog(
-            ...     start="2023-01-20T14:05:00Z",
-            ...     transfer_data={
-            ...         "reason": "Call forwarded",
-            ...         "from": "+1234567890",
-            ...         "to": "+1987654321",
-            ...         "protocol": "SIP",
-            ...         "details": {
-            ...             "sipMessage": "SIP/2.0 302 Moved Temporarily"
-            ...         }
-            ...     },
-            ...     parties=[0, 1]
-            ... )
+            >>> s = vcon.add_session(Session(start="2023-01-01T00:00:00Z", parties=[0, 1]))
         """
-        dialog = Dialog(
-            type="transfer",
-            start=start,
-            parties=parties,
-            transfer=transfer_data,
-            metadata=metadata
-        )
-    
-        self.add_dialog(dialog)
-    
+        if session is None:
+            session_dict: Dict[str, Any] = {}
+        elif isinstance(session, Session):
+            session_dict = session.to_dict()
+        else:
+            session_dict = dict(session)
+        processed = self._process_properties(session_dict, _ALLOWED_SESSION_PROPERTIES)
+        self.vcon_dict.setdefault("sessions", []).append(processed)
+        logger.info("Added session")
+        return len(self.vcon_dict["sessions"]) - 1
+
+    def add_event(self, event: Union[Event, Dict[str, Any]]) -> int:
+        """
+        Add an Event Object and return its index in the ``events`` array.
+
+        An ``Event`` is checked against the per-type parameter table when it is
+        built; a plain dict is checked by ``is_valid()``.
+
+        Example:
+            >>> vcon = Vcon.build_new()
+            >>> vcon.add_event(Event(type="join", time="2023-01-01T00:00:00Z", sessions=0, party=0))
+        """
+        event_dict = event.to_dict() if isinstance(event, Event) else dict(event)
+        processed = self._process_properties(event_dict, _ALLOWED_EVENT_PROPERTIES)
+        self.vcon_dict.setdefault("events", []).append(processed)
+        logger.info(f"Added event of type {processed.get('type')}")
+        return len(self.vcon_dict["events"]) - 1
+
     def add_incomplete_dialog(
         self,
         start: Union[str, datetime],
         disposition: str,
         details: Optional[Dict[str, Any]] = None,
         parties: List[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
+        metadata: Optional[Dict[str, Any]] = None,
+        session: Optional[int] = None,
+    ) -> int:
         """
         Add an incomplete dialog entry to the vCon.
+
         This method creates a dialog entry of type "incomplete" for conversations
-        that failed to be set up, with the provided disposition and details.
+        that failed to be set up. Under core-05 an incomplete Dialog has no
+        content (no body, mediatype, filename, encoding, url or content_hash), and
+        its ``parties`` is the party that attempted the call, the originator.
+        ``details`` is kept under ``metadata["details"]``.
+
         Args:
             start: When the attempt occurred (ISO 8601 string or datetime)
-            disposition: Reason for the incomplete conversation
+            disposition: Reason for the incomplete conversation (for example "no-answer")
             details: Additional details about the failure (optional)
-            parties: List of party indices involved (optional)
+            parties: The party (or parties) that attempted the conversation (optional)
             metadata: Additional metadata (optional)
-        
+            session: Optional Session index to add the Dialog to
+
+        Returns:
+            The index of the new Dialog.
+
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon.add_incomplete_dialog(
             ...     start="2023-01-20T14:00:00Z",
-            ...     disposition="NO_ANSWER",
+            ...     disposition="no-answer",
             ...     details={"ringDuration": 45000},
-            ...     parties=[0, 1]
+            ...     parties=[0]
             ... )
         """
         if parties is None:
             parties = []
-    
-        dialog_data = {
-            "disposition": disposition
-        }
-    
+
+        meta = dict(metadata) if metadata else {}
         if details:
-            dialog_data.update(details)
-    
+            meta["details"] = details
+
         dialog = Dialog(
             type="incomplete",
             start=start,
             parties=parties,
-            body=dialog_data,
             disposition=disposition,
-            metadata=metadata
+            metadata=meta or None,
         )
-    
-        self.add_dialog(dialog)
+
+        return self.add_dialog(dialog, session=session)
 
     def to_json(self) -> str:
         """
@@ -1552,7 +1820,7 @@ class Vcon:
         Example:
             >>> vcon = Vcon.build_new()
             >>> vcon_dict = vcon.to_dict()
-            >>> print(vcon_dict["vcon"])  # Prints "0.4.0"
+            >>> print(vcon_dict["vcon"])  # Prints "0.5.0"
         """
         logger.debug("Converting vCon to dictionary")
         return json.loads(self.to_json())
@@ -1684,12 +1952,38 @@ class Vcon:
         return self.vcon_dict.get("updated_at")
 
     @property
+    def sessions(self) -> List[Dict[str, Any]]:
+        """The ``sessions`` array (Session Objects)."""
+        return self.vcon_dict.get("sessions", [])
+
+    @property
+    def events(self) -> List[Dict[str, Any]]:
+        """The ``events`` array (Event Objects)."""
+        return self.vcon_dict.get("events", [])
+
+    @property
     def redacted(self):
-        return self.vcon_dict.get("redacted")
+        """Deprecated 0.4.0 name; returns ``redacted_from``."""
+        warnings.warn("Vcon.redacted is deprecated; use Vcon.redacted_from (core-05)", DeprecationWarning, stacklevel=2)
+        return self.redacted_from
 
     @property
     def amended(self):
-        return self.vcon_dict.get("amended")
+        """Deprecated 0.4.0 name; returns ``amended_from``."""
+        warnings.warn("Vcon.amended is deprecated; use Vcon.amended_from (core-05)", DeprecationWarning, stacklevel=2)
+        return self.amended_from
+
+    @property
+    def redacted_from(self):
+        return self.vcon_dict.get("redacted_from")
+
+    @property
+    def amended_from(self):
+        return self.vcon_dict.get("amended_from")
+
+    @property
+    def redacted_strings(self) -> List[Dict[str, Any]]:
+        return self.vcon_dict.get("redacted_strings", [])
 
     @property
     def group(self):
@@ -1734,7 +2028,7 @@ class Vcon:
 
         return uuid_str
 
-    def sign(self, private_key: Union[rsa.RSAPrivateKey, bytes]) -> None:
+    def sign(self, private_key: Union[rsa.RSAPrivateKey, bytes], alg: str = "RS256") -> None:
         """
         Sign the vCon using JWS (JSON Web Signature).
 
@@ -1744,8 +2038,12 @@ class Vcon:
 
         Args:
             private_key: The RSA private key or its PEM representation
+            alg: JWS algorithm (default "RS256", the value core-05 says SHOULD be
+                used). "none" is rejected (6.2.2).
 
         Raises:
+            AlgorithmNotPermittedError: If ``alg`` is "none" (any case) or is not
+                a permitted algorithm.
             Exception: If there is an error during the signing process
 
         Example:
@@ -1755,10 +2053,11 @@ class Vcon:
             >>> vcon.sign(private_key)
         """
         logger.debug("Signing vCon with JWS")
+        self._check_jws_alg(alg)
         try:
             payload = self.to_json()
-            jws = JsonWebSignature()
-            protected = {"alg": "RS256", "typ": "JWS"}
+            jws = JsonWebSignature(algorithms=list(PERMITTED_JWS_ALGORITHMS))
+            protected = {"alg": alg, "typ": "JWS"}
             
             # Convert private key to PEM format if it's not already
             if isinstance(private_key, rsa.RSAPrivateKey):
@@ -1781,6 +2080,17 @@ class Vcon:
             logger.error(f"Failed to sign vCon: {str(e)}")
             raise
 
+    @staticmethod
+    def _check_jws_alg(alg: Any) -> None:
+        if not isinstance(alg, str) or alg.strip().lower() == "none":
+            raise AlgorithmNotPermittedError(
+                'JWS alg "none" is not permitted (core-05 section 6.2.2)'
+            )
+        if alg not in PERMITTED_JWS_ALGORITHMS:
+            raise AlgorithmNotPermittedError(
+                f"JWS alg {alg!r} is not supported; use one of {PERMITTED_JWS_ALGORITHMS}"
+            )
+
     def verify(self, public_key: Union[rsa.RSAPublicKey, bytes]) -> bool:
         """
         Verify the JWS signature of the vCon.
@@ -1796,6 +2106,9 @@ class Vcon:
 
         Raises:
             ValueError: If the vCon is not signed
+            AlgorithmNotPermittedError: If the signature declares ``alg`` "none"
+                (in the protected header or the signature's header), which
+                core-05 forbids. Verification is refused rather than skipped.
 
         Example:
             >>> private_key, public_key = Vcon.generate_key_pair()
@@ -1810,8 +2123,30 @@ class Vcon:
             logger.error("Cannot verify: vCon is not signed")
             raise ValueError("vCon is not signed")
         
+        # Refuse alg "none" before anything else, from either header location.
+        sig0 = self.vcon_dict["signatures"][0]
+        declared = []
         try:
-            jws = JsonWebSignature()
+            hdr = sig0.get("protected")
+            if hdr:
+                declared.append(json.loads(base64.urlsafe_b64decode(hdr + "=" * (-len(hdr) % 4))).get("alg"))
+        except Exception:
+            logger.error("Cannot verify: protected header is not valid base64url JSON")
+            return False
+        if isinstance(sig0.get("header"), dict) and "alg" in sig0["header"]:
+            declared.append(sig0["header"]["alg"])
+        for declared_alg in declared:
+            if isinstance(declared_alg, str) and declared_alg.strip().lower() == "none":
+                logger.error('Refusing to verify: JWS alg "none" is not permitted')
+                raise AlgorithmNotPermittedError(
+                    'JWS alg "none" is not permitted (core-05 section 6.2.2)'
+                )
+        if not declared:
+            logger.error("Cannot verify: no alg in the JWS protected header or header")
+            return False
+
+        try:
+            jws = JsonWebSignature(algorithms=list(PERMITTED_JWS_ALGORITHMS))
             signed_data = f"{self.vcon_dict['signatures'][0]['protected']}.{self.vcon_dict['payload']}.{self.vcon_dict['signatures'][0]['signature']}"
 
             # Convert public key to PEM format if it's not already
@@ -1858,155 +2193,37 @@ class Vcon:
 
     def is_valid(self) -> Tuple[bool, List[str]]:
         """
-        Validate the vCon syntax according to the standard.
-        Checks required fields, ensures data types are correct, and verifies
-        relationships between different parts of the vCon (for example, dialog party
-        references and attachment fields).
+        Validate the vCon against the core-05 rules.
+
+        Checks required fields and types, that ``vcon`` (if present) is "0.5.0",
+        that Sessions, Events, Dialogs, attachments and analysis reference
+        existing objects, the per-event-type parameter table, that at least one
+        Session exists when there are Dialogs or Events, that attachments have
+        ``party`` and ``dialog`` or ``session``, that ``redacted_from`` and
+        ``amended_from`` are exclusive, that ``extensions`` lists every extension
+        in use (and every ``critical`` entry), and that every
+        ``__REDACTED_REF_#`` has a ``redacted_strings`` entry.
+
+        SHOULD-level findings are not errors; see :meth:`get_validation_warnings`.
 
         Returns:
             Tuple[bool, List[str]]: A tuple where the first element is True if the vCon
             is valid and False otherwise, and the second element is a list of error messages.
         """
         logger.debug("Validating vCon")
-        errors = []
-        # Validate required fields.
-        required_fields = ["uuid", "created_at"]
-        for field in required_fields:
-            if field not in self.vcon_dict:
-                error = f"Missing required field: {field}"
-                logger.error(error)
-                errors.append(error)
-        # Validate created_at format.
-        if "created_at" in self.vcon_dict:
-            try:
-                parser.parse(self.vcon_dict["created_at"])
-            except Exception as e:
-                error = f"Invalid created_at format. Must be an ISO 8601 datetime string: {str(e)}"
-                logger.error(error)
-                errors.append(error)
-        # Validate parties.
-        if "parties" in self.vcon_dict:
-            if not isinstance(self.vcon_dict["parties"], list):
-                error = "Field 'parties' must be a list."
-                logger.error(error)
-                errors.append(error)
-            else:
-                for i, party in enumerate(self.vcon_dict["parties"]):
-                    if not isinstance(party, dict):
-                        error = f"Party at index {i} must be a dictionary."
-                        logger.error(error)
-                        errors.append(error)
-        # Validate dialogs.
-        dialogs = self.vcon_dict.get("dialog", [])
-        for i, dialog in enumerate(dialogs):
-            if not isinstance(dialog, dict):
-                errors.append(f"Dialog at index {i} must be a dictionary.")
-                continue
-    
-            # Validate dialog type if present
-            if "type" in dialog:
-                dialog_type = dialog["type"]
-                if dialog_type not in Dialog.VALID_TYPES:
-                    errors.append(f"Dialog at index {i} has an invalid type: {dialog_type}")
-    
-                # Validate specific requirements for each type
-                if dialog_type == "incomplete":
-                    # For incomplete dialogs, ensure there's a disposition
-                    if "disposition" not in dialog:
-                        errors.append(f"Dialog at index {i} of type 'incomplete' must have a disposition.")
-    
-                elif dialog_type == "transfer":
-                    # For transfer dialogs, ensure there's either transfer info or transferor/transferee
-                    has_transfer_field = "transfer" in dialog
-                    has_transferor = "transferor" in dialog
-                    has_transferee = "transferee" in dialog
-    
-                    if not (has_transfer_field or (has_transferor and has_transferee)):
-                        errors.append(f"Dialog at index {i} of type 'transfer' must have either a transfer field or both transferor and transferee fields.")
-    
-            # Validate party references in dialog.
-            if "parties" in dialog:
-                if not isinstance(dialog["parties"], list):
-                    errors.append(f"Dialog at index {i} field 'parties' must be a list.")
-                else:
-                    party_count = len(self.vcon_dict.get("parties", []))
-                    for party_idx in dialog["parties"]:
-                        if not isinstance(party_idx, int) or party_idx < 0 or party_idx >= party_count:
-                            errors.append(f"Dialog at index {i} references invalid party index: {party_idx}")
-            # Validate start time format if present.
-            if "start" in dialog:
-                try:
-                    parser.parse(dialog["start"])
-                except Exception:
-                    errors.append(f"Dialog at index {i} has an invalid 'start' format. Must be an ISO 8601 datetime string.")
-    
-            # Validate mediatype for non-transfer/incomplete types
-            dialog_type = dialog.get("type", "")
-            if dialog_type not in ["transfer", "incomplete"]:
-                if ("mediatype" not in dialog or
-                    not isinstance(dialog["mediatype"], str) or
-                    dialog["mediatype"] not in Dialog.MIME_TYPES):
-                    errors.append(f"Dialog at index {i} has an invalid or missing mediatype: {dialog.get('mediatype', 'missing')}")
-    
-        # Validate attachments.
-        if "attachments" in self.vcon_dict:
-            if not isinstance(self.vcon_dict["attachments"], list):
-                errors.append("Field 'attachments' must be a list.")
-            else:
-                for i, attachment in enumerate(self.vcon_dict["attachments"]):
-                    if not isinstance(attachment, dict):
-                        errors.append(f"Attachment at index {i} must be a dictionary.")
-                    else:
-                        # Check for required attachment fields.
-                        if "purpose" not in attachment:
-                            errors.append(f"Attachment at index {i} is missing required field: purpose")
-                        has_inline = "body" in attachment and "encoding" in attachment
-                        has_external = "url" in attachment and "content_hash" in attachment
-                        if not (has_inline or has_external):
-                            errors.append(
-                                f"Attachment at index {i} must include body+encoding or url+content_hash."
-                            )
-                        # Validate encoding.
-                        if ("encoding" in attachment and
-                            attachment["encoding"] not in ["json", "none", "base64url"]):
-                            errors.append(f"Attachment at index {i} has invalid encoding: {attachment['encoding']}")
-
-        # Validate analysis.
-        if "analysis" in self.vcon_dict:
-            if not isinstance(self.vcon_dict["analysis"], list):
-                errors.append("Field 'analysis' must be a list.")
-            else:
-                for i, analysis in enumerate(self.vcon_dict["analysis"]):
-                    if not isinstance(analysis, dict):
-                        errors.append(f"Analysis at index {i} must be a dictionary.")
-                    else:
-                        # Required analysis fields.
-                        required_analysis_fields = ["type", "dialog", "vendor", "body", "encoding"]
-                        for field in required_analysis_fields:
-                            if field not in analysis:
-                                errors.append(f"Analysis at index {i} is missing required field: {field}")
-                        # Validate encoding.
-                        if ("encoding" in analysis and
-                            analysis["encoding"] not in ["json", "none", "base64url"]):
-                            errors.append(f"Analysis at index {i} has invalid encoding: {analysis['encoding']}")
-                        # Validate dialog references within analysis.
-                        dialog_count = len(dialogs)
-                        if "dialog" in analysis:
-                            if isinstance(analysis["dialog"], list):
-                                for dialog_idx in analysis["dialog"]:
-                                    if not isinstance(dialog_idx, int) or dialog_idx < 0 or dialog_idx >= dialog_count:
-                                        errors.append(f"Analysis at index {i} references invalid dialog index: {dialog_idx}")
-                            elif isinstance(analysis["dialog"], int):
-                                if analysis["dialog"] < 0 or analysis["dialog"] >= dialog_count:
-                                    errors.append(f"Analysis at index {i} references invalid dialog index: {analysis['dialog']}")
-                            else:
-                                errors.append(f"Analysis at index {i} has an invalid 'dialog' reference type.")
-
+        errors, _warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        for error in errors:
+            logger.error(error)
         if len(errors) == 0:
             logger.info("vCon validation successful.")
         else:
             logger.warning(f"vCon validation failed with {len(errors)} error(s).")
         return len(errors) == 0, errors
+
+    def get_validation_warnings(self) -> List[str]:
+        """SHOULD-level findings (for example SHOULD NOT parameters on Events)."""
+        _errors, warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        return warnings
 
     @staticmethod
     def validate_file(file_path: str) -> tuple[bool, list[str]]:
@@ -2052,6 +2269,8 @@ class Vcon:
         cls,
         source: str,
         property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        migrate_legacy: bool = True,
+        strict_migration: bool = False,
     ) -> "Vcon":
         """
         Load a vCon from either a file path or URL.
@@ -2073,11 +2292,15 @@ class Vcon:
             return cls.load_from_url(
                 source,
                 property_handling=property_handling,
+                migrate_legacy=migrate_legacy,
+                strict_migration=strict_migration,
             )
         else:
             return cls.load_from_file(
                 source,
                 property_handling=property_handling,
+                migrate_legacy=migrate_legacy,
+                strict_migration=strict_migration,
             )
 
     @classmethod
@@ -2085,6 +2308,8 @@ class Vcon:
         cls,
         file_path: str,
         property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        migrate_legacy: bool = True,
+        strict_migration: bool = False,
     ) -> "Vcon":
         """
         Load a vCon from a file.
@@ -2107,6 +2332,8 @@ class Vcon:
             return cls.build_from_json(
                 json_str,
                 property_handling=property_handling,
+                migrate_legacy=migrate_legacy,
+                strict_migration=strict_migration,
             )
         except FileNotFoundError:
             raise FileNotFoundError(f"vCon file not found: {file_path}")
@@ -2118,6 +2345,8 @@ class Vcon:
         cls,
         url: str,
         property_handling: str = PROPERTY_HANDLING_DEFAULT,
+        migrate_legacy: bool = True,
+        strict_migration: bool = False,
     ) -> "Vcon":
         """
         Load a vCon from a URL.
@@ -2139,6 +2368,8 @@ class Vcon:
         return cls.build_from_json(
             response.text,
             property_handling=property_handling,
+            migrate_legacy=migrate_legacy,
+            strict_migration=strict_migration,
         )
 
     def save_to_file(self, file_path: str) -> None:

@@ -1,6 +1,5 @@
 {
     "uuid": "019822fb-309a-8716-9dd8-dd37220d739c",
-    "redacted": {},
     "group": [],
     "parties": [
         {
@@ -33,8 +32,7 @@
             "type": "text",
             "start": "2025-07-19T15:59:04.090841",
             "parties": [
-                0,
-                1
+                0
             ],
             "body": "Hello, this is a test message!",
             "session_id": {
@@ -43,7 +41,9 @@
             },
             "content_hash": "yNPWf2YqeH6W50zLCneAMTjA8TSVoYbMveSVxXw4Vgg=",
             "metadata": {},
-            "meta": {}
+            "meta": {},
+            "mediatype": "text/plain",
+            "encoding": "none"
         }
     ],
     "attachments": [],
@@ -55,5 +55,18 @@
     ],
     "critical": [
         "encryption"
+    ],
+    "vcon": "0.5.0",
+    "sessions": [
+        {
+            "start": "2025-07-19T15:59:04.090841",
+            "parties": [
+                0,
+                1
+            ],
+            "dialog": [
+                0
+            ]
+        }
     ]
 }

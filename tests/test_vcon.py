@@ -1,6 +1,7 @@
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from typing import Union
 
 import pytest
@@ -26,7 +27,7 @@ Generating a UUID8 based on a domain name
 """
 
 
-test_vcon_string = (
+test_vcon_string_0_4_0 = (
     '{"uuid":"0192aa73-e702-8cef-9dd8-dd37220d739c","vcon":"0.4.0",'
     '"created_at":"2024-10-20T15:02:55.490850+00:00","parties":['
     '{"tel":"+14513886516","mailto":"david.scott@pickrandombusinesstype.com",'
@@ -87,6 +88,29 @@ test_vcon_string = (
     "customer's name is Diane Allen.  The conversation is about a random business "
     '(a Auto Repair Shop ) and is a conversation about billing."}}]}'
 )
+
+
+def _to_0_5_0(legacy: str) -> str:
+    """The same conversation as a valid 0.5.0 document (what a 0.4.0 author would write now)."""
+    d = json.loads(legacy)
+    d["vcon"] = "0.5.0"
+    d["sessions"] = [
+        {
+            "start": d["dialog"][0]["start"],
+            "duration": d["dialog"][0]["duration"],
+            "parties": [0, 1],
+            "dialog": [0],
+        }
+    ]
+    for att in d["attachments"]:
+        att.setdefault("start", d["created_at"])
+        att.setdefault("party", 0)
+        att.setdefault("session", [0])
+        att.setdefault("mediatype", "application/json")
+    return json.dumps(d)
+
+
+test_vcon_string = _to_0_5_0(test_vcon_string_0_4_0)
 
 GITHUB_WAV_URL = "https://github.com/vcon-dev/vcon-lib/raw/841eca9198397e768f478569a3595a70c6e892cc/tests/sample.mp3"
 
@@ -151,17 +175,35 @@ def test_build_from_json() -> None:
     """
     vcon = Vcon.build_from_json(test_vcon_string)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.4.0"
+    assert vcon.vcon == "0.5.0"
+    assert vcon.migration_report is None
     assert vcon.created_at == "2024-10-20T15:02:55.490850+00:00"
+
+
+def test_build_from_json_migrates_a_0_4_0_document() -> None:
+    """A document that declares 0.4.0 is migrated on load; the report says what it could not fix."""
+    vcon = Vcon.build_from_json(test_vcon_string_0_4_0)
+    assert vcon.vcon == "0.5.0"
+    assert vcon.migration_report is not None
+    assert vcon.sessions[0]["dialog"] == [0]
+    assert vcon.sessions[0]["parties"] == [0, 1]
+    # The fixture's attachment never had start, party or a dialog, so it was not valid
+    # in 0.4.0 either. The migration does not invent them; it reports the gap.
+    assert any(e.step == "post" and "attachment" in e.message.lower() for e in vcon.migration_report.unresolved)
+    valid, errors = vcon.is_valid()
+    assert not valid and any("Attachment at index 0" in e for e in errors)
+    # Opting out keeps the raw document.
+    raw = Vcon.build_from_json(test_vcon_string_0_4_0, migrate_legacy=False)
+    assert raw.vcon == "0.4.0" and raw.migration_report is None
 
 
 def test_build_new() -> None:
     vcon = Vcon.build_new()
     assert vcon.uuid is not None
-    assert vcon.vcon == "0.4.0"
+    assert vcon.vcon == "0.5.0"
     assert vcon.created_at is not None
     assert "group" not in vcon.vcon_dict
-    assert "redacted" not in vcon.vcon_dict
+    assert "redacted_from" not in vcon.vcon_dict
 
 
 def test_tags() -> None:
@@ -175,25 +217,33 @@ def test_tags() -> None:
         a for a in vcon.vcon_dict["attachments"] if a.get("purpose") == "tags"
     )
     assert "party" in tags_att, "tags attachment missing required 'party' index"
-    assert "dialog" in tags_att, "tags attachment missing required 'dialog' index"
+    assert "dialog" in tags_att or "session" in tags_att, (
+        "tags attachment needs dialog or session (core-05 section 4.6)"
+    )
+    assert tags_att["session"] == [0]
+    assert vcon.vcon_dict["sessions"] == [{}]
 
 
 def test_add_attachment():
     vcon = Vcon()
+    # start and party are required on every attachment, plus dialog or
+    # session (draft-ietf-vcon-vcon-core-05 section 4.6). add_attachment()
+    # fills start (the vCon's created_at) and party (0). The scope is only
+    # defaulted when the vCon has exactly one Session; with none it is an error
+    # rather than an invented placeholder Session.
+    with pytest.raises(ValueError, match="dialog or session"):
+        vcon.add_attachment(purpose="test_purpose", body="test_body")
+    vcon.add_session()
     attachment = vcon.add_attachment(purpose="test_purpose", body="test_body")
 
     assert len(vcon.vcon_dict["attachments"]) == 1
-    # start/party/dialog are required on every attachment by the WG JSON
-    # schema (draft-ietf-vcon-vcon-core-04); add_attachment() fills them in
-    # (start defaults to the vCon's created_at, party/dialog default to 0)
-    # when the caller doesn't supply them.
     assert vcon.vcon_dict["attachments"][0] == {
         "purpose": "test_purpose",
         "body": "test_body",
         "encoding": "none",
         "start": vcon.created_at,
         "party": 0,
-        "dialog": 0,
+        "session": 0,
     }
     assert isinstance(attachment, Attachment)
 
@@ -244,14 +294,14 @@ def test_get_tag() -> None:
 
 def test_find_attachment_by_purpose() -> None:
     vcon = Vcon.build_new()
-    vcon.add_attachment(body={"key": "value"}, purpose="test_purpose")
+    vcon.add_attachment(body={"key": "value"}, purpose="test_purpose", session=0)
     assert vcon.find_attachment_by_purpose("test_purpose") == {
         "purpose": "test_purpose",
         "body": {"key": "value"},
         "encoding": "none",
         "start": vcon.created_at,
         "party": 0,
-        "dialog": 0,
+        "session": 0,
     }
     assert vcon.find_attachment_by_purpose("nonexistent_purpose") is None
 
@@ -731,7 +781,7 @@ def test_load_from_file(tmp_path):
     vcon = Vcon.load(str(file_path))
     assert isinstance(vcon, Vcon)
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.4.0"
+    assert vcon.vcon == "0.5.0"
 
 
 def test_load_from_file_not_found():
@@ -764,7 +814,7 @@ def test_load_from_url(mock_get):
     
     # Verify the vCon was loaded correctly
     assert vcon.uuid == "0192aa73-e702-8cef-9dd8-dd37220d739c"
-    assert vcon.vcon == "0.4.0"
+    assert vcon.vcon == "0.5.0"
     
     # Verify the mock was called correctly
     mock_get.assert_called_once_with(url)
@@ -783,8 +833,8 @@ def test_load_detects_file_vs_url() -> None:
     try:
         # Replace methods with mocks as class methods so they bind correctly
         # Updated to accept all parameters
-        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None: path)
-        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None: url)
+        Vcon.load_from_file = classmethod(lambda cls, path, property_handling=None, **kw: path)
+        Vcon.load_from_url = classmethod(lambda cls, url, property_handling=None, **kw: url)
         
         # Test file path
         result = Vcon.load(file_path)
@@ -956,7 +1006,7 @@ def test_add_video_dialog():
     
     # Verify it was added correctly
     assert len(vcon.dialog) == 1
-    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
 @pytest.mark.parametrize("format_name,mediatype", [
@@ -1021,7 +1071,7 @@ def test_dialog_property_handling():
     
     # Verify properties are preserved
     dialog_dict = new_vcon.dialog[0]
-    assert dialog_dict["type"] == "video"
+    assert dialog_dict["type"] == "recording"  # audio/video normalize to recording
     assert dialog_dict["mediatype"] == "video/mp4"
     assert dialog_dict["filename"] == "test_video.mp4"
 
@@ -1174,7 +1224,8 @@ def test_vcon_validation_with_video():
         mediatype="video/mp4",
         filename="valid_video.mp4"
     )
-    vcon.add_dialog(dialog)
+    vcon.add_session(Session(parties=[0]))
+    vcon.add_dialog(dialog, session=0)
     
     # Validate the vCon
     is_valid, errors = vcon.is_valid()
@@ -1202,7 +1253,7 @@ def test_video_metadata_in_vcon():
     vcon.add_dialog(dialog)
     
     # Verify the basic properties
-    assert vcon.dialog[0]["type"] == "video"
+    assert vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[0]["mediatype"] == "video/mp4"
 
 @pytest.mark.skip("Property handling mode tests need vCon implementation check")
@@ -1247,7 +1298,7 @@ def test_load_save_file_with_videos(tmp_path):
     loaded_vcon = Vcon.load_from_file(str(temp_file))
     
     # Verify video properties were preserved
-    assert loaded_vcon.dialog[0]["type"] == "video"
+    assert loaded_vcon.dialog[0]["type"] == "recording"  # audio/video normalize to recording
     assert loaded_vcon.dialog[0]["mediatype"] == "video/mp4"
     assert loaded_vcon.dialog[0]["filename"] == "test_video.mp4"
 
@@ -1300,7 +1351,7 @@ def test_integration_basic_video_workflow():
     # Verify the conversation flow
     assert len(vcon.dialog) == 3
     assert vcon.dialog[0]["type"] == "text"
-    assert vcon.dialog[1]["type"] == "video"
+    assert vcon.dialog[1]["type"] == "recording"  # audio/video normalize to recording
     assert vcon.dialog[2]["type"] == "text"
     
     # Verify the video properties
@@ -1314,7 +1365,7 @@ def test_integration_basic_video_workflow():
     
     # Verify everything is preserved
     assert len(new_vcon.dialog) == 3
-    assert new_vcon.dialog[1]["type"] == "video"
+    assert new_vcon.dialog[1]["type"] == "recording"  # audio/video normalize to recording
     assert new_vcon.dialog[1]["mediatype"] == "video/mp4"
 
 def test_version_field_optional() -> None:
@@ -1387,13 +1438,13 @@ def test_version_field_optional_load_from_file(tmp_path) -> None:
 
 
 def test_build_new_sets_version_field() -> None:
-    """build_new() sets vcon: '0.4.0' per draft-ietf-vcon-vcon-core-02 §4.1.1.
+    """build_new() sets vcon: '0.5.0' per draft-ietf-vcon-vcon-core-05 section 4.1.1.
 
     The field is deprecated in the draft but retained for parser compat;
     the library emits it by default to avoid surprises with strict parsers.
     """
     vcon = Vcon.build_new()
-    assert vcon.vcon_dict["vcon"] == "0.4.0"
+    assert vcon.vcon_dict["vcon"] == "0.5.0"
 
 
 def test_no_version_field_remains_absent() -> None:
@@ -1489,7 +1540,7 @@ def test_extensions_from_json():
     json_str = '''
     {
         "uuid": "123",
-        "vcon": "0.4.0",
+        "vcon": "0.5.0",
         "created_at": "2023-01-01T00:00:00Z",
         "extensions": ["video", "encryption"],
         "critical": ["encryption"]
@@ -1505,45 +1556,45 @@ def test_extensions_property_handling():
     """Test extensions with different property handling modes."""
     vcon_dict = {
         "uuid": "123",
-        "vcon": "0.4.0",
+        "vcon": "0.5.0",
         "created_at": "2023-01-01T00:00:00Z",
-        "extensions": ["video"],
+        "extensions": ["video", "encryption"],
         "critical": ["encryption"],
         "custom_field": "value"
     }
     
     # Default mode - keep custom fields
     vcon = Vcon(vcon_dict, property_handling="default")
-    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_extensions() == ["video", "encryption"]
     assert vcon.get_critical() == ["encryption"]
     assert "custom_field" in vcon.vcon_dict
     
     # Strict mode - remove custom fields
     vcon = Vcon(vcon_dict, property_handling="strict")
-    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_extensions() == ["video", "encryption"]
     assert vcon.get_critical() == ["encryption"]
     assert "custom_field" not in vcon.vcon_dict
     
     # Meta mode - move custom fields to meta
     vcon = Vcon(vcon_dict, property_handling="meta")
-    assert vcon.get_extensions() == ["video"]
+    assert vcon.get_extensions() == ["video", "encryption"]
     assert vcon.get_critical() == ["encryption"]
     assert vcon.vcon_dict.get("meta", {}).get("custom_field") == "value"
 
 
 def test_build_new_emits_vcon_syntax_param() -> None:
-    """build_new() should emit vcon: '0.4.0' and round-trip through JSON."""
+    """build_new() should emit vcon: '0.5.0' and round-trip through JSON."""
     vcon = Vcon.build_new()
     serialized = vcon.to_json()
     reloaded = Vcon.build_from_json(serialized)
-    assert reloaded.vcon_dict["vcon"] == "0.4.0"
+    assert reloaded.vcon_dict["vcon"] == "0.5.0"
 
 
 def test_build_new_omits_empty_group_and_redacted() -> None:
     """build_new() should not seed empty group/redacted defaults."""
     vcon = Vcon.build_new()
     assert "group" not in vcon.vcon_dict
-    assert "redacted" not in vcon.vcon_dict
+    assert "redacted_from" not in vcon.vcon_dict
 
 
 def test_is_valid_with_new_defaults() -> None:
@@ -1553,11 +1604,12 @@ def test_is_valid_with_new_defaults() -> None:
 
     vcon = Vcon.build_new()
     vcon.add_party(Party(name="Alice"))
+    vcon.add_session(Session(start="2026-05-10T12:00:00Z", parties=[0]))
     vcon.add_dialog(Dialog(
         type="recording",
         start="2026-05-10T12:00:00Z",
         parties=[0],
         mediatype="audio/wav",
-    ))
+    ), session=0)
     valid, errors = vcon.is_valid()
     assert valid, f"Expected valid, got errors: {errors}"

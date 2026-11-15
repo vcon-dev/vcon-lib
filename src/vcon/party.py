@@ -1,4 +1,5 @@
-from typing import Optional
+import warnings
+from typing import Any, Dict, List, Optional, Union
 from vcon.civic_address import CivicAddress
 from datetime import datetime
 
@@ -121,70 +122,42 @@ class Party:
 
 
 class PartyHistory:
-    """
-    A class representing party history events in a vCon dialog.
-    
-    Party history tracks when parties join, leave, or change state during
-    a conversation. This is useful for understanding the flow of multi-party
-    conversations where participants may not all join and leave at the same time.
-    
-    Supported event types (vCon 0.4.0 specification):
-    - join: When the party joins the dialog
-    - drop: When the party drops out of the dialog
-    - hold: When the party is put on hold
-    - unhold: When the party is taken off hold
-    - mute: When the party is muted
-    - unmute: When the party is taken off mute
-    
-    Attributes:
-        party (int): Index of the party in the parties array
-        event (str): Type of event (must be one of VALID_EVENTS)
-        time (datetime): Time when the event occurred (serialized as ISO 8601)
-    
-    The time field is automatically serialized to ISO 8601 format when
-    converted to dictionary representation.
-    """
-    # Valid event types for party history (from specification)
-    VALID_EVENTS = [
-        "join",      # when the party joins the dialog
-        "drop",      # when the party drops out of the dialog
-        "hold",      # when the party is put on hold
-        "unhold",    # when the party is taken off hold
-        "mute",      # when the party is muted
-        "unmute"     # when the party is taken off mute
-    ]
+    """Deprecated 0.4.0 Party_History Object, kept so old imports keep working.
 
-    def __init__(self, party: int, event: str, time: datetime):
-        """
-        Initialize a new PartyHistory object.
+    core-05 replaced Dialog ``party_history`` with Event Objects. Build an
+    ``Event`` directly, or convert with :meth:`to_event`, which needs the
+    Session index (or indices) the event belongs to. A ``PartyHistory`` can no
+    longer be attached to a Dialog.
+    """
 
-        :param party: Index of the party
-        :type party: int
-        :param event: Event type (e.g. "join", "drop", "hold", "unhold", 
-                     "mute", "unmute")
-        :type event: str
-        :param time: Time of the event
-        :type time: datetime
-        """
-        # Validate event type
+    VALID_EVENTS = ["join", "drop", "hold", "unhold", "mute", "unmute", "keydown", "keyup"]
+
+    def __init__(self, party: int, event: str, time: Union[datetime, str], button: Optional[str] = None):
+        warnings.warn(
+            "PartyHistory is deprecated: use vcon.event.Event (core-05 Event Object)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if event not in PartyHistory.VALID_EVENTS:
-            raise ValueError(
-                f"Invalid event '{event}'. "
-                f"Must be one of: {PartyHistory.VALID_EVENTS}"
-            )
-        
+            raise ValueError(f"Invalid event '{event}'. Must be one of: {PartyHistory.VALID_EVENTS}")
         self.party = party
         self.event = event
         self.time = time
+        self.button = button
 
-    def to_dict(self):
-        # Handle time field which can be datetime or string
-        if hasattr(self.time, 'isoformat'):
-            time_value = self.time.isoformat()
-        else:
-            time_value = self.time
-        return {
-            "party": self.party, 
-            "event": self.event, 
-            "time": time_value
+    def to_dict(self) -> Dict[str, Any]:
+        """The 0.4.0 shape (``event``, not ``type``)."""
+        out: Dict[str, Any] = {
+            "party": self.party,
+            "event": self.event,
+            "time": self.time.isoformat() if hasattr(self.time, "isoformat") else self.time,
         }
+        if self.button is not None:
+            out["button"] = self.button
+        return out
+
+    def to_event(self, sessions: Union[int, List[int]]):
+        """The equivalent core-05 Event (``event`` renamed ``type``, no ``dialog``)."""
+        from .event import Event
+
+        return Event(type=self.event, time=self.time, sessions=sessions, party=self.party, button=self.button)

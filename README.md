@@ -1,6 +1,6 @@
 # vCon Library
 
-A Python library for working with vCon (Virtual Conversation) objects according to the vCon specification.
+A Python library for working with vCon (Virtual Conversation) objects according to the vCon specification, currently `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`).
 
 ## Overview
 
@@ -12,7 +12,8 @@ The vCon library provides a complete implementation of the vCon format for repre
 - **Security**: Digital signatures and content hashing
 - **Extensibility**: Extensions and critical fields
 - **Location Data**: Civic address information (GEOPRIV)
-- **Event Tracking**: Party history with join/drop/hold/mute events
+- **Sessions and Events**: `sessions` group dialog by conversation, `events` record joins, drops, holds, key presses and call transfers
+- **Migration**: `migrate_0_4_0_to_0_5_0()` upgrades 0.4.0 vCons, with a report of everything it inferred
 - **Privacy Compliance**: Lawful Basis extension for GDPR compliance
 - **Transcription Support**: WTF (World Transcription Format) extension for standardized speech-to-text
 
@@ -23,6 +24,7 @@ The vCon library provides a complete implementation of the vCon format for repre
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone
 
 # Create a new vCon
@@ -34,18 +36,36 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add dialog
+# A Session groups the dialog of one conversation. Its parties are the
+# receivers; each Dialog's parties are only the contributors.
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
+
+# Add dialog (to Session 0)
 dialog = Dialog(
     type="text",
     start=datetime.now(timezone.utc),
-    parties=[0, 1],
-    body="Hello, I need help with my account."
+    parties=[0],
+    body="Hello, I need help with my account.",
+    encoding="none",
+    mediatype="text/plain",
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Save to file
 vcon.save_to_file("conversation.vcon.json")
-print(f"Created vCon: {vcon.uuid}")
+print(f"Created vCon: {vcon.uuid}")  # syntax "0.5.0"
+```
+
+### Loading a 0.4.0 vCon
+```python
+# Readers accept 0.4.0 and 0.5.0. A document that declares "vcon": "0.4.0"
+# is migrated to 0.5.0 on load; the report lists every inferred value.
+vcon = Vcon.load("old.vcon.json")
+print(vcon.migration_report.summary())   # "3 inferred, 0 fallback, 1 unresolved"
+
+# Or migrate explicitly (strict=True raises MigrationError instead of using a fallback)
+from vcon import migrate_0_4_0_to_0_5_0
+new_dict, report = migrate_0_4_0_to_0_5_0(old_dict, strict=False)
 ```
 
 ### Privacy Compliance with Lawful Basis Extension
@@ -127,14 +147,15 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add recording dialog
+# One Session for the call, then the recording dialog in it
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
     mediatype="audio/mp3"
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Add lawful basis for consent
 vcon.add_lawful_basis_attachment(
@@ -252,19 +273,35 @@ dialog = Dialog(
 )
 ```
 
-### Party History Events
+### Events (replacing party history)
 ```python
-from vcon.party import PartyHistory
-from datetime import datetime
+from vcon.event import Event
+from datetime import datetime, timezone
 
-# Track party events
-history = [
-    PartyHistory(0, "join", datetime.now()),
-    PartyHistory(1, "join", datetime.now()),
-    PartyHistory(0, "hold", datetime.now()),
-    PartyHistory(0, "unhold", datetime.now()),
-    PartyHistory(1, "drop", datetime.now())
-]
+now = datetime.now(timezone.utc)
+# Events apply to the Sessions listed in `sessions`.
+vcon.add_event(Event(type="join", time=now, sessions=0, party=0))
+vcon.add_event(Event(type="hold", time=now, sessions=0, party=0))
+vcon.add_event(Event(type="keydown", time=now, sessions=0, party=1, button="5"))
+
+# A blind transfer: `sessions` is the original call, `target_session` the call to the target
+vcon.add_event(Event(type="blind-transfer", time=now, sessions=0, party=1,
+                     transferee=0, transfer_target=2, target_session=1))
+```
+Each type has a parameter table (core-05 section 4.3.1.5) that `Event` and
+`Vcon.is_valid()` enforce: required (M), optional (O), should not (SN, a warning)
+and must not (X).
+
+### Sessions
+```python
+from vcon.session import Session, SessionReference
+
+vcon.add_session(Session(
+    start=now, duration=300, parties=[0, 1],   # parties are the receivers
+    originator=1,                              # only when not the first party
+    sessions=[SessionReference(1, "child")],   # child, peer, precursor, breakout
+))
+vcon.add_session()   # an empty placeholder Session is allowed
 ```
 
 ### Disposition Values for Incomplete Dialogs
@@ -419,6 +456,7 @@ pip install vcon
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime
 
 # Create a new vCon
@@ -431,15 +469,20 @@ bob = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(alice)
 vcon.add_party(bob)
 
+# A Session lists the receivers; Dialog parties are the contributors
+vcon.add_session(Session(start=datetime.now(), parties=[0, 1]))
+
 # Add dialog
 dialog = Dialog(
     type="text",
     start=datetime.now(),
-    parties=[0, 1],
-    body="Hello, this is a test message!"
+    parties=[0],
+    body="Hello, this is a test message!",
+    encoding="none",
+    mediatype="text/plain",
 )
 
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Save to file
 vcon.save_to_file("conversation.vcon.json")
@@ -546,23 +589,18 @@ vcon = Vcon.load("file.json", property_handling="meta")
 vcon = Vcon.load("file.json", property_handling="default")
 ```
 
-### Transfer Dialogs
+### Call Transfers
+
+The `transfer` dialog type was removed in 0.5.0. A transfer is one or two Events
+(`consultation-start`, `blind-transfer`, `consultative-transfer`,
+`transfer-abandoned`) that reference Sessions for the original, consultation and
+target calls. See "Events" above.
+
+### Empty Dialog Objects
 
 ```python
-# Create transfer dialog
-transfer_data = {
-    "transferee": 0,
-    "transferor": 1,
-    "transfer_target": 2,
-    "original": 0,
-    "target_dialog": 1
-}
-
-vcon.add_transfer_dialog(
-    start=datetime.now(),
-    transfer_data=transfer_data,
-    parties=[0, 1, 2]
-)
+# Holds a position in the dialog array so no other index moves
+vcon.add_dialog(Dialog.placeholder())   # serializes as {}
 ```
 
 ### Analysis Data
@@ -585,8 +623,9 @@ This library implements the latest vCon specification with:
 - ✅ All required fields and validation
 - ✅ Proper media type support
 - ✅ Civic address (GEOPRIV) compliance
-- ✅ Party history event tracking
-- ✅ Transfer dialog support
+- ✅ Sessions and Events, with the per-event-type parameter table enforced
+- ✅ Migration from 0.4.0 (`migrate_0_4_0_to_0_5_0`)
+- ✅ `extensions` completeness and `alg: "none"` rejection
 - ✅ Content hashing and security
 - ✅ Extensions and critical
 - ✅ Flexible versioning (version field is optional)

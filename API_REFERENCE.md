@@ -1,6 +1,21 @@
 # vCon Library API Reference
 
-Complete API documentation for the vCon library - a Python implementation of the latest vCon specification for Virtual Conversation objects.
+Complete API documentation for the vCon library - a Python implementation of the vCon specification (`draft-ietf-vcon-vcon-core-05`, syntax `"0.5.0"`) for Virtual Conversation objects.
+
+## Changes in 1.0.0 (vCon 0.5.0)
+
+| Old (0.4.0) | New (0.5.0) |
+| --- | --- |
+| `vcon.redacted`, `vcon.amended` | `vcon.redacted_from`, `vcon.amended_from` |
+| `PartyHistory`, `Dialog(party_history=...)` | `Event` objects in `vcon.events` (`Vcon.add_event`) |
+| `Vcon.add_transfer_dialog()`, `"transfer"` Dialog type | transfer `Event` types (`blind-transfer`, `consultation-start`, `consultative-transfer`, `transfer-abandoned`) |
+| `"recording-set"` Dialog type, `recordings`, `recording_set` | a `Session` listing the recordings |
+| `Dialog(originator=...)` | `Session(originator=...)` |
+| Dialog `parties` = sender and receivers | Dialog `parties` = contributors; `Session.parties` = receivers |
+| Attachment `dialog` required | Attachment needs `party` plus `dialog` or `session` |
+| `Vcon.sign(key)` | `Vcon.sign(key, alg="RS256")`; `alg` "none" raises `AlgorithmNotPermittedError`, as does `verify()` of such a vCon |
+| `extensions` SHOULD list extensions | `is_valid()` errors when an extension in use is not listed |
+| (new) | `Vcon.add_session`, `Vcon.sessions`, `Vcon.events`, `Dialog.placeholder()`, `migrate_0_4_0_to_0_5_0()` |
 
 ## Table of Contents
 
@@ -11,7 +26,8 @@ Complete API documentation for the vCon library - a Python implementation of the
   - [Party](#party-class)
   - [Dialog](#dialog-class)
   - [CivicAddress](#civicaddress-class)
-  - [PartyHistory](#partyhistory-class)
+  - [Session and Event](#session-and-event-classes)
+  - [Migration](#migration)
   - [Attachment](#attachment-class)
 - [Extensions](#extensions)
   - [Extension Framework](#extension-framework)
@@ -152,19 +168,23 @@ Find all dialogs of a specific type.
 text_dialogs = vcon.find_dialogs_by_type("text")
 ```
 
-###### `add_transfer_dialog(start: Union[datetime, str], transfer_data: Dict[str, Any], parties: List[int]) -> None`
-Add a transfer dialog.
+###### `add_session(session: Union[Session, dict, None] = None) -> int`
+Add a Session Object (an empty placeholder when called with no argument) and return its index.
 
 ```python
-transfer_data = {
-    "transferee": 0,
-    "transferor": 1,
-    "transfer_target": 2
-}
-vcon.add_transfer_dialog(datetime.now(), transfer_data, [0, 1, 2])
+s = vcon.add_session(Session(start=datetime.now(), parties=[0, 1]))
+vcon.add_dialog(dialog, session=s)   # appends the new dialog index to Session s
 ```
 
-###### `add_incomplete_dialog(start: Union[datetime, str], disposition: str, parties: List[int]) -> None`
+###### `add_event(event: Union[Event, dict]) -> int`
+Add an Event Object and return its index.
+
+```python
+vcon.add_event(Event(type="blind-transfer", time=datetime.now(), sessions=0, party=1,
+                     transferee=0, transfer_target=2, target_session=1))
+```
+
+###### `add_incomplete_dialog(start: Union[datetime, str], disposition: str, parties: List[int]) -> int`
 Add an incomplete dialog.
 
 ```python
@@ -173,7 +193,7 @@ vcon.add_incomplete_dialog(datetime.now(), "no-answer", [0])
 
 ##### Attachment Management
 
-###### `add_attachment(purpose: str, body: Any, encoding: str = "none") -> Attachment`
+###### `add_attachment(purpose: str, body: Any = None, encoding: str = "none", ..., party: Optional[int] = None, dialog: Optional[int] = None, session: Optional[Union[int, List[int]]] = None) -> Attachment`
 Add an attachment to the vCon.
 
 ```python
@@ -281,7 +301,7 @@ Remove a must-support extension.
 
 ##### Extension-Specific Methods
 
-###### `add_lawful_basis_attachment(lawful_basis: str, expiration: str, purpose_grants: list, party_index: Optional[int] = None, dialog_index: Optional[int] = None, **kwargs) -> None`
+###### `add_lawful_basis_attachment(lawful_basis: str, expiration: str, purpose_grants: list, party_index: Optional[int] = None, dialog_index: Optional[int] = None, session_index: Optional[Union[int, List[int]]] = None, **kwargs) -> None`
 Add a lawful basis attachment to the vCon.
 
 ```python
@@ -343,7 +363,7 @@ results = vcon.process_extensions()
 
 ##### Security
 
-###### `sign(private_key: Union[rsa.RSAPrivateKey, bytes]) -> None`
+###### `sign(private_key: Union[rsa.RSAPrivateKey, bytes], alg: str = "RS256") -> None`
 Sign the vCon with a private key.
 
 ```python
@@ -426,11 +446,20 @@ Get the creation timestamp.
 ##### `updated_at`
 Get the update timestamp.
 
-##### `redacted`
-Get the redacted flag.
+##### `redacted_from`
+Get the Redacted_from Object (reference to the less redacted vCon).
 
-##### `amended`
-Get the amended flag.
+##### `amended_from`
+Get the Amended_from Object (reference to the prior vCon instance).
+
+##### `sessions`
+Get the `sessions` array.
+
+##### `events`
+Get the `events` array.
+
+##### `redacted_strings`
+Get the `redacted_strings` array.
 
 ##### `group`
 Get the group information.
@@ -517,27 +546,18 @@ Dialog(
     type: str,
     start: Union[datetime, str],
     parties: List[int],
-    originator: Optional[int] = None,
     mediatype: Optional[str] = None,
     filename: Optional[str] = None,
     body: Optional[str] = None,
     encoding: Optional[str] = None,
     url: Optional[str] = None,
     disposition: Optional[str] = None,
-    party_history: Optional[List[PartyHistory]] = None,
-    transferee: Optional[int] = None,
-    transferor: Optional[int] = None,
-    transfer_target: Optional[int] = None,
-    original: Optional[int] = None,
-    consultation: Optional[int] = None,
-    target_dialog: Optional[int] = None,
     campaign: Optional[str] = None,
     interaction: Optional[str] = None,
     skill: Optional[str] = None,
     duration: Optional[float] = None,
     meta: Optional[dict] = None,
     metadata: Optional[Dict[str, Any]] = None,
-    transfer: Optional[Dict[str, Any]] = None,
     signaling: Optional[Dict[str, Any]] = None,
     resolution: Optional[str] = None,
     frame_rate: Optional[float] = None,
@@ -548,28 +568,21 @@ Dialog(
     content_hash: Optional[str] = None,
     application: Optional[str] = None,
     message_id: Optional[str] = None,
+    redacted_segments: Optional[List[Dict[str, Any]]] = None,
     **kwargs
 )
 ```
 
 **Parameters:**
-- `type` (str): Dialog type ("text", "recording", "transfer", "incomplete", "audio", "video")
+- `type` (str): Dialog type ("text", "recording", "incomplete"; "audio" and "video" are library conveniences)
 - `start` (Union[datetime, str]): Start time
-- `parties` (List[int]): List of party indices
-- `originator` (int, optional): Originator party index
+- `parties` (List[int]): Indices of the contributors (the receivers are in the Session)
 - `mediatype` (str, optional): MIME type of content
 - `filename` (str, optional): Filename
 - `body` (str, optional): Content body
 - `encoding` (str, optional): Content encoding
 - `url` (str, optional): External URL
 - `disposition` (str, optional): Disposition for incomplete dialogs
-- `party_history` (List[PartyHistory], optional): Party event history
-- `transferee` (int, optional): Transferee party index
-- `transferor` (int, optional): Transferor party index
-- `transfer_target` (int, optional): Transfer target party index
-- `original` (int, optional): Original dialog index
-- `consultation` (int, optional): Consultation dialog index
-- `target_dialog` (int, optional): Target dialog index
 - `campaign` (str, optional): Campaign identifier
 - `interaction` (str, optional): Interaction identifier
 - `skill` (str, optional): Skill identifier
@@ -735,25 +748,29 @@ CivicAddress(
 ##### `to_dict() -> Dict[str, Optional[str]]`
 Convert CivicAddress to dictionary.
 
-### PartyHistory Class
+### Session and Event Classes
 
-Represents party history events in a vCon dialog.
+`Session(start=None, duration=None, parties=None, originator=None, session_id=None, sessions=None, dialog=None)`
+and `SessionReference(session, type, description=None)` (types `child`, `peer`, `precursor`, `breakout`) are in
+`vcon.session`. `to_dict()` omits unset parameters; `Session().to_dict() == {}` is a valid placeholder.
 
-#### Constructor
+`Event(type, time, sessions=None, party=None, dialog=None, channel=None, contributors=None, button=None,
+transferee=None, transfer_target=None, consultation=None, target_session=None, validate=True, **extra)` is in
+`vcon.event`. With `validate=True` the constructor applies the per-type parameter table
+(`vcon.event.EVENT_PARAMETER_RULES`; M must, O optional, SN should not, X must not) and raises `ValueError`.
+`validate_event(dict, ...)` returns `(errors, warnings)`.
 
-```python
-PartyHistory(party: int, event: str, time: datetime)
-```
+`Dialog.placeholder()` creates an empty Dialog Object that serializes as `{}`.
 
-**Parameters:**
-- `party` (int): Index of the party
-- `event` (str): Event type ("join", "drop", "hold", "unhold", "mute", "unmute")
-- `time` (datetime): Time of the event
+### Migration
 
-#### Methods
-
-##### `to_dict() -> Dict[str, Any]`
-Convert PartyHistory to dictionary.
+`migrate_0_4_0_to_0_5_0(vcon, strict=False) -> MigrationResult(vcon, report)` (in `vcon.migration`) implements
+Appendix A.1. `MIGRATION_STEPS` holds one entry per step T1 to T15. `MigrationReport` lists inferred values,
+fallbacks and unresolved items (`report.inferred`, `.fallbacks`, `.unresolved`), the original content of removed
+Dialogs (`report.removed_dialogs`) and `report.resign_required`. `MigrationError` is raised for input that cannot
+be migrated and, in strict mode, when a required field has no source. `Vcon(...)`, `Vcon.build_from_json()` and
+`Vcon.load*()` migrate input that declares `"vcon": "0.4.0"` (`migrate_legacy=False` turns that off) and keep the
+report in `vcon.migration_report`.
 
 ### Attachment Class
 
@@ -762,13 +779,16 @@ Represents an attachment in a vCon.
 #### Constructor
 
 ```python
-Attachment(type: str, body: Any, encoding: str = "none")
+Attachment(purpose: str, body: Any = None, encoding: str = "none", mediatype=None, filename=None, url=None,
+           content_hash=None, start=None, party=None, dialog=None, session=None)
 ```
 
 **Parameters:**
-- `type` (str): Type of attachment
+- `purpose` (str): Purpose of the attachment
 - `body` (Any): Content of attachment
-- `encoding` (str): Encoding format ("base64", "base64url", "none")
+- `encoding` (str): Encoding format ("base64url", "json", "none")
+- `party` (int): Party index (default 0)
+- `dialog` (int), `session` (int or list): at least one is required; `Vcon.add_attachment()` sets `session` to the only Session when the vCon has exactly one and neither is given, and raises `ValueError` otherwise
 
 #### Methods
 
@@ -1165,7 +1185,7 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 ### Dialog Types
 
 ```python
-VALID_TYPES = ["recording", "text", "transfer", "incomplete", "audio", "video"]
+VALID_TYPES = ["recording", "text", "incomplete", "audio", "video"]
 ```
 
 ### Disposition Values
@@ -1177,10 +1197,12 @@ VALID_DISPOSITIONS = [
 ]
 ```
 
-### Party History Events
+### Event Types
 
 ```python
-VALID_EVENTS = ["join", "drop", "hold", "unhold", "mute", "unmute"]
+from vcon.event import CORE_EVENT_TYPES
+# join, drop, hold, unhold, mute, unmute, keydown, keyup, consultation-start,
+# blind-transfer, consultative-transfer, transfer-abandoned, channel-contributors
 ```
 
 ### Attachment Encodings
@@ -1285,15 +1307,19 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
+# Session: the receivers. Dialog parties: the contributors.
+vcon.add_session(Session(start=datetime.now(), parties=[0, 1]))
+
 # Add dialog
 dialog = Dialog(
     type="text",
     start=datetime.now(),
-    parties=[0, 1],
-    originator=0,
-    body="Hello, I need help with my account."
+    parties=[0],
+    body="Hello, I need help with my account.",
+    encoding="none",
+    mediatype="text/plain",
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Save to file
 vcon.save_to_file("conversation.vcon.json")
@@ -1422,27 +1448,15 @@ party = Party(
 )
 ```
 
-### Party History
+### Events
 
 ```python
-from vcon.party import PartyHistory
+from vcon.event import Event
 
-# Create party history
-history = [
-    PartyHistory(0, "join", datetime.now()),
-    PartyHistory(1, "join", datetime.now()),
-    PartyHistory(0, "hold", datetime.now()),
-    PartyHistory(0, "unhold", datetime.now()),
-    PartyHistory(1, "drop", datetime.now())
-]
-
-# Add to dialog
-dialog = Dialog(
-    type="recording",
-    start=datetime.now(),
-    parties=[0, 1],
-    party_history=history
-)
+vcon.add_event(Event(type="join", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="hold", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="unhold", time=datetime.now(), sessions=0, party=0))
+vcon.add_event(Event(type="drop", time=datetime.now(), sessions=0, party=1))
 ```
 
 ### HTTP Operations
