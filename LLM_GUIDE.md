@@ -10,7 +10,8 @@ The vCon library is a Python implementation of the vCon 0.5.0 specification (dra
 
 - **vCon Container**: The primary object that holds all conversation data
 - **Parties**: Participants in a conversation (callers, agents, bots) with contact information
-- **Dialogs**: Individual messages or segments of the conversation (text, audio, video, etc.)
+- **Dialogs**: Individual messages or segments of the conversation (`recording`, `text` or `incomplete`)
+- **Sessions**: Group Dialogs and Events and list the receiving parties (0.5.0)
 - **Attachments**: Additional files or data associated with the conversation
 - **Analysis**: Results from processing the conversation (sentiment analysis, transcription, etc.)
 - **Extensions**: Optional features that extend the base vCon functionality
@@ -18,7 +19,7 @@ The vCon library is a Python implementation of the vCon 0.5.0 specification (dra
   - **WTF Extension**: World Transcription Format for standardized speech-to-text data
 - **Digital Signatures**: Cryptographic verification of vCon integrity
 - **Civic Addresses**: Location information for parties using GEOPRIV standard
-- **Party History**: Event tracking for multi-party conversations
+- **Events**: Joins, drops, holds, key presses and transfers (replace 0.4.0 party history)
 
 ## Installation
 
@@ -89,15 +90,17 @@ response = vcon.post_to_url(
 ```python
 # Access properties
 uuid = vcon.uuid
-version = vcon.vcon
+version = vcon.vcon            # "0.5.0" for vCons built or migrated by 1.0
 created_at = vcon.created_at
 updated_at = vcon.updated_at
 parties_list = vcon.parties
 dialog_list = vcon.dialog
+sessions_list = vcon.sessions
+events_list = vcon.events
 attachments_list = vcon.attachments
 analysis_list = vcon.analysis
-extensions_list = vcon.extensions
-critical_list = vcon.critical
+extensions_list = vcon.get_extensions()
+critical_list = vcon.get_critical()
 ```
 
 ### 2. Party Class
@@ -174,14 +177,14 @@ vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 # Add to vCon, in Session 0
 vcon.add_dialog(text_dialog, session=0)
 
-# Create an audio dialog
+# Create an audio recording dialog ("audio"/"video" are deprecated aliases for "recording")
 audio_dialog = Dialog(
-    type="audio",
+    type="recording",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     mediatype="audio/mp3",
     body=base64_encoded_audio,
-    encoding="base64",
+    encoding="base64url",
     filename="recording.mp3"
 )
 
@@ -233,11 +236,13 @@ is_email = dialog.is_email()
 #### Dialog Types and MIME Types
 
 **Valid Dialog Types:**
+- `"recording"`: Audio/video recording (the media kind is carried by `mediatype`)
 - `"text"`: Text-based communication (chat, SMS, email)
-- `"recording"`: Audio/video recording
 - `"incomplete"`: Failed or incomplete conversation setup
-- `"audio"`: Audio content
-- `"video"`: Video content
+
+`"audio"` and `"video"` are still accepted as deprecated aliases: they emit a `DeprecationWarning` and are
+stored as `"recording"`. The `"transfer"` and `"recording-set"` types were removed in 0.5.0 (use transfer
+Events and a Session), and Dialog parameters such as `transfer`, `party_history` and `originator` raise `ValueError`.
 
 **Supported MIME Types:**
 
@@ -280,21 +285,28 @@ all_tags = vcon.tags  # Returns the tags attachment dictionary
 
 ### 5. Working with Attachments
 
-Attachments are arbitrary data associated with the conversation.
+Attachments are arbitrary data associated with the conversation. Under core-05 an attachment needs `party`
+plus `dialog` or `session`. `party` defaults to 0; if neither `dialog` nor `session` is given, the only Session
+is used when the vCon has exactly one, otherwise `ValueError` is raised.
 
 ```python
 # Add an attachment
 vcon.add_attachment(
-    type="transcript",
+    purpose="transcript",
     body="Conversation transcript content...",
-    encoding="none"
+    encoding="none",
+    party=0,
+    dialog=0
 )
 
-# Add a base64-encoded attachment
+# Add a base64url-encoded attachment scoped to Session 0
 vcon.add_attachment(
-    type="recording",
+    purpose="recording",
     body=base64_encoded_content,
-    encoding="base64url"
+    encoding="base64url",
+    mediatype="audio/mp3",
+    party=0,
+    session=0
 )
 
 # Find an attachment
@@ -377,7 +389,7 @@ vcon.add_lawful_basis_attachment(
         }
     ],
     party_index=0,
-    dialog_index=0
+    session_index=0  # core-05 scopes a lawful basis to Sessions
 )
 
 # Add extension to vCon
@@ -415,7 +427,8 @@ from vcon.extensions.lawful_basis import (
     ProofMechanism,
     LawfulBasisType,
     ProofType,
-    HashAlgorithm
+    HashAlgorithm,
+    CanonicalizationMethod
 )
 
 # Create purpose grants with conditions
@@ -436,7 +449,7 @@ purpose_grants = [
 # Create content hash for integrity
 content_hash = ContentHash(
     algorithm=HashAlgorithm.SHA_256,
-    canonicalization="JCS",
+    canonicalization=CanonicalizationMethod.JCS,
     value="computed_hash_value"
 )
 
@@ -571,7 +584,8 @@ wtf_attachment = whisper_adapter.convert(whisper_data)
 vcon.add_wtf_transcription_attachment(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
-    metadata=wtf_attachment.metadata.to_dict()
+    metadata=wtf_attachment.metadata.to_dict(),
+    dialog_index=0  # or session_index; required unless the vCon has exactly one Session
 )
 ```
 
@@ -596,7 +610,13 @@ transcript = Transcript(
     confidence=0.95
 )
 
-# Create segments with words
+# Create words
+words = [
+    Word(id=0, start=0.0, end=1.0, text="Hello", confidence=0.95, speaker=0),
+    Word(id=1, start=1.0, end=2.0, text="world", confidence=0.95, speaker=0)
+]
+
+# Create segments (a segment references its words by id)
 segments = [
     Segment(
         id=0,
@@ -605,23 +625,20 @@ segments = [
         text="Hello world",
         confidence=0.95,
         speaker=0,
-        words=[
-            Word(id=0, start=0.0, end=1.0, text="Hello", confidence=0.95, speaker=0),
-            Word(id=1, start=1.0, end=2.0, text="world", confidence=0.95, speaker=0)
-        ]
+        words=[0, 1]
     )
 ]
 
-# Create speaker information
-speakers = [
-    Speaker(
+# Create speaker information (keyed by speaker id)
+speakers = {
+    "0": Speaker(
         id=0,
         label="Speaker 1",
         segments=[0],
         total_time=2.0,
         confidence=0.9
     )
-]
+}
 
 # Create quality metrics
 quality = Quality(
@@ -641,8 +658,8 @@ metadata = Metadata(
     processed_at=datetime.now(timezone.utc).isoformat(),
     provider="whisper",
     model="whisper-1",
-    audio_quality="high",
-    background_noise=0.1
+    processing_time=1.2,
+    audio={"duration": 2.0, "sample_rate": 16000}
 )
 
 # Create comprehensive WTF attachment
@@ -650,7 +667,7 @@ attachment = WTFAttachment(
     transcript=transcript,
     segments=segments,
     metadata=metadata,
-    words=[word for segment in segments for word in segment.words],
+    words=words,
     speakers=speakers,
     quality=quality
 )
@@ -762,14 +779,14 @@ dialog = Dialog(
     body="Hello, this is a test message!",
     encoding="none",
     session_id={"local": "local-uuid", "remote": "remote-uuid"},
-    content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
+    content_hash="sha512-xbxzWUN7HoME4TkKebyfothmuRRH1M_Skvg2tfVxlFDWSQOdsLcKZ60qsibswilp_NsnfnBW3-7ctRSQGT9UVg",
     application="chat-app",
     message_id="<message-id@example.com>"
 )
 
-# Video dialog with metadata
+# Video recording dialog with metadata (the mediatype says it is video)
 video_dialog = Dialog(
-    type="video",
+    type="recording",
     start=datetime.now(),
     parties=[0, 1],
     mediatype="video/mp4",
@@ -827,6 +844,7 @@ is_valid, errors = Vcon.validate_json(json_string)
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone
 
 # Create a new vCon
@@ -838,22 +856,25 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add conversation dialogs in sequence
+# One Session for the conversation (lists the receivers)
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
+
+# Add conversation dialogs in sequence (Dialog parties are the contributors)
 vcon.add_dialog(Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
-    parties=[0, 1],
+    parties=[0],
     mediatype="text/plain",
     body="Hello, I need help with my account."
-))
+), session=0)
 
 vcon.add_dialog(Dialog(
     type="text",
     start=datetime.now(timezone.utc).isoformat(),
-    parties=[0, 1],
+    parties=[1],
     mediatype="text/plain",
     body="I'd be happy to help. Can you provide your account number?"
-))
+), session=0)
 
 # Add metadata
 vcon.add_tag("customer_id", "12345")
@@ -875,18 +896,18 @@ import base64
 # Reading an audio file and adding it to a dialog
 with open("recording.mp3", "rb") as f:
     audio_data = f.read()
-    audio_base64 = base64.b64encode(audio_data).decode("utf-8")
+    audio_base64 = base64.urlsafe_b64encode(audio_data).decode("utf-8").rstrip("=")
 
 audio_dialog = Dialog(
-    type="audio",
+    type="recording",
     start=datetime.now(timezone.utc).isoformat(),
     parties=[0, 1],
     mediatype="audio/mp3",
     body=audio_base64,
-    encoding="base64",
+    encoding="base64url",
     filename="recording.mp3"
 )
-vcon.add_dialog(audio_dialog)
+vcon.add_dialog(audio_dialog, session=0)
 ```
 
 ### 3. External vs Inline Content
@@ -914,9 +935,9 @@ if dialog.is_inline_data():
 ### 4. Video Content Handling
 
 ```python
-# Add video data with metadata
+# Add video data with metadata (a "recording"; the mediatype says it is video)
 video_dialog = Dialog(
-    type="video",
+    type="recording",
     start=datetime.now(),
     parties=[0, 1],
     mediatype="video/mp4",
@@ -986,14 +1007,14 @@ if image_dialog.is_pdf():
 ### 6. Content Hashing and Integrity
 
 ```python
-# Calculate content hash
-content_hash = dialog.calculate_content_hash("sha256")
+# Calculate content hash: "sha512-<unpadded base64url>" (pass "sha256" for SHA-256)
+content_hash = dialog.calculate_content_hash()
 
 # Set content hash for external files
 dialog.set_content_hash(content_hash)
 
-# Verify content integrity
-is_valid = dialog.verify_content_hash(expected_hash, "sha256")
+# Verify content integrity (the algorithm is read from the hash prefix)
+is_valid = dialog.verify_content_hash(expected_hash)
 
 # Check if external data has changed
 if dialog.is_external_data_changed():
@@ -1042,6 +1063,7 @@ When generating vCon code, use these templates as starting points:
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime
 
 def create_basic_conversation():
@@ -1054,13 +1076,17 @@ def create_basic_conversation():
     vcon.add_party(caller)
     vcon.add_party(agent)
     
+    # A Session MUST exist once there is a Dialog (0.5.0)
+    vcon.add_session(Session(start=datetime.now(), parties=[0, 1]))
+    
     # Add conversation
     vcon.add_dialog(Dialog(
         type="text",
         start=datetime.now().isoformat(),
-        parties=[0, 1],
+        parties=[0],
+        mediatype="text/plain",
         body="Hello, I need help."
-    ))
+    ), session=0)
     
     return vcon
 ```
@@ -1087,22 +1113,25 @@ def create_multimedia_conversation():
     vcon.add_party(caller)
     vcon.add_party(agent)
     
+    vcon.add_session(Session(start=datetime.now(), parties=[0, 1]))
+    
     # Add text dialog
     vcon.add_dialog(Dialog(
         type="text",
         start=datetime.now().isoformat(),
-        parties=[0, 1],
+        parties=[0],
+        mediatype="text/plain",
         body="Hello, I need help with my account."
-    ))
+    ), session=0)
     
-    # Add audio dialog
+    # Add audio recording dialog
     vcon.add_dialog(Dialog(
         type="recording",
         start=datetime.now().isoformat(),
         parties=[0, 1],
         mediatype="audio/mp3",
         filename="conversation.mp3"
-    ))
+    ), session=0)
     
     # Add analysis
     vcon.add_analysis(
@@ -1140,16 +1169,17 @@ def create_extension_enabled_conversation():
     vcon.add_party(caller)
     vcon.add_party(agent)
     
-    # Add recording dialog
+    # Add a Session and the recording dialog
+    vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
     dialog = Dialog(
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         mediatype="audio/mp3"
     )
-    vcon.add_dialog(dialog)
+    vcon.add_dialog(dialog, session=0)
     
-    # Add lawful basis for consent
+    # Add lawful basis for consent (scoped to the only Session)
     vcon.add_lawful_basis_attachment(
         lawful_basis="consent",
         expiration=(datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
@@ -1196,10 +1226,7 @@ def create_extension_enabled_conversation():
         dialog_index=0
     )
     
-    # Add extensions
-    vcon.add_extension("lawful_basis")
-    vcon.add_extension("wtf_transcription")
-    
+    # Both methods already list their extension in vCon.extensions
     return vcon
 ```
 
@@ -1215,7 +1242,8 @@ def create_privacy_compliant_conversation():
         ProofMechanism,
         LawfulBasisType,
         ProofType,
-        HashAlgorithm
+        HashAlgorithm,
+        CanonicalizationMethod
     )
     
     vcon = Vcon.build_new()
@@ -1234,14 +1262,15 @@ def create_privacy_compliant_conversation():
     vcon.add_party(caller)
     vcon.add_party(agent)
     
-    # Add dialog
+    # Add a Session and the dialog
+    vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
     dialog = Dialog(
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         mediatype="audio/mp3"
     )
-    vcon.add_dialog(dialog)
+    vcon.add_dialog(dialog, session=0)
     
     # Create comprehensive lawful basis
     purpose_grants = [
@@ -1266,7 +1295,7 @@ def create_privacy_compliant_conversation():
     # Create content hash for integrity
     content_hash = ContentHash(
         algorithm=HashAlgorithm.SHA_256,
-        canonicalization="JCS",
+        canonicalization=CanonicalizationMethod.JCS,
         value="computed_hash_value"
     )
     
@@ -1289,14 +1318,15 @@ def create_privacy_compliant_conversation():
         proof_mechanisms=[proof]
     )
     
-    # Add to vCon
-    vcon.vcon_dict["attachments"].append({
-        "type": "lawful_basis",
-        "encoding": "json",
-        "body": attachment.to_dict(),
-        "party": 0,
-        "dialog": 0
-    })
+    # Add to vCon (core-05: party plus session; a "json" body is the JSON value itself)
+    vcon.add_attachment(
+        purpose="lawful_basis",
+        body=attachment.to_dict(),
+        encoding="json",
+        mediatype="application/json",
+        party=0,
+        session=0
+    )
     
     # Add extension
     vcon.add_extension("lawful_basis")
@@ -1335,14 +1365,15 @@ def create_transcription_enabled_conversation():
     vcon.add_party(caller)
     vcon.add_party(agent)
     
-    # Add dialog
+    # Add a Session and the dialog
+    vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
     dialog = Dialog(
         type="recording",
         start=datetime.now(timezone.utc),
         parties=[0, 1],
         mediatype="audio/mp3"
     )
-    vcon.add_dialog(dialog)
+    vcon.add_dialog(dialog, session=0)
     
     # Create detailed transcript
     transcript = Transcript(
@@ -1352,7 +1383,22 @@ def create_transcription_enabled_conversation():
         confidence=0.94
     )
     
-    # Create segments with words
+    # Create words
+    words = [
+        Word(id=0, start=0.0, end=0.5, text="Hello", confidence=0.98, speaker=0),
+        Word(id=1, start=0.5, end=0.8, text="I", confidence=0.95, speaker=0),
+        Word(id=2, start=0.8, end=1.1, text="need", confidence=0.92, speaker=0),
+        Word(id=3, start=1.1, end=1.4, text="help", confidence=0.94, speaker=0),
+        Word(id=4, start=1.4, end=1.7, text="with", confidence=0.90, speaker=0),
+        Word(id=5, start=1.7, end=2.0, text="my", confidence=0.96, speaker=0),
+        Word(id=6, start=2.0, end=2.5, text="account", confidence=0.93, speaker=0),
+        Word(id=7, start=3.2, end=3.5, text="Can", confidence=0.91, speaker=0),
+        Word(id=8, start=3.5, end=3.8, text="you", confidence=0.94, speaker=0),
+        Word(id=9, start=3.8, end=4.2, text="assist", confidence=0.89, speaker=0),
+        Word(id=10, start=4.2, end=4.5, text="me", confidence=0.95, speaker=0)
+    ]
+    
+    # Create segments (a segment references its words by id)
     segments = [
         Segment(
             id=0,
@@ -1361,15 +1407,7 @@ def create_transcription_enabled_conversation():
             text="Hello, I need help with my account.",
             confidence=0.95,
             speaker=0,
-            words=[
-                Word(id=0, start=0.0, end=0.5, text="Hello", confidence=0.98, speaker=0),
-                Word(id=1, start=0.5, end=0.8, text="I", confidence=0.95, speaker=0),
-                Word(id=2, start=0.8, end=1.1, text="need", confidence=0.92, speaker=0),
-                Word(id=3, start=1.1, end=1.4, text="help", confidence=0.94, speaker=0),
-                Word(id=4, start=1.4, end=1.7, text="with", confidence=0.90, speaker=0),
-                Word(id=5, start=1.7, end=2.0, text="my", confidence=0.96, speaker=0),
-                Word(id=6, start=2.0, end=2.5, text="account", confidence=0.93, speaker=0)
-            ]
+            words=[0, 1, 2, 3, 4, 5, 6]
         ),
         Segment(
             id=1,
@@ -1378,25 +1416,20 @@ def create_transcription_enabled_conversation():
             text="Can you assist me?",
             confidence=0.92,
             speaker=0,
-            words=[
-                Word(id=7, start=3.2, end=3.5, text="Can", confidence=0.91, speaker=0),
-                Word(id=8, start=3.5, end=3.8, text="you", confidence=0.94, speaker=0),
-                Word(id=9, start=3.8, end=4.2, text="assist", confidence=0.89, speaker=0),
-                Word(id=10, start=4.2, end=4.5, text="me", confidence=0.95, speaker=0)
-            ]
+            words=[7, 8, 9, 10]
         )
     ]
     
-    # Create speaker information
-    speakers = [
-        Speaker(
+    # Create speaker information (keyed by speaker id)
+    speakers = {
+        "0": Speaker(
             id=0,
             label="Customer",
             segments=[0, 1],
             total_time=6.5,
             confidence=0.93
         )
-    ]
+    }
     
     # Create quality metrics
     quality = Quality(
@@ -1416,8 +1449,8 @@ def create_transcription_enabled_conversation():
         processed_at=datetime.now(timezone.utc).isoformat(),
         provider="whisper",
         model="whisper-1",
-        audio_quality="high",
-        background_noise=0.05
+        processing_time=2.1,
+        audio={"duration": 6.5, "sample_rate": 16000}
     )
     
     # Create comprehensive WTF attachment
@@ -1425,19 +1458,20 @@ def create_transcription_enabled_conversation():
         transcript=transcript,
         segments=segments,
         metadata=metadata,
-        words=[word for segment in segments for word in segment.words],
+        words=words,
         speakers=speakers,
         quality=quality
     )
     
-    # Add to vCon
-    vcon.vcon_dict["attachments"].append({
-        "type": "wtf_transcription",
-        "encoding": "json",
-        "body": attachment.to_dict(),
-        "party": 0,
-        "dialog": 0
-    })
+    # Add to vCon (core-05: party plus dialog or session)
+    vcon.add_attachment(
+        purpose="wtf_transcription",
+        body=attachment.to_dict(),
+        encoding="json",
+        mediatype="application/json",
+        party=0,
+        dialog=0
+    )
     
     # Add extension
     vcon.add_extension("wtf_transcription")
@@ -1462,14 +1496,21 @@ def chat_to_vcon(chat_messages, participants):
         vcon.add_party(party)
         party_map[participant["id"]] = i
     
-    # Add messages as dialogs
+    # One Session for the chat, received by all participants
+    vcon.add_session(Session(
+        start=chat_messages[0]["timestamp"],
+        parties=list(range(len(participants)))
+    ))
+    
+    # Add messages as dialogs (the sender is the contributor)
     for message in chat_messages:
         vcon.add_dialog(Dialog(
             type="text",
             start=message["timestamp"],
             parties=[party_map[message["sender_id"]]],
+            mediatype="text/plain",
             body=message["content"]
-        ))
+        ), session=0)
     
     return vcon
 ```
@@ -1620,6 +1661,7 @@ def export_transcriptions(vcon, party_index=None, format="srt"):
         exports.append({
             "party_index": attachment.get("party"),
             "dialog_index": attachment.get("dialog"),
+            "session_index": attachment.get("session"),
             "format": format,
             "content": content
         })
@@ -1693,7 +1735,7 @@ def safe_vcon_operation(operation_func, *args, **kwargs):
 
 # Usage
 result = safe_vcon_operation(Vcon.load, "conversation.json")
-if not result.get("success", True):
+if isinstance(result, dict) and not result.get("success", True):
     print(f"Error: {result['error']}")
 ```
 
@@ -1715,11 +1757,18 @@ def validate_and_fix_vcon(vcon):
             # UUID is auto-generated, this shouldn't happen
             pass
         elif "invalid dialog type" in error.lower():
-            # Try to fix invalid dialog types
+            # Try to fix invalid dialog types (core-05: recording, text, incomplete;
+            # an empty {} is a placeholder Dialog and has no type)
             for dialog in vcon.dialog:
-                if dialog.get("type") not in ["text", "recording", "incomplete", "audio", "video"]:
+                if not dialog:
+                    continue
+                old_type = dialog.get("type")
+                if old_type in ("audio", "video"):
+                    dialog["type"] = "recording"  # deprecated aliases for recording
+                    fixes_applied.append(f"Fixed dialog type {old_type} -> recording")
+                elif old_type not in ["recording", "text", "incomplete"]:
                     dialog["type"] = "text"  # Default to text
-                    fixes_applied.append(f"Fixed invalid dialog type: {dialog.get('type')}")
+                    fixes_applied.append(f"Fixed invalid dialog type: {old_type}")
     
     # Re-validate after fixes
     is_valid, remaining_errors = vcon.is_valid()
@@ -1772,23 +1821,36 @@ def vcon_to_database_record(vcon):
 ### 6. Performance Considerations
 
 ```python
+import base64
+from vcon.dialog import Dialog, compute_content_hash
+
 def optimize_vcon_for_storage(vcon):
     """Optimize vCon for storage by converting large content to external references."""
+    # vcon.dialog is a list of dicts (mutable references into the vCon)
     for i, dialog in enumerate(vcon.dialog):
         if dialog.get("body") and len(dialog["body"]) > 1000000:  # 1MB threshold
-            # In real implementation, upload to storage and get URL
+            body = dialog["body"]
+            if dialog.get("encoding") == "base64url":
+                content = base64.urlsafe_b64decode(body + "=" * (-len(body) % 4))
+            else:
+                content = body.encode()
+            # In real implementation, upload content to storage and get URL
             external_url = f"https://storage.example.com/dialog_{i}_content"
             dialog["url"] = external_url
-            dialog["content_hash"] = dialog.calculate_content_hash()
+            dialog["content_hash"] = compute_content_hash(content)  # "sha512-..."
             del dialog["body"]
-            dialog["encoding"] = None
+            dialog.pop("encoding", None)
 
 def optimize_vcon_for_processing(vcon):
     """Optimize vCon for processing by loading external content."""
-    for dialog in vcon.dialog:
+    for i, dialog_dict in enumerate(vcon.dialog):
+        if not dialog_dict:
+            continue  # placeholder Dialog ({})
+        dialog = Dialog(**dialog_dict)
         if dialog.is_external_data():
             try:
                 dialog.to_inline_data()
+                vcon.dialog[i] = dialog.to_dict()
             except Exception as e:
                 print(f"Failed to load external content: {e}")
 ```
@@ -1805,7 +1867,7 @@ The vCon library provides a comprehensive framework for working with conversatio
 6. **Handle Errors Gracefully**: Implement proper error handling for robust applications
 7. **Consider Performance**: Optimize for storage or processing based on use case
 8. **Use Extensions**: Declare optional features and must-support requirements
-9. **Track Events**: Use party history for complex multi-party conversations
+9. **Track Events**: Use Sessions and Event objects (joins, drops, holds, transfers) for complex multi-party conversations
 10. **Integrate Seamlessly**: Follow patterns for API and database integration
 11. **Implement Privacy Compliance**: Use Lawful Basis extension for GDPR compliance
 12. **Standardize Transcriptions**: Use WTF extension for multi-provider transcription support

@@ -15,53 +15,60 @@ permissions:
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
-  docs:
-    # Deploy to the github-pages environment
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Builds on every push and pull request, so a broken docs build fails the PR.
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
-          
+          python-version: '3.12'
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.7.1
+          version: 2.5.1
           virtualenvs-create: true
           virtualenvs-in-project: true
-          
+
       - name: Install dependencies
         run: |
           poetry install --with dev
-          
+
       - name: Build documentation
         run: |
           cd docs
-          poetry run make html
+          poetry run make html SPHINXOPTS="-W --keep-going"
           # Copy built docs to a clean directory for Pages
           mkdir -p ../pages-build
           cp -r build/html/* ../pages-build/
           # Ensure .nojekyll exists to disable Jekyll
           touch ../pages-build/.nojekyll
-          
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        
+
       - name: Upload artifact
+        if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
           path: './pages-build'
-          
+
+  # Deploys only from main; the github-pages environment rejects other refs.
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 
+        uses: actions/deploy-pages@v4

@@ -57,7 +57,8 @@ The main class for working with vCon objects.
 #### Constructor
 
 ```python
-Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default")
+Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default",
+     migrate_legacy: bool = True, strict_migration: bool = False)
 ```
 
 **Parameters:**
@@ -66,24 +67,26 @@ Vcon(vcon_dict: Dict[str, Any] = None, property_handling: str = "default")
   - `"default"`: Keep non-standard properties (default)
   - `"strict"`: Remove non-standard properties
   - `"meta"`: Move non-standard properties to meta object
+- `migrate_legacy` (bool): Migrate input that declares `"vcon": "0.4.0"` to 0.5.0 (default `True`)
+- `strict_migration` (bool): Raise instead of using fallbacks when a 0.4.0 construct cannot be migrated exactly
 
 #### Class Methods
 
-##### `build_new() -> Vcon`
-Create a new vCon object with default values.
+##### `build_new(created_at: Union[str, datetime] = None, property_handling: str = "default") -> Vcon`
+Create a new vCon object with default values (`"vcon": "0.5.0"`, a new UUID, and empty `parties`, `dialog`, `attachments` and `analysis`).
 
 ```python
 vcon = Vcon.build_new()
 ```
 
-##### `build_from_json(json_str: str, property_handling: str = "default") -> Vcon`
+##### `build_from_json(json_str: str, property_handling: str = "default", migrate_legacy: bool = True, strict_migration: bool = False) -> Vcon`
 Create a vCon object from JSON string.
 
 ```python
 vcon = Vcon.build_from_json('{"uuid": "123", "created_at": "2024-01-01T00:00:00Z"}')
 ```
 
-##### `load(file_path_or_url: str, property_handling: str = "default") -> Vcon`
+##### `load(file_path_or_url: str, property_handling: str = "default", migrate_legacy: bool = True, strict_migration: bool = False) -> Vcon`
 
 Load a vCon from file or URL.
 
@@ -95,10 +98,10 @@ vcon = Vcon.load("conversation.vcon.json")
 vcon = Vcon.load("https://example.com/conversation.vcon.json")
 ```
 
-##### `load_from_file(file_path: str, property_handling: str = "default") -> Vcon`
+##### `load_from_file(file_path: str, property_handling: str = "default", migrate_legacy: bool = True, strict_migration: bool = False) -> Vcon`
 Load a vCon from a local file.
 
-##### `load_from_url(url: str, property_handling: str = "default") -> Vcon`
+##### `load_from_url(url: str, property_handling: str = "default", migrate_legacy: bool = True, strict_migration: bool = False) -> Vcon`
 
 Load a vCon from a URL.
 
@@ -146,8 +149,8 @@ index = vcon.find_party_index("tel", "+1234567890")
 
 ##### Dialog Management
 
-###### `add_dialog(dialog: Dialog) -> None`
-Add a dialog to the vCon.
+###### `add_dialog(dialog: Dialog, session: Optional[int] = None) -> int`
+Add a dialog to the vCon and return its index. With `session`, the new dialog index is also appended to that Session's `dialog` list.
 
 ```python
 dialog = Dialog(type="text", start=datetime.now(), parties=[0, 1], body="Hello")
@@ -194,13 +197,13 @@ vcon.add_incomplete_dialog(datetime.now(), "no-answer", [0])
 ##### Attachment Management
 
 ###### `add_attachment(purpose: str, body: Any = None, encoding: str = "none", ..., party: Optional[int] = None, dialog: Optional[int] = None, session: Optional[Union[int, List[int]]] = None) -> Attachment`
-Add an attachment to the vCon.
+Add an attachment to the vCon. Core-05 needs `party` plus `dialog` or `session`: `party` defaults to 0, and if neither `dialog` nor `session` is given the only Session is used when the vCon has exactly one; otherwise `ValueError` is raised.
 
 ```python
-attachment = vcon.add_attachment("transcript", "Full conversation...", "none")
+attachment = vcon.add_attachment("transcript", "Full conversation...", "none", party=0, dialog=0)
 ```
 
-###### `add_image(image_path: str, type: str = "image") -> Attachment`
+###### `add_image(image_path: str, purpose: str = "image") -> Attachment`
 Add an image attachment from file.
 
 ```python
@@ -216,7 +219,7 @@ transcript = vcon.find_attachment_by_purpose("transcript")
 
 ##### Analysis Management
 
-###### `add_analysis(type: str, dialog: Union[int, List[int]], vendor: str, body: Any, encoding: str = "none") -> None`
+###### `add_analysis(*, type: str, vendor: str, body: Any, dialog: Union[int, List[int]] = None, sessions: Union[int, List[int]] = None, encoding: str = "none", ...) -> None`
 Add analysis data to the vCon.
 
 ```python
@@ -239,7 +242,7 @@ sentiment = vcon.find_analysis_by_type("sentiment")
 ##### Tag Management
 
 Tags are stored as a `"tags"`-purpose attachment whose body is a list of
-`"name:value"` strings (per `draft-ietf-vcon-vcon-core-04`, a `"json"`-encoded
+`"name:value"` strings (per `draft-ietf-vcon-vcon-core-04` and `-05`, a `"json"`-encoded
 body is the JSON value itself, not a serialized string). `get_tag()` and
 `add_tag()` also accept a legacy JSON-*string* tags body -- as written under
 -02 conventions, or by this library prior to 0.10.0 -- decoding it
@@ -302,7 +305,7 @@ Remove a must-support extension.
 ##### Extension-Specific Methods
 
 ###### `add_lawful_basis_attachment(lawful_basis: str, expiration: str, purpose_grants: list, party_index: Optional[int] = None, dialog_index: Optional[int] = None, session_index: Optional[Union[int, List[int]]] = None, **kwargs) -> None`
-Add a lawful basis attachment to the vCon.
+Add a lawful basis attachment to the vCon. Core-05 scopes a basis to Sessions, so pass `session_index` (a `dialog_index`-only scope is accepted with a warning). With neither, the only Session is used when the vCon has exactly one; otherwise `ValueError` is raised. `party_index` defaults to 0 with a warning.
 
 ```python
 vcon.add_lawful_basis_attachment(
@@ -311,18 +314,20 @@ vcon.add_lawful_basis_attachment(
     purpose_grants=[
         {"purpose": "recording", "granted": True, "granted_at": "2025-01-01T00:00:00Z"}
     ],
-    party_index=0
+    party_index=0,
+    session_index=0
 )
 ```
 
-###### `add_wtf_transcription_attachment(transcript: Dict[str, Any], segments: List[Dict[str, Any]], metadata: Dict[str, Any], party_index: Optional[int] = None, dialog_index: Optional[int] = None, **kwargs) -> None`
-Add a WTF transcription attachment to the vCon.
+###### `add_wtf_transcription_attachment(transcript: Dict[str, Any], segments: List[Dict[str, Any]], metadata: Dict[str, Any], party_index: Optional[int] = None, dialog_index: Optional[int] = None, session_index: Optional[Union[int, List[int]]] = None, **kwargs) -> None`
+Add a WTF transcription attachment to the vCon. Scoped by `dialog_index` and/or `session_index`; with neither, the only Session is used when the vCon has exactly one, otherwise `ValueError` is raised.
 
 ```python
 vcon.add_wtf_transcription_attachment(
     transcript={"text": "Hello world", "language": "en", "duration": 2.0, "confidence": 0.95},
     segments=[{"id": 0, "start": 0.0, "end": 2.0, "text": "Hello world", "confidence": 0.95}],
-    metadata={"created_at": "2025-01-01T00:00:00Z", "provider": "whisper", "model": "whisper-1"}
+    metadata={"created_at": "2025-01-01T00:00:00Z", "provider": "whisper", "model": "whisper-1"},
+    dialog_index=0
 )
 ```
 
@@ -435,7 +440,7 @@ Set the update timestamp.
 Get the vCon UUID.
 
 ##### `vcon -> Optional[str]`
-Get the vCon version (optional field).
+Get the vCon syntax version (`build_new()` writes `"0.5.0"`; input declaring `"0.4.0"` is migrated to `"0.5.0"` on load).
 
 ##### `subject -> Optional[str]`
 Get the vCon subject.
@@ -574,7 +579,7 @@ Dialog(
 ```
 
 **Parameters:**
-- `type` (str): Dialog type ("text", "recording", "incomplete"; "audio" and "video" are library conveniences)
+- `type` (str): Dialog type ("recording", "text", "incomplete"; "audio" and "video" are accepted as deprecated aliases that emit a `DeprecationWarning` and become "recording", with the media kind carried by `mediatype`)
 - `start` (Union[datetime, str]): Start time
 - `parties` (List[int]): Indices of the contributors (the receivers are in the Session)
 - `mediatype` (str, optional): MIME type of content
@@ -589,7 +594,6 @@ Dialog(
 - `duration` (float, optional): Dialog duration
 - `meta` (dict, optional): Additional metadata
 - `metadata` (Dict[str, Any], optional): Structured metadata
-- `transfer` (Dict[str, Any], optional): Transfer-specific information
 - `signaling` (Dict[str, Any], optional): Signaling information
 - `resolution` (str, optional): Video resolution (e.g., "1920x1080")
 - `frame_rate` (float, optional): Video frame rate
@@ -600,6 +604,11 @@ Dialog(
 - `content_hash` (str, optional): Content hash for external files
 - `application` (str, optional): Application identifier
 - `message_id` (str, optional): Message identifier
+- `redacted_segments` (List[Dict[str, Any]], optional): Redacted_segments Objects (`start`, `end`, optional `parties`)
+
+The parameters removed in 0.5.0 (`originator`, `party_history`, `transfer`, `transferee`, `transferor`,
+`transfer_target`, `original`, `consultation`, `target_dialog`, `recordings`, `recording_set`) raise `ValueError`.
+Use `Session(originator=...)`, `Event` objects and `Session(dialog=[...])` instead.
 
 #### Methods
 
@@ -625,7 +634,7 @@ Check if dialog is text type.
 Check if dialog is recording type.
 
 ##### `is_transfer() -> bool`
-Check if dialog is transfer type.
+Deprecated: core-05 has no transfer Dialog type (transfers are Events), so this emits a `DeprecationWarning` and always returns `False`.
 
 ##### `is_incomplete() -> bool`
 Check if dialog is incomplete type.
@@ -690,11 +699,11 @@ Set content hash.
 ##### `get_content_hash() -> Optional[str]`
 Get content hash.
 
-##### `calculate_content_hash(algorithm: str = "sha256") -> str`
-Calculate content hash.
+##### `calculate_content_hash(algorithm: str = "sha512") -> str`
+Calculate the content hash of the body as `"<algorithm>-<unpadded base64url>"`, e.g. `"sha512-xbxz..."` (`"sha256"` is also supported).
 
-##### `verify_content_hash(expected_hash: str, algorithm: str = "sha256") -> bool`
-Verify content hash.
+##### `verify_content_hash(expected_hash: str, algorithm: Optional[str] = None) -> bool`
+Verify content hash. The algorithm is taken from the `expected_hash` prefix unless given.
 
 ### CivicAddress Class
 
@@ -795,7 +804,7 @@ Attachment(purpose: str, body: Any = None, encoding: str = "none", mediatype=Non
 ##### `to_dict() -> Dict[str, Any]`
 Convert Attachment to dictionary.
 
-##### `from_image(image_path: str, type: str = "image") -> 'Attachment'`
+##### `from_image(image_path: str, purpose: str = "image") -> 'Attachment'`
 Create attachment from image file.
 
 ## Extensions
@@ -972,7 +981,7 @@ The WTF (World Transcription Format) extension provides standardized representat
 Main class representing a WTF transcription attachment.
 
 ```python
-from vcon.extensions.wtf import WTFAttachment, Transcript, Segment, Metadata
+from vcon.extensions.wtf import WTFAttachment, Transcript, Segment, Word, Speaker, Quality, Metadata
 from datetime import datetime, timezone
 
 # Create transcript
@@ -1188,6 +1197,10 @@ PROPERTY_HANDLING_META = "meta"        # Move non-standard properties to meta
 VALID_TYPES = ["recording", "text", "incomplete", "audio", "video"]
 ```
 
+Core-05 defines only `recording`, `text` and `incomplete`. `audio` and `video` are accepted as deprecated
+aliases: they emit a `DeprecationWarning` and are stored as `recording` (the media kind is carried by
+`mediatype`). The `transfer` and `recording-set` types were removed in 0.5.0 (use transfer Events and a Session).
+
 ### Disposition Values
 
 ```python
@@ -1208,7 +1221,7 @@ from vcon.event import CORE_EVENT_TYPES
 ### Attachment Encodings
 
 ```python
-VALID_ENCODINGS = ["base64", "base64url", "none"]
+VALID_ENCODINGS = ["base64url", "json", "none"]
 ```
 
 ### Supported MIME Types
@@ -1264,9 +1277,9 @@ ProofType.EXTERNAL_SYSTEM           # External system attestation
 ```python
 from vcon.extensions.lawful_basis import HashAlgorithm
 
-HashAlgorithm.SHA_256    # SHA-256
-HashAlgorithm.SHA_384    # SHA-384
-HashAlgorithm.SHA_512    # SHA-512
+HashAlgorithm.SHA_256      # SHA-256
+HashAlgorithm.SHA_3_256    # SHA3-256
+HashAlgorithm.BLAKE2B_256  # BLAKE2b-256
 ```
 
 ### Canonicalization Methods
@@ -1296,6 +1309,7 @@ from vcon.extensions.wtf import (
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime
 
 # Create new vCon
@@ -1382,11 +1396,13 @@ vcon.add_analysis(
     encoding="json"
 )
 
-# Add attachment
+# Add attachment (core-05: party plus dialog or session)
 vcon.add_attachment(
-    type="transcript",
+    purpose="transcript",
     body="Full conversation transcript...",
-    encoding="none"
+    encoding="none",
+    party=0,
+    session=0
 )
 
 # Add tags
@@ -1397,9 +1413,9 @@ vcon.add_tag("priority", "high")
 ### Video Content
 
 ```python
-# Add video dialog
+# Add video dialog (a "recording"; the mediatype says it is video)
 video_dialog = Dialog(
-    type="video",
+    type="recording",
     start=datetime.now(),
     parties=[0, 1],
     mediatype="video/mp4",
@@ -1422,7 +1438,7 @@ metadata = video_dialog.extract_video_metadata()
 # Generate thumbnail
 thumbnail = video_dialog.generate_thumbnail(timestamp=10.0)
 
-vcon.add_dialog(video_dialog)
+vcon.add_dialog(video_dialog, session=0)
 ```
 
 ### Civic Address
@@ -1496,6 +1512,7 @@ vcon = Vcon.load("file.json", property_handling="default")
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone, timedelta
 
 # Create vCon with parties and dialog
@@ -1505,14 +1522,15 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add dialog
+# Add a Session and the dialog
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
     mediatype="audio/mp3"
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Add lawful basis attachment
 vcon.add_lawful_basis_attachment(
@@ -1532,7 +1550,7 @@ vcon.add_lawful_basis_attachment(
         }
     ],
     party_index=0,
-    dialog_index=0
+    session_index=0
 )
 
 # Check permissions
@@ -1553,6 +1571,7 @@ print(f"Found {len(attachments)} lawful basis attachments")
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone
 
 # Create vCon with parties and dialog
@@ -1562,14 +1581,15 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add dialog
+# Add a Session and the dialog
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
     mediatype="audio/mp3"
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Add WTF transcription attachment
 vcon.add_wtf_transcription_attachment(
@@ -1668,7 +1688,8 @@ wtf_attachment = whisper_adapter.convert(whisper_data)
 vcon.add_wtf_transcription_attachment(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
-    metadata=wtf_attachment.metadata.to_dict()
+    metadata=wtf_attachment.metadata.to_dict(),
+    dialog_index=0  # or session_index; required unless the vCon has exactly one Session
 )
 ```
 
@@ -1678,6 +1699,7 @@ vcon.add_wtf_transcription_attachment(
 from vcon import Vcon
 from vcon.party import Party
 from vcon.dialog import Dialog
+from vcon.session import Session
 from datetime import datetime, timezone, timedelta
 
 # Create comprehensive vCon with extensions
@@ -1689,14 +1711,15 @@ agent = Party(tel="+1987654321", name="Bob", role="agent")
 vcon.add_party(caller)
 vcon.add_party(agent)
 
-# Add dialog
+# Add a Session and the recording dialog
+vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0, 1]))
 dialog = Dialog(
     type="recording",
     start=datetime.now(timezone.utc),
     parties=[0, 1],
     mediatype="audio/mp3"
 )
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Add lawful basis for consent
 vcon.add_lawful_basis_attachment(

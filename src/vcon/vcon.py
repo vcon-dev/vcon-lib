@@ -256,8 +256,9 @@ class Vcon:
     and analysis data.
     
     The vCon format supports features such as:
+
     - Unique identification via UUID
-    - Optional versioning (version field is optional)
+    - The ``vcon`` syntax version (written as ``"0.5.0"``)
     - Timestamps for creation and updates
     - Party information with contact details (tel, name, sip, did, jCard, timezone)
     - Dialog content with media types and session information
@@ -270,6 +271,7 @@ class Vcon:
       (``events``) for joins, drops, holds, key presses and transfers
     
     New in vCon 0.5.0 (draft-ietf-vcon-vcon-core-05):
+
     - ``sessions`` and ``events`` arrays; ``Session`` and ``Event`` classes
     - ``redacted_from`` and ``amended_from`` replace ``redacted`` and ``amended``
     - Attachments need ``party`` and ``dialog`` or ``session``

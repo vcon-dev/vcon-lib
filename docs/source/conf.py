@@ -7,16 +7,19 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.abspath("../../src"))
 
 project = "vcon"
-copyright = "2024, Thomas McCarthy-Howe"
+copyright = "2024-2026, Thomas McCarthy-Howe"
 author = "Thomas McCarthy-Howe"
 
-version = "0.7.0"
-release = "0.7.0"
+# Read the release from pyproject.toml so the docs never drift from the package.
+with open(os.path.join(os.path.dirname(__file__), "..", "..", "pyproject.toml")) as _f:
+    release = re.search(r'(?m)^version\s*=\s*"([^"]+)"', _f.read()).group(1)
+version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

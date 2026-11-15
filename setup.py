@@ -5,10 +5,10 @@ with open("README.md", "r") as f:
 
 setup(
     name="vcon",
-    version="1.0.0",
+    version="1.0.1",
     author="Thomas McCarthy-Howe",
     author_email="ghostofbasho@gmail.com",
-    description="A package for working with vCon containers",
+    description="The vCon library - vCon 0.5.0 (draft-ietf-vcon-vcon-core-05) specification implementation",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/vcon-dev/vcon-lib",

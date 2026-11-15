@@ -161,7 +161,8 @@ class Dialog:
     - text: Text-based communication (email, chat, SMS)
     - recording: Audio/video recording of the conversation
     - incomplete: Failed or incomplete conversation setup
-    - video: Video content with metadata
+
+    ``"audio"`` and ``"video"`` are accepted as deprecated aliases for ``recording``.
     
     Dialog content can be stored inline or referenced externally:
     - Inline: Content stored directly in the body field
@@ -174,6 +175,7 @@ class Dialog:
     - Images: JPEG, TIFF, PDF
     
     Changes in vCon 0.5.0 (draft-ietf-vcon-vcon-core-05):
+
     - ``parties`` lists the contributors only. The receivers are in the
       ``parties`` of the Session Object that references the dialog.
     - ``originator`` moved to the Session Object.

@@ -28,7 +28,7 @@ from vcon import Vcon
 
 #### Properties
 - `uuid`: Unique identifier
-- `vcon`: Version number (optional)
+- `vcon`: Syntax version (`build_new()` writes `"0.5.0"`; 0.4.0 input is migrated on load)
 - `created_at`: Creation timestamp
 - `updated_at`: Last update timestamp
 - `parties`: List of participants
@@ -42,8 +42,8 @@ from vcon import Vcon
 - `group`: Group information
 - `meta`: Metadata
 - `tags`: Tags attachment
-- `extensions`: List of extensions used
-- `critical`: List of must-support extensions
+- `get_extensions()`: List of extensions used
+- `get_critical()`: List of must-support extensions
 
 ### Party
 Represents a participant in the conversation.
@@ -225,11 +225,14 @@ is_inline = dialog.is_inline_data()
 
 ### Attachments
 ```python
-# Add an attachment
+# Add an attachment. Core-05 needs party plus dialog or session; with
+# neither, the only Session is used when exactly one exists, else ValueError.
 vcon.add_attachment(
-    type="document",
+    purpose="document",
     body="content",
-    encoding="none"
+    encoding="none",
+    party=0,
+    session=0
 )
 
 # Find attachment
@@ -311,7 +314,7 @@ vcon.add_lawful_basis_attachment(
         }
     ],
     party_index=0,
-    dialog_index=0
+    session_index=0  # core-05 scopes a lawful basis to Sessions
 )
 ```
 
@@ -346,7 +349,8 @@ from vcon.extensions.lawful_basis import (
     ProofMechanism,
     LawfulBasisType,
     ProofType,
-    HashAlgorithm
+    HashAlgorithm,
+    CanonicalizationMethod
 )
 
 # Create purpose grants with conditions
@@ -367,7 +371,7 @@ purpose_grants = [
 # Create content hash for integrity
 content_hash = ContentHash(
     algorithm=HashAlgorithm.SHA_256,
-    canonicalization="JCS",
+    canonicalization=CanonicalizationMethod.JCS,
     value="computed_hash_value"
 )
 
@@ -499,7 +503,8 @@ wtf_attachment = whisper_adapter.convert(whisper_data)
 vcon.add_wtf_transcription_attachment(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
-    metadata=wtf_attachment.metadata.to_dict()
+    metadata=wtf_attachment.metadata.to_dict(),
+    dialog_index=0  # or session_index; required unless the vCon has exactly one Session
 )
 ```
 
@@ -524,7 +529,13 @@ transcript = Transcript(
     confidence=0.95
 )
 
-# Create segments with words
+# Create words
+words = [
+    Word(id=0, start=0.0, end=1.0, text="Hello", confidence=0.95, speaker=0),
+    Word(id=1, start=1.0, end=2.0, text="world", confidence=0.95, speaker=0)
+]
+
+# Create segments (a segment references its words by id)
 segments = [
     Segment(
         id=0,
@@ -533,23 +544,20 @@ segments = [
         text="Hello world",
         confidence=0.95,
         speaker=0,
-        words=[
-            Word(id=0, start=0.0, end=1.0, text="Hello", confidence=0.95, speaker=0),
-            Word(id=1, start=1.0, end=2.0, text="world", confidence=0.95, speaker=0)
-        ]
+        words=[0, 1]
     )
 ]
 
-# Create speaker information
-speakers = [
-    Speaker(
+# Create speaker information (keyed by speaker id)
+speakers = {
+    "0": Speaker(
         id=0,
         label="Speaker 1",
         segments=[0],
         total_time=2.0,
         confidence=0.9
     )
-]
+}
 
 # Create quality metrics
 quality = Quality(
@@ -569,8 +577,8 @@ metadata = Metadata(
     processed_at=datetime.now(timezone.utc).isoformat(),
     provider="whisper",
     model="whisper-1",
-    audio_quality="high",
-    background_noise=0.1
+    processing_time=1.2,
+    audio={"duration": 2.0, "sample_rate": 16000}
 )
 
 # Create comprehensive WTF attachment
@@ -578,7 +586,7 @@ attachment = WTFAttachment(
     transcript=transcript,
     segments=segments,
     metadata=metadata,
-    words=[word for segment in segments for word in segment.words],
+    words=words,
     speakers=speakers,
     quality=quality
 )

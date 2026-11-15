@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.1] - 2026-11-15
+
+Documentation release. No change to library behavior.
+
+### Changed
+- README: install line, Python requirement and a 1.0 upgrade note at the top;
+  links to conserver.io, the API docs, the changelog and the migration guide;
+  absolute links so they work on PyPI; examples fixed for core-05 (attachment
+  scope, `recording` instead of `video`, sha512 content hashes).
+- PyPI metadata: homepage, repository, documentation, changelog, migration
+  guide, issues and specification links; keywords and classifiers.
+- Sphinx docs (https://vcon-dev.github.io/vcon-lib/) rewritten for 1.0 and
+  core-05: usage with Sessions and Events, a versions and migration page, and
+  API pages for every module. The version is read from `pyproject.toml`. The
+  stale 0.7.0 build output committed under `docs/` was removed.
+- The docs workflow builds on Python 3.12 with warnings as errors and deploys
+  only from `main`; pull requests build without deploying.
+- GUIDE.md, API_REFERENCE.md, LLM_GUIDE.md and MIGRATION_GUIDE.md examples
+  corrected against the 1.0 API.
+- Docstring fixes in `Vcon` and `Dialog` so they render in Sphinx.
+
 ## [1.0.0] - 2026-11-15
 
 Retargets the library to `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`).
