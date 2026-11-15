@@ -1,190 +1,94 @@
-Version Management Changes
-==========================
+Versions and Migration
+======================
 
-This document describes the changes to version management in the vCon library, including the removal of mandatory version enforcement and the optional nature of the version field.
+Which spec each release implements
+----------------------------------
 
-Overview
---------
+=============  ======================================  =================
+``vcon``       Specification                           Writes ``vcon``
+=============  ======================================  =================
+1.0            ``draft-ietf-vcon-vcon-core-05``        ``"0.5.0"``
+0.10           ``draft-ietf-vcon-vcon-core-04``        ``"0.4.0"``
+=============  ======================================  =================
 
-Starting with version 0.7.0, the vCon library has simplified version management by making the version field optional and removing automatic version enforcement. This aligns with the latest vCon specification changes and provides more flexibility for users.
+``Vcon.build_new()`` writes ``"vcon": "0.5.0"``. The ``vcon`` parameter is
+optional on read; when present, ``is_valid()`` requires it to be ``"0.5.0"``.
 
-Key Changes
------------
+Loading a 0.4.0 vCon
+--------------------
 
-Version Field Is Now Optional
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``vcon`` field in vCon objects is no longer required:
-
-- New vCon objects created with ``Vcon.build_new()`` do not include a version field by default
-- Existing vCon objects with version fields continue to work unchanged
-- The version field can be manually added if needed
-
-Removed Version Management Parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The following parameters have been removed from all Vcon methods:
-
-- ``strict_version`` parameter removed from:
-  - ``Vcon.__init__()``
-  - ``Vcon.build_from_json()``
-  - ``Vcon.build_new()``
-  - ``Vcon.load()``
-  - ``Vcon.load_from_file()``
-  - ``Vcon.load_from_url()``
-
-Updated Method Signatures
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-All method signatures have been updated to remove version management:
+Readers accept 0.4.0 and 0.5.0. A vCon that declares ``"vcon": "0.4.0"`` is
+migrated to 0.5.0 on load, following core-05 Appendix A.1. Array indices are
+preserved, and ``migration_report`` lists every value the migration inferred,
+every fallback it used for a required field, and every item it could not
+resolve.
 
 .. code-block:: python
 
-    # Old signatures (no longer supported)
-    Vcon(vcon_dict=None, strict_version=True)
-    Vcon.build_new(created_at=None, strict_version=True)
-    Vcon.build_from_json(json_str, strict_version=True)
-    Vcon.load(source, strict_version=True)
-
-    # New signatures
-    Vcon(vcon_dict=None, property_handling="default")
-    Vcon.build_new(created_at=None, property_handling="default")
-    Vcon.build_from_json(json_str, property_handling="default")
-    Vcon.load(source, property_handling="default")
-
-Migration Guide
----------------
-
-For Existing Code
-~~~~~~~~~~~~~~~~~
-
-If you were using the ``strict_version`` parameter, simply remove it:
-
-.. code-block:: python
-
-    # Old code (will cause errors)
-    vcon = Vcon.load("file.json", strict_version=True)
-    vcon = Vcon.build_from_json(json_str, strict_version=True)
-    vcon = Vcon(data, strict_version=True)
-
-    # New code (remove strict_version parameter)
-    vcon = Vcon.load("file.json")
-    vcon = Vcon.build_from_json(json_str)
-    vcon = Vcon(data)
-
-For Version Field Handling
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The version field is now optional. You can choose to:
-
-1. **Ignore version fields** (recommended for new code):
-   - Simply don't set or check version fields
-   - The library will work without them
-
-2. **Manually manage version fields** (if needed):
-   - Add version fields manually when creating vCon objects
-   - Check version fields in your application logic
-
-.. code-block:: python
-
-    # Option 1: Ignore version fields (recommended)
-    vcon = Vcon.build_new()
-    # vcon.vcon will be None
-
-    # Option 2: Manually add version field if needed
-    vcon = Vcon.build_new()
-    vcon.vcon_dict["vcon"] = "0.5.0"
-    # vcon.vcon will be "0.5.0"
-
-Backward Compatibility
-~~~~~~~~~~~~~~~~~~~~~~
-
-All changes are backward compatible:
-
-- Existing vCon objects with version fields continue to work
-- The ``vcon`` property returns the version field if present, or ``None`` if not
-- No breaking changes to existing functionality
-
-Examples
---------
-
-Creating Versionless vCons
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
+    import json
     from vcon import Vcon
 
-    # Create a new vCon without version field
-    vcon = Vcon.build_new()
-    print(vcon.vcon)  # None
+    old = {
+        "vcon": "0.4.0",
+        "uuid": "01928e10-193e-8231-b9a2-279e0d16bc46",
+        "created_at": "2024-01-01T00:00:00Z",
+        "parties": [{"tel": "+15551230001"}, {"tel": "+15551230002"}],
+        "dialog": [{
+            "type": "recording",
+            "start": "2024-01-01T00:00:00Z",
+            "parties": [0, 1],
+            "url": "https://example.com/call.wav",
+            "mediatype": "audio/x-wav",
+            "duration": 95,
+        }],
+    }
+    with open("old.vcon.json", "w") as f:
+        json.dump(old, f)
 
-    # Add version field manually if needed
-    vcon.vcon_dict["vcon"] = "0.5.0"
-    print(vcon.vcon)  # "0.5.0"
+    vcon = Vcon.load("old.vcon.json")
+    print(vcon.vcon)                          # 0.5.0
+    print(vcon.migration_report.summary())    # 2 inferred, 0 fallback, 0 unresolved
+    print(len(vcon.sessions))                 # 1
 
-Working with Existing vCons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The same behavior applies to ``Vcon(dict)``, ``build_from_json()``,
+``load_from_file()`` and ``load_from_url()``. Two parameters control it:
+
+* ``migrate_legacy=False`` keeps the raw 0.4.0 dict. Property handling is not
+  applied to it, so legacy parameters survive.
+* ``strict_migration=True`` raises ``MigrationError`` when a required field has
+  no source, instead of using a fallback.
+
+A signed 0.4.0 vCon is kept signed on load. Verify it, then migrate it
+explicitly; the report sets ``resign_required``, and the library never
+re-signs.
+
+Migrating explicitly
+--------------------
 
 .. code-block:: python
 
-    # Load existing vCon (with or without version field)
-    vcon = Vcon.load("existing.vcon.json")
+    from vcon import migrate_0_4_0_to_0_5_0
 
-    # Check if version field exists
-    if vcon.vcon:
-        print(f"Version: {vcon.vcon}")
-    else:
-        print("No version field")
+    new_dict, report = migrate_0_4_0_to_0_5_0(old, strict=False)
+    print(new_dict["vcon"])                   # 0.5.0
+    for item in report.inferred:
+        print(item)
 
-Validation Changes
-~~~~~~~~~~~~~~~~~~
+    # Or get a Vcon back
+    vcon = Vcon.migrate_0_4_0_to_0_5_0(old)
 
-The validation logic has been updated to reflect the optional nature of the version field:
+What changes in a migrated vCon
+-------------------------------
 
-.. code-block:: python
+* Every Dialog is listed in a Session. Recording-set membership becomes Session
+  membership, and nested recording sets become ``child`` Session references.
+* ``transfer`` Dialogs and ``party_history`` entries become Events.
+* Dialog ``parties`` keep only the contributors; the receivers move to the
+  Session.
+* ``redacted`` and ``amended`` become ``redacted_from`` and ``amended_from``.
+* Attachments without a scope get the only Session when exactly one exists.
 
-    # Validation no longer requires version field
-    is_valid, errors = vcon.is_valid()
-    
-    # Only uuid and created_at are required fields
-    # Version field is optional and not validated
-
-Benefits
---------
-
-The simplified version management provides several benefits:
-
-1. **Reduced Complexity**: No need to manage version parameters
-2. **More Flexibility**: Version fields are optional and can be added as needed
-3. **Better Interoperability**: Works with vCon objects from different sources
-4. **Simplified API**: Cleaner method signatures without version management
-5. **Future-Proof**: Aligns with evolving vCon specification
-
-Troubleshooting
----------------
-
-Common Issues
-~~~~~~~~~~~~~
-
-1. **"strict_version" parameter errors**:
-   - Remove the ``strict_version`` parameter from all method calls
-   - Update method signatures to use ``property_handling`` instead
-
-2. **Version field not found**:
-   - Check if the vCon object has a version field: ``vcon.vcon is not None``
-   - Add version field manually if needed: ``vcon.vcon_dict["vcon"] = "0.5.0"``
-
-3. **Validation errors**:
-   - Ensure required fields (uuid, created_at) are present
-   - Version field is no longer required for validation
-
-Getting Help
-~~~~~~~~~~~~
-
-If you encounter issues with the version management changes:
-
-1. Check the migration guide above
-2. Review the changelog for detailed changes
-3. Test with the updated method signatures
-4. Ensure backward compatibility with existing vCon objects
+The `changelog <https://github.com/vcon-dev/vcon-lib/blob/main/CHANGELOG.md>`_
+has the full list, and the `migration guide
+<https://github.com/vcon-dev/vcon-lib/blob/main/MIGRATION_GUIDE.md>`_ shows the
+code changes when upgrading an application from 0.10 to 1.0.

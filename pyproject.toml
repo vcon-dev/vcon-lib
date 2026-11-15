@@ -1,13 +1,30 @@
 [tool.poetry]
 name = "vcon"
-version = "1.0.0"
+version = "1.0.1"
 description = "The vCon library - vCon 0.5.0 (draft-ietf-vcon-vcon-core-05) specification implementation"
 authors = ["Thomas McCarthy-Howe <ghostofbasho@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://www.conserver.io/vcon-library"
+repository = "https://github.com/vcon-dev/vcon-lib"
+documentation = "https://vcon-dev.github.io/vcon-lib/"
+keywords = ["vcon", "ietf", "conversation", "call recording", "transcription"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Communications :: Telephony",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 packages = [
     { include = "vcon", from = "src" }
 ]
+
+[tool.poetry.urls]
+"Changelog" = "https://github.com/vcon-dev/vcon-lib/blob/main/CHANGELOG.md"
+"Migration guide" = "https://github.com/vcon-dev/vcon-lib/blob/main/MIGRATION_GUIDE.md"
+"Issues" = "https://github.com/vcon-dev/vcon-lib/issues"
+"Specification" = "https://datatracker.ietf.org/doc/draft-ietf-vcon-vcon-core/"
 
 [tool.poetry.dependencies]
 python = "^3.12"

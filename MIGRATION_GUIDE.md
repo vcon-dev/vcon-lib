@@ -50,6 +50,12 @@ attachment with inline content but no `mediatype`.
 
 # Earlier migration: Version Management Changes
 
+> **Historical (pre-1.0).** This section describes an earlier release. Since 1.0.0, `build_new()` writes
+> `"vcon": "0.5.0"`, a vCon that declares `"0.4.0"` is migrated to 0.5.0 on load (`migrate_legacy=False` turns
+> that off), `is_valid()` requires a Session once there are dialogs or events, and attachments need `party` plus
+> `dialog` or `session`. Where the text below says the version field is optional or that nothing is migrated,
+> the 1.0.0 behavior above applies instead.
+
 This guide helps you migrate your existing vCon code to work with the updated version management system.
 
 ## Overview
@@ -92,7 +98,7 @@ The vCon library has been updated to align with the latest vCon specification ch
 If you were using the `strict_version` parameter, you need to remove it:
 
 ```python
-# Old code (will cause errors)
+# Old code: no longer works (TypeError: unexpected keyword argument 'strict_version')
 vcon = Vcon.load("file.json", strict_version=True)
 vcon = Vcon.build_from_json(json_str, strict_version=True)
 vcon = Vcon(data, strict_version=True)
@@ -118,7 +124,7 @@ vcon = Vcon({"uuid": "123", "created_at": "2024-01-01T00:00:00Z"})
 
 **Option B: Keep existing version fields**
 ```python
-# This still works - no changes needed
+# This still loads; since 1.0.0 a "0.4.0" vCon is migrated to "0.5.0" on load
 vcon = Vcon({"uuid": "123", "vcon": "0.4.0", "created_at": "2024-01-01T00:00:00Z"})
 ```
 
@@ -273,6 +279,10 @@ party = Party(
 )
 vcon.add_party(party)
 
+# 1.0.0 / vCon 0.5.0: a Session must exist once there is a dialog
+from vcon.session import Session
+vcon.add_session(Session(start=datetime.now(), parties=[0]))
+
 # Add dialog with session tracking and integrity
 dialog = Dialog(
     type="text",
@@ -286,7 +296,7 @@ dialog = Dialog(
 content_hash = dialog.calculate_content_hash()
 dialog.set_content_hash(content_hash)
 
-vcon.add_dialog(dialog)
+vcon.add_dialog(dialog, session=0)
 
 # Save
 vcon.save_to_file("conversation.json")
@@ -385,4 +395,5 @@ reference JSON schema:
   `created_at` when you don't supply them, because the WG JSON schema
   requires `start`, `party`, and `dialog` on every attachment. If your code
   checked for the *absence* of these keys (rather than their values), check
-  the CHANGELOG's 0.10.0 entry before upgrading. 
+  the CHANGELOG's 0.10.0 entry before upgrading. (1.0.0 no longer defaults
+  `dialog` to `0`: pass `dialog` or `session`; see the 0.5.0 section above.) 

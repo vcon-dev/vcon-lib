@@ -1,6 +1,14 @@
 # vCon Library
 
-A Python library for working with vCon (Virtual Conversation) objects according to the vCon specification, currently `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`).
+A Python library for working with vCon (Virtual Conversation) objects according to the vCon specification, currently [`draft-ietf-vcon-vcon-core-05`](https://datatracker.ietf.org/doc/draft-ietf-vcon-vcon-core/) (syntax `"0.5.0"`).
+
+[Documentation](https://www.conserver.io/vcon-library) · [API docs](https://vcon-dev.github.io/vcon-lib/) · [Changelog](https://github.com/vcon-dev/vcon-lib/blob/main/CHANGELOG.md) · [Migration guide](https://github.com/vcon-dev/vcon-lib/blob/main/MIGRATION_GUIDE.md) · [Source](https://github.com/vcon-dev/vcon-lib)
+
+```bash
+pip install vcon
+```
+
+Requires Python 3.12 or later. Version 1.0 writes vCon syntax `"0.5.0"` and reads both `"0.4.0"` and `"0.5.0"`; a 0.4.0 vCon is migrated to 0.5.0 when it is loaded. 1.0 is a breaking release: read the [migration guide](https://github.com/vcon-dev/vcon-lib/blob/main/MIGRATION_GUIDE.md) before upgrading from 0.10 or earlier.
 
 ## Overview
 
@@ -8,7 +16,7 @@ The vCon library provides a complete implementation of the vCon format for repre
 
 - **Conversation Management**: Parties, dialogs, attachments, and analysis
 - **Contact Information**: Multiple contact methods (tel, email, SIP, DID)
-- **Media Support**: Audio, video, text, and image formats
+- **Media Support**: Recordings (audio and video), text, and images
 - **Security**: Digital signatures and content hashing
 - **Extensibility**: Extensions and critical fields
 - **Location Data**: Civic address information (GEOPRIV)
@@ -267,7 +275,8 @@ dialog = Dialog(
     start=datetime.now(),
     parties=[0, 1],
     session_id={"local": "local-uuid", "remote": "remote-uuid"},
-    content_hash="c8d3d67f662a787e96e74ccb0a77803138c0f13495a186ccbde495c57c385608",
+    # "<algorithm>-<unpadded base64url digest>"; vcon.compute_content_hash(data) makes one
+    content_hash="sha512-xbxzWUN7HoME4TkKebyfothmuRRH1M_Skvg2tfVxlFDWSQOdsLcKZ60qsibswilp_NsnfnBW3-7ctRSQGT9UVg",
     application="chat-app",
     message_id="<message-id@example.com>"
 )
@@ -353,7 +362,8 @@ vcon.add_lawful_basis_attachment(
             "conditions": ["anonymized_data_only"]
         }
     ],
-    party_index=0
+    party_index=0,
+    session_index=0   # an attachment needs a dialog or session scope
 )
 
 # Check permissions
@@ -438,7 +448,9 @@ wtf_attachment = whisper_adapter.convert(whisper_data)
 vcon.add_wtf_transcription_attachment(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
-    metadata=wtf_attachment.metadata.to_dict()
+    metadata=wtf_attachment.metadata.to_dict(),
+    party_index=0,
+    session_index=0
 )
 ```
 
@@ -517,6 +529,8 @@ is_valid, errors = Vcon.validate_file("conversation.vcon.json")
 
 ### Audio and Video
 
+Core-05 has three Dialog types: `recording`, `text` and `incomplete`. Audio and video are both `recording` Dialogs, told apart by `mediatype`. `Dialog(type="audio")` and `Dialog(type="video")` still work, but they warn and build a `recording`.
+
 ```python
 # Add audio recording
 audio_dialog = Dialog(
@@ -529,7 +543,7 @@ audio_dialog = Dialog(
 
 # Add video with metadata
 video_dialog = Dialog(
-    type="video",
+    type="recording",
     start=datetime.now(),
     parties=[0, 1],
     url="https://example.com/video.mp4",
@@ -557,7 +571,7 @@ from cryptography.hazmat.primitives import serialization
 # Generate key pair
 private_key, public_key = Vcon.generate_key_pair()
 
-# Sign the vCon
+# Sign the vCon (RS256 by default; alg "none" raises AlgorithmNotPermittedError)
 vcon.sign(private_key)
 
 # Verify signature
@@ -567,11 +581,11 @@ is_valid = vcon.verify(public_key)
 ### Content Hashing
 
 ```python
-# Calculate content hash for external files
-content_hash = dialog.calculate_content_hash("sha256")
+# Hash the dialog's content: "sha512-<unpadded base64url>" by default
+content_hash = dialog.calculate_content_hash()
 
-# Verify content integrity
-is_valid = dialog.verify_content_hash(expected_hash, "sha256")
+# Verify content integrity against a stored hash
+is_valid = dialog.verify_content_hash(content_hash)
 ```
 
 ## Advanced Features
@@ -628,7 +642,7 @@ This library implements the latest vCon specification with:
 - ✅ `extensions` completeness and `alg: "none"` rejection
 - ✅ Content hashing and security
 - ✅ Extensions and critical
-- ✅ Flexible versioning (version field is optional)
+- ✅ Writes `"vcon": "0.5.0"`; reads 0.4.0 and 0.5.0
 - ✅ Backward compatibility
 - ✅ **Lawful Basis Extension** - GDPR-compliant privacy management
 - ✅ **WTF Extension** - World Transcription Format for standardized speech-to-text
@@ -693,11 +707,14 @@ attachments = vcon.find_wtf_attachments(party_index=0)
 
 ## Documentation
 
-- **[API Reference](API_REFERENCE.md)** - Complete API documentation
-- **[User Guide](GUIDE.md)** - Comprehensive usage guide
-- **[LLM Guide](LLM_GUIDE.md)** - Guide for AI-assisted development
-- **[Migration Guide](MIGRATION_GUIDE.md)** - Upgrading from older versions
+- **[conserver.io: vCon Library](https://www.conserver.io/vcon-library)** - Quickstart and API reference
+- **[API docs](https://vcon-dev.github.io/vcon-lib/)** - Generated from the source
+- **[API Reference](https://github.com/vcon-dev/vcon-lib/blob/main/API_REFERENCE.md)** - Complete API documentation
+- **[User Guide](https://github.com/vcon-dev/vcon-lib/blob/main/GUIDE.md)** - Comprehensive usage guide
+- **[LLM Guide](https://github.com/vcon-dev/vcon-lib/blob/main/LLM_GUIDE.md)** - Guide for AI-assisted development
+- **[Migration Guide](https://github.com/vcon-dev/vcon-lib/blob/main/MIGRATION_GUIDE.md)** - Upgrading from 0.10 and earlier
+- **[Changelog](https://github.com/vcon-dev/vcon-lib/blob/main/CHANGELOG.md)** - Release notes
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/vcon-dev/vcon-lib/blob/main/LICENSE.txt) file for details.

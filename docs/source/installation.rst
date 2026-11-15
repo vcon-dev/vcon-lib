@@ -1,59 +1,50 @@
 Installation
 ============
 
-There are several ways to install the vcon library.
+``vcon`` requires Python 3.12 or later.
 
 Using pip
 ---------
-
-The simplest way to install vcon is using pip:
 
 .. code-block:: bash
 
     pip install vcon
 
-Using Poetry (recommended for development)
-------------------------------------------
+The image and PDF helpers need Pillow and pypdf, which the ``image`` extra
+installs:
 
-For development, we recommend using Poetry:
+.. code-block:: bash
 
-1. First, install Poetry if you haven't already:
+    pip install "vcon[image]"
 
-   .. code-block:: bash
+Some video features call the ``ffmpeg`` binary, which must be installed
+separately and on your ``PATH``.
 
-       curl -sSL https://install.python-poetry.org | python3 -
+From source
+-----------
 
-2. Clone the repository:
+The project uses Poetry:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-       git clone https://github.com/vcon-dev/vcon-lib.git
-       cd vcon-lib
+    git clone https://github.com/vcon-dev/vcon-lib.git
+    cd vcon-lib
+    poetry install
+    poetry run pytest
 
-3. Install dependencies:
+To build these docs locally:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-       poetry install
+    poetry install --with dev
+    cd docs
+    poetry run make html
 
-This will create a virtual environment and install all dependencies, including development dependencies.
+The output is in ``docs/build/html``.
 
-Requirements
+Dependencies
 ------------
 
-vcon requires Python 3.12 or later and has the following main dependencies:
-
-- authlib>=1.6.4
-- uuid6>=2024.7.10
-- requests>=2.32.3
-- pydash>=8.0.3
-- python-dateutil>=2.9.0
-- mutagen>=1.47.0
-- ffmpeg>=1.4
-- logger>=1.4
-- pypdf>=6.0.0
-- pillow>=11.3.0
-
-Some video processing features require the `ffmpeg` system binary to be installed and available on your PATH.
-
-These dependencies will be automatically installed when you install vcon using any of the methods above. 
+The runtime dependencies are listed in ``pyproject.toml`` and installed
+automatically: authlib, uuid6, requests, pydash, python-dateutil, mutagen,
+ffmpeg and logger. Pillow and pypdf come with the ``image`` extra.
