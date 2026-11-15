@@ -1,8 +1,9 @@
 # Changelog
 
-## [1.0.1] - 2026-11-15
+## [1.0.2] - 2026-11-15
 
-Documentation release. No change to library behavior.
+Documentation release. No change to library behavior. (1.0.1 was never
+published: PyPI had already used and deleted that filename.)
 
 ### Changed
 - README: install line, Python requirement and a 1.0 upgrade note at the top;
