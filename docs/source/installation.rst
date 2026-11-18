@@ -47,4 +47,4 @@ Dependencies
 
 The runtime dependencies are listed in ``pyproject.toml`` and installed
 automatically: authlib, uuid6, requests, pydash, python-dateutil, mutagen,
-ffmpeg and logger. Pillow and pypdf come with the ``image`` extra.
+and ffmpeg. Pillow and pypdf come with the ``image`` extra.

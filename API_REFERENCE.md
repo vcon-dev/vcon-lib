@@ -203,11 +203,11 @@ Add an attachment to the vCon. Core-05 needs `party` plus `dialog` or `session`:
 attachment = vcon.add_attachment("transcript", "Full conversation...", "none", party=0, dialog=0)
 ```
 
-###### `add_image(image_path: str, purpose: str = "image") -> Attachment`
-Add an image attachment from file.
+###### `add_image(image_path: str, purpose: str = "image", party: Optional[int] = None, dialog: Optional[int] = None, session: Optional[Union[int, List[int]]] = None) -> Attachment`
+Add an image or PDF attachment from file (JPEG, TIFF or PDF). The scope rules are the same as `add_attachment()`.
 
 ```python
-attachment = vcon.add_image("screenshot.png", "screenshot")
+attachment = vcon.add_image("scan.jpg", "identification", party=0, session=0)
 ```
 
 ###### `find_attachment_by_purpose(purpose: str) -> Optional[Dict[str, Any]]`

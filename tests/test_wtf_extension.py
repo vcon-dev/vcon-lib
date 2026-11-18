@@ -629,15 +629,35 @@ class TestWTFTranscriptionAnalysis:
         assert vcon.vcon_dict["attachments"] == []
 
         entry = vcon.vcon_dict["analysis"][0]
-        assert entry["type"] == "transcription"
+        assert entry["type"] == "wtf_transcription"
         assert entry["vendor"] == "whisper"
         assert entry["product"] == "whisper-1"
         assert entry["encoding"] == "json"
         assert entry["schema"] == Vcon.WTF_SCHEMA_URL
         assert entry["dialog"] == [0]
 
-        body = json.loads(entry["body"])
-        assert body["transcript"]["text"] == "Hello world"
+        # The body is the WTF document itself, not a JSON string
+        assert isinstance(entry["body"], dict)
+        assert entry["body"]["transcript"]["text"] == "Hello world"
+        assert Vcon.decoded_body(entry)["transcript"]["text"] == "Hello world"
+
+    def test_add_wtf_transcription_analysis_session_scope_is_valid(self):
+        from datetime import datetime, timezone
+        from vcon import Vcon, Session
+        from vcon.dialog import Dialog
+        from vcon.party import Party
+
+        vcon = Vcon.build_new()
+        vcon.add_party(Party(tel="+15551230001"))
+        s = vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0]))
+        vcon.add_dialog(Dialog(type="recording", start=datetime.now(timezone.utc), parties=[0],
+                               url="https://example.com/a.wav", mediatype="audio/x-wav",
+                               content_hash="sha512-AAAA"), session=s)
+        vcon.add_wtf_transcription_analysis(**self._payload(), session_index=s)
+        entry = vcon.vcon_dict["analysis"][0]
+        assert entry["sessions"] in (0, [0])
+        assert "dialog" not in entry
+        assert vcon.is_valid() == (True, [])
 
     def test_add_wtf_transcription_analysis_registers_extension(self):
         from vcon import Vcon

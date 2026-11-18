@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.0.3] - 2026-11-18
+
+### Fixed
+- `add_wtf_transcription_analysis()` writes the analysis entry defined by
+  draft-howe-vcon-wtf-extension: `type: "wtf_transcription"` (was
+  `"transcription"`) with the WTF document as the JSON body (was a
+  `json.dumps` string). It takes `session_index` for a Session scope.
+  `Vcon.decoded_body()` still reads entries written by older releases.
+- `add_image()` scopes the attachment like `add_attachment()`: it takes
+  `party`, `dialog` and `session`, uses the only Session when the vCon has
+  exactly one, and raises `ValueError` otherwise. It used to write an
+  attachment with neither `dialog` nor `session`, which failed `is_valid()`.
+- `Dialog.calculate_content_hash()` hashes the decoded bytes of a `base64url`
+  body, so it matches the hash `add_image_data()` stores and
+  `verify_content_hash()` succeeds on image dialogs. `verify_content_hash()`
+  also accepts a hash of the encoded text, as 1.0.0 and earlier computed it.
+- Lawful basis `ContentHash` accepts strings (`"sha-256"`, `"jcs"`) as well as
+  enums, and rejects unknown values in the constructor instead of crashing in
+  `to_dict()`.
+- Importing `vcon` no longer configures the root logger. `vcon.dialog` used
+  the third-party `logger` package, which set the root logger to INFO on
+  stdout; it now uses `logging.getLogger(__name__)` like the other modules,
+  and `logger` is no longer a dependency. Configure logging in your
+  application to see the library's messages.
+
 ## [1.0.2] - 2026-11-15
 
 Documentation release. No change to library behavior. (1.0.1 was never

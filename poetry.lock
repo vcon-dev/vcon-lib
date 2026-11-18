@@ -578,17 +578,6 @@ files = [
 referencing = ">=0.31.0"
 
 [[package]]
-name = "logger"
-version = "1.4"
-description = "Python logging helper"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "logger-1.4.tar.gz", hash = "sha256:4ecac57133c6376fa215f0fe6b4dc4d60e4d1ad8be005cab4e8a702df682f8b3"},
-]
-
-[[package]]
 name = "markupsafe"
 version = "2.1.5"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1386,4 +1375,4 @@ image = ["pillow", "pypdf"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "2107dee660a3b77ab7fdd3fefe5c0fce6e3139ce25e41821c0f22d467e48dd8e"
+content-hash = "55cca0e4301450d0fd21e42f42856fb7a728473d731d7459deb4e8b5825c37ee"

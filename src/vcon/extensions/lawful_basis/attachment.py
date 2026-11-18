@@ -117,12 +117,16 @@ class ContentHash:
     
     def __init__(
         self,
-        algorithm: HashAlgorithm,
-        canonicalization: CanonicalizationMethod,
+        algorithm: Union[HashAlgorithm, str],
+        canonicalization: Union[CanonicalizationMethod, str],
         value: str
     ):
-        self.algorithm = algorithm
-        self.canonicalization = canonicalization
+        # Accept the enum or its string value ("sha-256", "jcs"); a value
+        # outside the enum raises ValueError here rather than later in to_dict().
+        self.algorithm = HashAlgorithm(algorithm.lower() if isinstance(algorithm, str) else algorithm)
+        self.canonicalization = CanonicalizationMethod(
+            canonicalization.lower() if isinstance(canonicalization, str) else canonicalization
+        )
         self.value = value
     
     def validate(self, content: Dict[str, Any]) -> bool:

@@ -2,12 +2,14 @@ import requests
 import hashlib
 import base64
 import os
-import logger
+import logging
 import tempfile
 import warnings
 from datetime import datetime
 from typing import Optional, List, Dict, Union, Any, Tuple
 from dateutil import parser
+
+logger = logging.getLogger(__name__)
 
 MIME_TYPES = [
     "text/plain",
@@ -1423,6 +1425,10 @@ class Dialog:
         """
         Calculate the content hash for the dialog body.
 
+        The hash covers the content itself: for a ``base64url`` body that is
+        the decoded bytes, so the value matches a hash of the original file
+        (what ``add_image_data()`` stores). Other bodies are hashed as UTF-8.
+
         The returned value is spec-formatted as ``"<algorithm>-<base64url>"``
         with no base64 padding (draft-ietf-vcon-vcon-core-02), e.g.
         ``"sha512-GLy6IPa..."``.
@@ -1438,8 +1444,17 @@ class Dialog:
         if not hasattr(self, "body") or not self.body:
             raise ValueError("No body content available to hash")
 
-        body_bytes = self.body.encode() if isinstance(self.body, str) else self.body
-        return compute_content_hash(body_bytes, algorithm)
+        return compute_content_hash(self._content_bytes(), algorithm)
+
+    def _content_bytes(self) -> bytes:
+        """The dialog content as bytes: decoded for base64url, else the body."""
+        body = self.body
+        if getattr(self, "encoding", None) == "base64url" and isinstance(body, str):
+            try:
+                return b64url_decode(body)
+            except (ValueError, TypeError):
+                pass
+        return body.encode() if isinstance(body, str) else body
 
     def verify_content_hash(
         self, expected_hash: str, algorithm: Optional[str] = None
@@ -1477,6 +1492,10 @@ class Dialog:
                 ).decode()
                 return legacy == expected_hash
 
-            return self.calculate_content_hash(resolved) == expected_hash
+            if self.calculate_content_hash(resolved) == expected_hash:
+                return True
+            # 1.0.0 and earlier hashed a base64url body as its encoded text.
+            body_bytes = self.body.encode() if isinstance(self.body, str) else self.body
+            return compute_content_hash(body_bytes, resolved) == expected_hash
         except ValueError:
             return False
