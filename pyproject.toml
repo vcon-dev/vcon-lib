@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vcon"
-version = "1.0.2"
+version = "1.0.3"
 description = "The vCon library - vCon 0.5.0 (draft-ietf-vcon-vcon-core-05) specification implementation"
 authors = ["Thomas McCarthy-Howe <ghostofbasho@gmail.com>"]
 license = "MIT"
@@ -35,7 +35,6 @@ pydash = "^8.0.3"
 python-dateutil = "^2.9.0.post0"
 mutagen = "^1.47.0"
 ffmpeg = "^1.4"
-logger = "^1.4"
 pypdf = "^6.10.2"
 pillow = "^12.2.0"
 

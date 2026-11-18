@@ -1037,6 +1037,7 @@ class Vcon:
         segments: List[Dict[str, Any]],
         metadata: Dict[str, Any],
         dialog_index: Optional[int] = None,
+        session_index: Optional[Union[int, List[int]]] = None,
         **kwargs
     ) -> None:
         """
@@ -1047,10 +1048,11 @@ class Vcon:
         pipeline treats transcripts as derived analysis output and prefers
         analysis[] placement.
 
-        Emits a spec-shaped analysis entry: ``type="transcription"``,
-        ``vendor`` and ``product`` taken from ``metadata["provider"]`` /
-        ``metadata["model"]``, ``schema`` set to the WTF draft URL,
-        ``encoding="json"``, and ``body`` as a JSON-serialized WTF document.
+        Emits the analysis entry defined by draft-howe-vcon-wtf-extension
+        (section 5.3): ``type="wtf_transcription"``, ``vendor`` and ``product``
+        taken from ``metadata["provider"]`` / ``metadata["model"]``, ``schema``
+        set to the WTF draft URL, ``encoding="json"``, and ``body`` as the WTF
+        document itself (a JSON value, not a serialized string).
 
         Args:
             transcript: Transcript information dictionary
@@ -1058,6 +1060,7 @@ class Vcon:
             metadata: Metadata dictionary; ``provider`` and ``model`` keys
                 map to ``vendor`` and ``product`` on the analysis entry
             dialog_index: Index of the dialog this transcription applies to
+            session_index: Session index or indices this transcription applies to
             **kwargs: Additional WTF parameters (words, speakers, quality, etc.)
         """
         if not EXTENSIONS_AVAILABLE:
@@ -1077,11 +1080,12 @@ class Vcon:
             dialog_ref = [dialog_index] if dialog_index is not None else None
 
             self.add_analysis(
-                type="transcription",
+                type="wtf_transcription",
                 dialog=dialog_ref,
+                sessions=session_index,
                 vendor=metadata.get("provider", "unknown"),
                 product=metadata.get("model"),
-                body=json.dumps(wtf_body),
+                body=wtf_body,
                 encoding="json",
                 schema=self.WTF_SCHEMA_URL,
             )
@@ -1346,7 +1350,14 @@ class Vcon:
         logger.info(f"Added new attachment of purpose {purpose}")
         return attachment
 
-    def add_image(self, image_path: str, purpose: str = "image") -> Attachment:
+    def add_image(
+        self,
+        image_path: str,
+        purpose: str = "image",
+        party: Optional[int] = None,
+        dialog: Optional[int] = None,
+        session: Optional[Union[int, List[int]]] = None,
+    ) -> Attachment:
         """
         Add an image attachment to the vCon.
         
@@ -1356,25 +1367,38 @@ class Vcon:
         Args:
             image_path: Path to the image file
             purpose: The purpose of the attachment (default: "image")
+            party: Party index (default 0)
+            dialog: Dialog index
+            session: Session index or list of indices. With neither
+                ``dialog`` nor ``session``, the only Session is used when the
+                vCon has exactly one, as in ``add_attachment()``.
             
         Returns:
             The created Attachment object
             
         Raises:
             FileNotFoundError: If the image file cannot be found
-            ValueError: If the image format is not supported
+            ValueError: If the image format is not supported, or no
+                ``dialog``/``session`` is given and the vCon does not have
+                exactly one Session
             
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_session()
             >>> attachment = vcon.add_image("document.pdf", "identification")
             >>> print(attachment.mediatype)  # Prints "application/pdf"
         """
+        if dialog is None and session is None:
+            session = self._resolve_attachment_scope()["session"]
         attachment = Attachment.from_image(image_path, purpose)
         # The WG JSON schema requires start on every attachment; default to
-        # this vCon's created_at (party/dialog already default to 0 in
-        # Attachment.__init__).
+        # this vCon's created_at.
         if attachment.start is None:
             attachment.start = self.vcon_dict.get("created_at")
+        if party is not None:
+            attachment.party = party
+        attachment.dialog = dialog
+        attachment.session = session
         self.vcon_dict["attachments"].append(attachment.to_dict())
         logger.info(f"Added new image attachment of purpose {purpose}")
         return attachment
