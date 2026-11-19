@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.5] - 2026-11-18
+
+### Fixed
+- `is_valid()` raised instead of reporting when a `lawful_basis` body was
+  malformed (a regression in 1.0.4, which started checking those bodies): an
+  `expiration` with no offset, a non-string `expiration`, `granted_at` or proof
+  `timestamp`, a purpose grant, proof mechanism, `content_hash` or `registry`
+  that is not an object, or a non-string `lawful_basis` value. These are now
+  validation errors; a timestamp with no offset is read as UTC.
+- A `content_hash` with a trailing newline was accepted.
+- A `created_at` or `updated_at` offset of 24 hours or more (accepted by
+  dateutil) is reported as invalid.
+- Signed (JWS) and encrypted (JWE) vCons are kept exactly as given on load. The
+  constructor used to add `created_at` and empty arrays to the container, which
+  changed the document, and `is_valid()` reported them as missing `uuid`. Now a
+  signed vCon is validated as a JWS (non-empty `signatures`, each with
+  `signature` and `protected` or `header`) with its payload validated as a vCon,
+  and an encrypted vCon is checked as a JWE, with a warning that its content was
+  not validated. Appendix B6 and B7 now validate.
+
 ## [1.0.4] - 2026-11-18
 
 ### Fixed

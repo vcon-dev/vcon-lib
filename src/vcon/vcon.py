@@ -28,7 +28,7 @@ from .migration import (
     MigrationReport,
     migrate_0_4_0_to_0_5_0 as _migrate_0_4_0_to_0_5_0,
 )
-from .validation import validate_vcon_dict
+from .validation import encrypted_form, signed_form, signed_payload, validate_vcon_dict
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -385,6 +385,13 @@ class Vcon:
                 logger.warning(
                     "0.4.0 vCon kept unmigrated: property_handling=%r not applied", self.property_handling
                 )
+            self.vcon_dict = json.loads(json.dumps(vcon_dict))
+            return
+
+        if signed_form(vcon_dict) or encrypted_form(vcon_dict):
+            # A JWS or JWE container (core-05 sections 6.2, 6.3) is kept exactly
+            # as given: adding uuid, created_at or empty arrays would change
+            # (and for JWS, invalidate) the document. is_valid() checks it.
             self.vcon_dict = json.loads(json.dumps(vcon_dict))
             return
 
@@ -2316,17 +2323,26 @@ class Vcon:
     def _validate_all(self) -> Tuple[List[str], List[str]]:
         """Core rules plus the body of every lawful_basis attachment."""
         errors, warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        # For a signed vCon the attachments are in the payload; an encrypted
+        # one cannot be read.
+        content = signed_payload(self.vcon_dict) if signed_form(self.vcon_dict) else self.vcon_dict
+        if encrypted_form(self.vcon_dict) or not isinstance(content, dict):
+            content = {}
         if EXTENSIONS_AVAILABLE:
             from .extensions.lawful_basis.validation import LawfulBasisValidator
             validator = LawfulBasisValidator()
-            attachments = self.vcon_dict.get("attachments")
+            attachments = content.get("attachments")
             for i, attachment in enumerate(attachments if isinstance(attachments, list) else []):
                 if not isinstance(attachment, dict) or attachment.get("purpose") != "lawful_basis":
                     continue
-                if isinstance(self.vcon_dict.get("redacted_from"), dict) and "body" not in attachment:
+                if isinstance(content.get("redacted_from"), dict) and "body" not in attachment:
                     continue
                 # Scope (party, dialog/session) is checked by the core rules above.
-                result = validator.validate_attachment(attachment)
+                try:
+                    result = validator.validate_attachment(attachment)
+                except Exception as e:  # a malformed body must not make is_valid() raise
+                    errors.append(f"Attachment at index {i} (lawful_basis): body could not be checked: {e}")
+                    continue
                 errors.extend(f"Attachment at index {i} (lawful_basis): {e}" for e in result.errors)
                 warnings.extend(
                     f"Attachment at index {i} (lawful_basis): {w}" for w in result.warnings

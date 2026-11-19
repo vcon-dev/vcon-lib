@@ -6,8 +6,11 @@ plain dicts so the migration code can reuse it.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import re
+from datetime import timedelta
 from typing import Any, Dict, List, Set, Tuple
 
 from dateutil import parser
@@ -74,7 +77,7 @@ def content_hash_problems(value: Any) -> List[str]:
         if not isinstance(token, str):
             problems.append(f"{token!r} is not a string")
             continue
-        m = _CONTENT_HASH_RE.match(token)
+        m = _CONTENT_HASH_RE.fullmatch(token)
         if not m:
             problems.append(f"{token!r} is not of the form '<algorithm>-<base64url digest>'")
             continue
@@ -212,10 +215,74 @@ def _scan_redacted_refs(obj: Any, found: Set[int]) -> None:
             _scan_redacted_refs(v, found)
 
 
+def signed_form(vcon: Any) -> bool:
+    """True for a JWS General JSON Serialization container (section 6.2)."""
+    return isinstance(vcon, dict) and "uuid" not in vcon and "payload" in vcon and "signatures" in vcon
+
+
+def encrypted_form(vcon: Any) -> bool:
+    """True for a JWE General JSON Serialization container (section 6.3)."""
+    return isinstance(vcon, dict) and "uuid" not in vcon and "ciphertext" in vcon
+
+
+def signed_payload(vcon: Dict[str, Any]) -> Any:
+    """The decoded JWS payload of a signed vCon, or None if it is not base64url JSON."""
+    raw = vcon.get("payload")
+    if not isinstance(raw, str):
+        return None
+    try:
+        return json.loads(base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)))
+    except (ValueError, binascii.Error, UnicodeDecodeError):
+        return None
+
+
+def _validate_jws(vcon: Dict[str, Any], dialog_mime_types: List[str]) -> Tuple[List[str], List[str]]:
+    errors: List[str] = []
+    sigs = vcon.get("signatures")
+    if not isinstance(sigs, list) or not sigs:
+        errors.append("Signed vCon: 'signatures' must be a non-empty array.")
+    else:
+        for n, sig in enumerate(sigs):
+            if not isinstance(sig, dict):
+                errors.append(f"Signed vCon: signatures[{n}] must be an object.")
+                continue
+            if not isinstance(sig.get("signature"), str):
+                errors.append(f"Signed vCon: signatures[{n}] is missing 'signature'.")
+            if not isinstance(sig.get("protected"), str) and not isinstance(sig.get("header"), dict):
+                errors.append(f"Signed vCon: signatures[{n}] needs 'protected' or 'header'.")
+    payload = signed_payload(vcon)
+    if not isinstance(payload, dict):
+        errors.append("Signed vCon: 'payload' is not a base64url-encoded JSON object.")
+        return errors, []
+    inner_errors, inner_warnings = validate_vcon_dict(payload, dialog_mime_types)
+    return errors + inner_errors, inner_warnings
+
+
+def _validate_jwe(vcon: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    errors: List[str] = []
+    for member in ("ciphertext", "iv", "tag"):
+        if member in vcon and not isinstance(vcon[member], str):
+            errors.append(f"Encrypted vCon: '{member}' must be a base64url string.")
+    recipients = vcon.get("recipients")
+    if "recipients" in vcon and (not isinstance(recipients, list) or not recipients):
+        errors.append("Encrypted vCon: 'recipients' must be a non-empty array.")
+    if "protected" in vcon and not isinstance(vcon["protected"], str):
+        errors.append("Encrypted vCon: 'protected' must be a base64url string.")
+    return errors, ["Encrypted vCon: the content cannot be validated without decrypting it."]
+
+
 def validate_vcon_dict(
     vcon: Dict[str, Any], dialog_mime_types: List[str]
 ) -> Tuple[List[str], List[str]]:
-    """Validate an unsigned vCon dict. Returns ``(errors, warnings)``."""
+    """Validate a vCon dict. Returns ``(errors, warnings)``.
+
+    A signed (JWS) vCon is checked as a JWS and its payload as a vCon; an
+    encrypted (JWE) vCon is checked as a JWE only.
+    """
+    if signed_form(vcon):
+        return _validate_jws(vcon, dialog_mime_types)
+    if encrypted_form(vcon):
+        return _validate_jwe(vcon)
     errors: List[str] = []
     warnings: List[str] = []
 
@@ -226,7 +293,14 @@ def validate_vcon_dict(
     for ts in ("created_at", "updated_at"):
         if ts in vcon:
             try:
-                parser.parse(vcon[ts])
+                parsed = parser.parse(vcon[ts])
+                offset = parsed.utcoffset()
+                if offset is not None and abs(offset) >= timedelta(hours=24):
+                    # dateutil accepts these; datetime (and RFC 3339) do not.
+                    raise ValueError(
+                        "offset must be a timedelta strictly between "
+                        "-timedelta(hours=24) and timedelta(hours=24)."
+                    )
             except Exception as e:
                 errors.append(
                     f"Invalid {ts} format. Must be an ISO 8601 datetime string: {str(e)}"
