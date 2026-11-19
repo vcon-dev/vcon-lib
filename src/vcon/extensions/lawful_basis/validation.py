@@ -51,6 +51,29 @@ class ContentHashMismatchError(LawfulBasisValidationError):
     pass
 
 
+def _fields(value: Any) -> Dict[str, Any]:
+    """A malformed (non-object) sub-object is checked as an empty one."""
+    return value if isinstance(value, dict) else {}
+
+
+def _member(value: Any, allowed: Any) -> bool:
+    try:
+        return value in allowed
+    except TypeError:  # unhashable, e.g. a list
+        return False
+
+
+def _parse_timestamp(value: Any) -> Optional[datetime]:
+    """ISO 8601 timestamp, or None. A value with no offset is read as UTC."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
 class LawfulBasisValidator(ExtensionValidator):
     """Validator for lawful basis extension."""
     
@@ -138,19 +161,18 @@ class LawfulBasisValidator(ExtensionValidator):
         # Validate lawful_basis
         if "lawful_basis" in body:
             lawful_basis = body["lawful_basis"]
-            if lawful_basis not in self.supported_lawful_bases:
+            if not _member(lawful_basis, self.supported_lawful_bases):
                 result.add_error(f"Unsupported lawful basis: {lawful_basis}")
         
         # Validate expiration
         if "expiration" in body:
             expiration = body["expiration"]
             if expiration is not None:
-                try:
-                    exp_dt = datetime.fromisoformat(expiration.replace('Z', '+00:00'))
-                    if exp_dt <= datetime.now(timezone.utc):
-                        result.add_warning("Lawful basis has expired")
-                except ValueError:
+                exp_dt = _parse_timestamp(expiration)
+                if exp_dt is None:
                     result.add_error("Invalid expiration timestamp format")
+                elif exp_dt <= datetime.now(timezone.utc):
+                    result.add_warning("Lawful basis has expired")
         
         # Validate purpose_grants
         if "purpose_grants" in body:
@@ -196,6 +218,7 @@ class LawfulBasisValidator(ExtensionValidator):
     def _validate_purpose_grant(self, grant: Dict[str, Any]) -> ValidationResult:
         """Validate a purpose grant."""
         result = ValidationResult(True)
+        grant = _fields(grant)
         
         required_fields = ["purpose", "granted", "granted_at"]
         for field in required_fields:
@@ -207,11 +230,8 @@ class LawfulBasisValidator(ExtensionValidator):
             result.add_error("granted field must be a boolean")
         
         # Validate granted_at timestamp
-        if "granted_at" in grant:
-            try:
-                datetime.fromisoformat(grant["granted_at"].replace('Z', '+00:00'))
-            except ValueError:
-                result.add_error("Invalid granted_at timestamp format")
+        if "granted_at" in grant and _parse_timestamp(grant["granted_at"]) is None:
+            result.add_error("Invalid granted_at timestamp format")
         
         # Validate conditions
         if "conditions" in grant:
@@ -226,6 +246,7 @@ class LawfulBasisValidator(ExtensionValidator):
     def _validate_content_hash(self, content_hash: Dict[str, Any]) -> ValidationResult:
         """Validate content hash information."""
         result = ValidationResult(True)
+        content_hash = _fields(content_hash)
         
         required_fields = ["algorithm", "canonicalization", "value"]
         for field in required_fields:
@@ -235,13 +256,13 @@ class LawfulBasisValidator(ExtensionValidator):
         # Validate algorithm
         if "algorithm" in content_hash:
             algorithm = content_hash["algorithm"]
-            if algorithm not in self.supported_hash_algorithms:
+            if not _member(algorithm, self.supported_hash_algorithms):
                 result.add_warning(f"Hash algorithm {algorithm!r} is not one this library can verify")
         
         # Validate canonicalization
         if "canonicalization" in content_hash:
             canonicalization = content_hash["canonicalization"]
-            if canonicalization not in self.supported_canonicalization:
+            if not _member(canonicalization, self.supported_canonicalization):
                 result.add_warning(f"Canonicalization method {canonicalization!r} is not one this library can apply")
         
         # Validate hash value format
@@ -255,6 +276,7 @@ class LawfulBasisValidator(ExtensionValidator):
     def _validate_proof_mechanism(self, proof: Dict[str, Any]) -> ValidationResult:
         """Validate a proof mechanism."""
         result = ValidationResult(True)
+        proof = _fields(proof)
         
         required_fields = ["proof_type", "timestamp", "proof_data"]
         for field in required_fields:
@@ -264,15 +286,12 @@ class LawfulBasisValidator(ExtensionValidator):
         # Validate proof_type
         if "proof_type" in proof:
             proof_type = proof["proof_type"]
-            if proof_type not in self.supported_proof_types:
+            if not _member(proof_type, self.supported_proof_types):
                 result.add_warning(f"Proof type {proof_type!r} is not one of the types the draft defines")
         
         # Validate timestamp
-        if "timestamp" in proof:
-            try:
-                datetime.fromisoformat(proof["timestamp"].replace('Z', '+00:00'))
-            except ValueError:
-                result.add_error("Invalid timestamp format in proof mechanism")
+        if "timestamp" in proof and _parse_timestamp(proof["timestamp"]) is None:
+            result.add_error("Invalid timestamp format in proof mechanism")
         
         # Validate proof_data
         if "proof_data" in proof:
@@ -284,6 +303,7 @@ class LawfulBasisValidator(ExtensionValidator):
     def _validate_registry_info(self, registry: Dict[str, Any]) -> ValidationResult:
         """Validate registry information."""
         result = ValidationResult(True)
+        registry = _fields(registry)
         
         required_fields = ["type", "url"]
         for field in required_fields:
@@ -293,7 +313,7 @@ class LawfulBasisValidator(ExtensionValidator):
         # Validate registry type
         if "type" in registry:
             registry_type = registry["type"]
-            if registry_type not in ["scitt"]:  # Add more types as they're defined
+            if registry_type != "scitt":  # Add more types as they're defined
                 result.add_warning(f"Unknown registry type: {registry_type}")
         
         # Validate URL format (basic validation)
