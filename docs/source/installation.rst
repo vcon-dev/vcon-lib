@@ -17,8 +17,13 @@ installs:
 
     pip install "vcon[image]"
 
-Some video features call the ``ffmpeg`` binary, which must be installed
-separately and on your ``PATH``.
+The video helpers (metadata, thumbnails, transcoding) need ffmpeg-python,
+which the ``video`` extra installs, and the ``ffmpeg`` binary on your
+``PATH``:
+
+.. code-block:: bash
+
+    pip install "vcon[video]"
 
 From source
 -----------
@@ -46,5 +51,6 @@ Dependencies
 ------------
 
 The runtime dependencies are listed in ``pyproject.toml`` and installed
-automatically: authlib, uuid6, requests, pydash, python-dateutil, mutagen,
-and ffmpeg. Pillow and pypdf come with the ``image`` extra.
+automatically: joserfc (JWS signing), uuid6, requests, pydash,
+python-dateutil and mutagen. Pillow and pypdf come with the ``image`` extra,
+ffmpeg-python with the ``video`` extra.

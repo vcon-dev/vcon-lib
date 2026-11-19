@@ -6,6 +6,7 @@ plain dicts so the migration code can reuse it.
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Dict, List, Set, Tuple
 
@@ -56,6 +57,62 @@ LEGACY_DIALOG_PARAMS = (
 LEGACY_DIALOG_TYPES = ("transfer", "recording-set")
 
 _REDACTED_REF_RE = re.compile(r"__REDACTED_REF_(\d{1,5})(?!\d)")
+
+# ContentHash token (section 2.2): "<algorithm>-<unpadded base64url digest>".
+_CONTENT_HASH_RE = re.compile(r"^([a-z0-9]+)-([A-Za-z0-9_-]+)$")
+# Unpadded base64url length of the digests this library knows.
+_DIGEST_B64_LENGTHS = {"sha512": 86, "sha256": 43}
+
+
+def content_hash_problems(value: Any) -> List[str]:
+    """Return why ``value`` is not a ContentHash or ContentHash[] (empty if it is)."""
+    tokens = value if isinstance(value, list) else [value]
+    if isinstance(value, list) and not value:
+        return ["must not be an empty array"]
+    problems = []
+    for token in tokens:
+        if not isinstance(token, str):
+            problems.append(f"{token!r} is not a string")
+            continue
+        m = _CONTENT_HASH_RE.match(token)
+        if not m:
+            problems.append(f"{token!r} is not of the form '<algorithm>-<base64url digest>'")
+            continue
+        expected = _DIGEST_B64_LENGTHS.get(m.group(1))
+        if expected is not None and len(m.group(2)) != expected:
+            problems.append(
+                f"{token!r} has a {m.group(1)} digest of {len(m.group(2))} base64url characters, "
+                f"expected {expected}"
+            )
+    return problems
+
+
+def _check_content(obj: Dict[str, Any], label: str, errors: List[str], warnings: List[str],
+                   check_url: bool = True) -> None:
+    """Integrity and body-form checks shared by Dialog, Attachment, Analysis and the
+    redacted_from / amended_from references (section 2.4)."""
+    if check_url and "url" in obj and "content_hash" not in obj:
+        # A MUST in section 2.4. Reported as a warning in 1.0.x so producers
+        # that only hold a carrier URL keep validating; an error from 1.1.
+        warnings.append(
+            f"{label} has a url but no content_hash (an external reference MUST have both; "
+            "this will be an error in vcon 1.1)."
+        )
+    if "content_hash" in obj:
+        for problem in content_hash_problems(obj["content_hash"]):
+            errors.append(f"{label} has an invalid content_hash: {problem}.")
+    if obj.get("encoding") == "json" and isinstance(obj.get("body"), str):
+        body = obj["body"].strip()
+        if body[:1] in ("{", "["):
+            try:
+                json.loads(body)
+            except ValueError:
+                pass
+            else:
+                warnings.append(
+                    f"{label} has encoding 'json' and a body that is a serialized JSON string; "
+                    "the body should be the JSON value itself (section 2.3.2)."
+                )
 
 
 def mediatype_ok(mediatype: Any, known: List[str]) -> bool:
@@ -231,6 +288,7 @@ def validate_vcon_dict(
                 errors.append("redacted_from is missing required field: type")
             if "url" in rf and "content_hash" not in rf:
                 errors.append("redacted_from with url must include content_hash.")
+            _check_content(rf, "redacted_from", errors, warnings, check_url=False)
     af = vcon.get("amended_from")
     if "amended_from" in vcon:
         if not isinstance(af, dict):
@@ -240,6 +298,7 @@ def validate_vcon_dict(
                 errors.append("amended_from must include uuid, or an external reference (url).")
             if "url" in af and "content_hash" not in af:
                 errors.append("amended_from with url must include content_hash.")
+            _check_content(af, "amended_from", errors, warnings, check_url=False)
 
     # --- extensions / critical -------------------------------------------
     ext_listed = vcon.get("extensions", [])
@@ -355,6 +414,10 @@ def validate_vcon_dict(
                             f"Dialog at index {i} redacted_segments[{n}] requires start and end."
                         )
 
+    for i, dialog in enumerate(dialogs):
+        if isinstance(dialog, dict) and dialog.get("type") != "incomplete":
+            _check_content(dialog, f"Dialog at index {i}", errors, warnings)
+
     # --- sessions ---------------------------------------------------------
     if (dialog_count or events) and not sessions:
         errors.append(
@@ -417,6 +480,8 @@ def validate_vcon_dict(
         has_external = "url" in attachment and "content_hash" in attachment
         if not (has_inline or has_external or redacted):
             errors.append(f"Attachment at index {i} must include body+encoding or url+content_hash.")
+        _check_content(attachment, f"Attachment at index {i}", errors, warnings,
+                       check_url=has_inline or redacted)
         if "encoding" in attachment and attachment["encoding"] not in CORE_ENCODINGS and not ext_listed:
             errors.append(f"Attachment at index {i} has invalid encoding: {attachment['encoding']}")
         if "body" in attachment and attachment["body"] != "" and "mediatype" not in attachment:
@@ -460,6 +525,7 @@ def validate_vcon_dict(
             errors.append(f"Analysis at index {i} is missing required field: encoding")
         if "encoding" in analysis and analysis["encoding"] not in CORE_ENCODINGS and not ext_listed:
             errors.append(f"Analysis at index {i} has invalid encoding: {analysis['encoding']}")
+        _check_content(analysis, f"Analysis at index {i}", errors, warnings)
         for key, count, noun in (
             ("dialog", dialog_count, "dialog"),
             ("sessions", session_count, "session"),

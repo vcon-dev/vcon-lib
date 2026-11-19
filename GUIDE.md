@@ -138,6 +138,14 @@ The `post_to_url` method enables sending a vCon to a URL endpoint:
 
 ### Tags
 ```python
+# A new tags attachment names the party that adds the tags (core-05), so
+# add a party first. On a vCon with no parties add_tag() still writes party 0
+# but emits a DeprecationWarning (it will raise ValueError in vcon 1.1).
+# party= picks a party index other than the default 0; an index out of
+# range raises ValueError.
+vcon = Vcon.build_new()
+vcon.add_party(Party(name="Support Desk"))
+
 # Add a tag
 vcon.add_tag("category", "support")
 
@@ -193,9 +201,9 @@ index = vcon.find_party_index("tel", "+1234567890")
 ### Adding Dialog Entries
 ```python
 # A Session lists the receivers (0.5.0); Dialog parties are the contributors
-vcon.add_session(Session(start="2024-03-21T10:00:00Z", parties=[0, 1]))
+session = vcon.add_session(Session(start="2024-03-21T10:00:00Z", parties=[0, 1]))
 
-# Add a text dialog to Session 0
+# Add a text dialog to that Session (add_session() returns its index)
 dialog = Dialog(
     type="text",
     start="2024-03-21T10:00:00Z",
@@ -204,14 +212,15 @@ dialog = Dialog(
     body="Hello, how can I help?",
     encoding="none",
 )
-vcon.add_dialog(dialog, session=0)
+vcon.add_dialog(dialog, session=session)
 ```
 
 ### Working with Media
 ```python
-# Add inline data
+# Add inline data: bytes are base64url-encoded for you; a str must already
+# be base64url. content_hash is computed over the decoded content.
 dialog.add_inline_data(
-    body="base64_encoded_content",
+    body=b"raw audio bytes",
     filename="recording.wav",
     mediatype="audio/wav"
 )
@@ -232,7 +241,7 @@ vcon.add_attachment(
     body="content",
     encoding="none",
     party=0,
-    session=0
+    session=session
 )
 
 # Find attachment
@@ -407,11 +416,13 @@ The WTF (World Transcription Format) extension provides standardized representat
 - **Provider Adapters**: Automatic conversion from provider-specific formats
 - **Analysis Tools**: Keyword extraction, confidence analysis, and transcription comparison
 
-#### Adding WTF Transcription Attachments
+#### Adding WTF Transcriptions
+
+The WTF draft stores a transcription as analysis: `add_wtf_transcription_analysis()` writes an analysis entry with type `"wtf_transcription"` and the WTF document as a JSON body. (`add_wtf_transcription_attachment()` wrote it to attachments and is deprecated; it emits a `DeprecationWarning`.)
 
 ```python
-# Add WTF transcription attachment
-vcon.add_wtf_transcription_attachment(
+# Add WTF transcription analysis
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, this is a test transcription.",
         "language": "en",
@@ -444,29 +455,29 @@ vcon.add_wtf_transcription_attachment(
         "audio_quality": "high",
         "background_noise": 0.1
     },
-    party_index=0,
     dialog_index=0
 )
 ```
 
-#### Finding WTF Attachments
+#### Finding WTF Transcriptions
 
 ```python
-# Find all WTF attachments
-attachments = vcon.find_wtf_attachments()
+# Find the first WTF transcription and read its body
+entry = vcon.find_analysis_by_type("wtf_transcription")
+wtf_body = Vcon.decoded_body(entry)
 
-# Find attachments for a specific party
-party_attachments = vcon.find_wtf_attachments(party_index=0)
+# Find all WTF transcriptions
+transcriptions = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
 ```
 
 #### Exporting Transcriptions
 
 ```python
-# Find WTF attachments and export to SRT
-attachments = vcon.find_wtf_attachments(party_index=0)
-if attachments:
+# Find the WTF transcription and export to SRT
+entry = vcon.find_analysis_by_type("wtf_transcription")
+if entry:
     from vcon.extensions.wtf import WTFAttachment
-    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    wtf_attachment = WTFAttachment.from_dict(entry["body"])
     
     # Export to SRT format
     srt_content = wtf_attachment.export_to_srt()
@@ -500,7 +511,7 @@ whisper_adapter = WhisperAdapter()
 wtf_attachment = whisper_adapter.convert(whisper_data)
 
 # Add to vCon
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
     metadata=wtf_attachment.metadata.to_dict(),
@@ -675,7 +686,7 @@ vcon.add_lawful_basis_attachment(
 )
 
 # Add transcription
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, I need help with my account.",
         "language": "en",
@@ -698,7 +709,6 @@ vcon.add_wtf_transcription_attachment(
         "provider": "whisper",
         "model": "whisper-1"
     },
-    party_index=0,
     dialog_index=0
 )
 
@@ -732,6 +742,8 @@ vcon.sign(private_key)
 is_valid = vcon.verify(public_key)
 ```
 
+`sign()` and `verify()` use joserfc and accept RSA, EC and Ed25519 keys, as `cryptography` key objects or PEM (`alg` RS\*, PS\*, ES\* or EdDSA).
+
 ### Validation
 ```python
 # Validate vCon object
@@ -743,6 +755,8 @@ is_valid, errors = Vcon.validate_file("conversation.json")
 # Validate JSON string
 is_valid, errors = Vcon.validate_json(json_string)
 ```
+
+Besides the structure rules, `is_valid()` reports a malformed `content_hash` (it must be `<algorithm>-<unpadded base64url digest>`: 86 characters for sha512, 43 for sha256), an unparseable `created_at`, and problems in the body of every `lawful_basis` attachment (missing `lawful_basis`, `expiration`, `purpose_grants` and so on). `vcon.get_validation_warnings()` returns findings that do not make the vCon invalid: a `url` without a `content_hash` on a dialog, attachment or analysis entry (a warning in 1.0.x, an `is_valid()` error from vcon 1.1), an `encoding: "json"` body that is a serialized JSON string, and lawful-basis warnings (an unknown proof type, hash algorithm or canonicalization method is a warning, not an error). Loading a vCon keeps `created_at` exactly as written.
 
 ### UUID Generation
 ```python

@@ -17,6 +17,18 @@ Complete API documentation for the vCon library - a Python implementation of the
 | `extensions` SHOULD list extensions | `is_valid()` errors when an extension in use is not listed |
 | (new) | `Vcon.add_session`, `Vcon.sessions`, `Vcon.events`, `Dialog.placeholder()`, `migrate_0_4_0_to_0_5_0()` |
 
+## Changes in 1.0.4
+
+| Before | 1.0.4 |
+| --- | --- |
+| `add_tag()` wrote `party: 0` even with no parties | `add_tag(name, value, party=None)`; `party` defaults to 0. On a vCon with no parties it still writes party 0 but emits a `DeprecationWarning` (it will raise in 1.1); a `party` index out of range raises `ValueError` |
+| `add_wtf_transcription_attachment()` | deprecated (`DeprecationWarning`); use `add_wtf_transcription_analysis()`, which writes the analysis entry the WTF draft requires |
+| `is_valid()` core structure only | also reports a malformed `content_hash` and errors in the body of every `lawful_basis` attachment; `get_validation_warnings()` adds a `url` without `content_hash` (an error from 1.1), JSON-string bodies under `encoding: "json"`, and lawful-basis warnings |
+| loading rewrote `created_at` (and crashed on an unparseable one) | `created_at` is kept exactly as written; `is_valid()` reports an unparseable value |
+| `Dialog.add_inline_data(body: str, ...)` | also accepts `bytes` (encoded to base64url); `content_hash` is over the decoded content |
+| `generate_thumbnail()` defined twice (the image one won) | dispatches to `generate_image_thumbnail()` or `generate_video_thumbnail()`; video helpers need `pip install "vcon[video]"` and the ffmpeg binary |
+| `authlib` for JWS | `joserfc`; `sign()`/`verify()` accept RSA, EC and Ed25519 keys |
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -47,6 +59,12 @@ pip install vcon
 ```
 
 Image/PDF processing support is included by default with the standard installation.
+
+The video helpers (`extract_video_metadata`, `generate_video_thumbnail`, `transcode_video`) need the `video` extra (ffmpeg-python) and the ffmpeg binary on `PATH`:
+
+```bash
+pip install "vcon[video]"
+```
 
 ## Core Classes
 
@@ -248,11 +266,11 @@ body is the JSON value itself, not a serialized string). `get_tag()` and
 -02 conventions, or by this library prior to 0.10.0 -- decoding it
 automatically; `add_tag()` normalizes it back to a list in place.
 
-###### `add_tag(tag_name: str, tag_value: str) -> None`
-Add a tag to the vCon.
+###### `add_tag(tag_name: str, tag_value: str, party: Optional[int] = None) -> None`
+Add a tag to the vCon. Core-05 requires the tags attachment's `party` to be a valid party index (the party that adds the tags): `party` defaults to 0. When a new tags attachment is needed and the vCon has no parties, it still writes party 0 (so the vCon fails `is_valid()`) and emits a `DeprecationWarning`; this will raise `ValueError` in vcon 1.1, so add a party before the first tag. A `party` index that is out of range raises `ValueError`.
 
 ```python
-vcon.add_tag("customer_id", "12345")
+vcon.add_tag("customer_id", "12345")  # a new tags attachment names party 0
 ```
 
 ###### `get_tag(tag_name: str) -> Optional[str]`
@@ -319,17 +337,23 @@ vcon.add_lawful_basis_attachment(
 )
 ```
 
-###### `add_wtf_transcription_attachment(transcript: Dict[str, Any], segments: List[Dict[str, Any]], metadata: Dict[str, Any], party_index: Optional[int] = None, dialog_index: Optional[int] = None, session_index: Optional[Union[int, List[int]]] = None, **kwargs) -> None`
-Add a WTF transcription attachment to the vCon. Scoped by `dialog_index` and/or `session_index`; with neither, the only Session is used when the vCon has exactly one, otherwise `ValueError` is raised.
+###### `add_wtf_transcription_analysis(transcript: Dict[str, Any], segments: List[Dict[str, Any]], metadata: Dict[str, Any], dialog_index: Optional[int] = None, session_index: Optional[Union[int, List[int]]] = None, **kwargs) -> None`
+Add a WTF transcription as an analysis entry, the placement draft-howe-vcon-wtf-extension requires: `type` `"wtf_transcription"`, `vendor`/`product` from `metadata["provider"]`/`metadata["model"]`, `encoding` `"json"` and the WTF document as the body. `**kwargs` takes the other WTF fields (`words`, `speakers`, `quality`, ...).
 
 ```python
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={"text": "Hello world", "language": "en", "duration": 2.0, "confidence": 0.95},
     segments=[{"id": 0, "start": 0.0, "end": 2.0, "text": "Hello world", "confidence": 0.95}],
-    metadata={"created_at": "2025-01-01T00:00:00Z", "provider": "whisper", "model": "whisper-1"},
+    metadata={"created_at": "2025-01-01T00:00:00Z", "processed_at": "2025-01-01T00:00:05Z",
+              "provider": "whisper", "model": "whisper-1"},
     dialog_index=0
 )
+entry = vcon.find_analysis_by_type("wtf_transcription")
+wtf_body = Vcon.decoded_body(entry)
 ```
+
+###### `add_wtf_transcription_attachment(transcript, segments, metadata, party_index=None, dialog_index=None, session_index=None, **kwargs) -> None`
+Deprecated: emits a `DeprecationWarning`. It writes the transcription to `attachments`, which the WTF draft does not allow; use `add_wtf_transcription_analysis()`.
 
 ###### `find_lawful_basis_attachments(party_index: Optional[int] = None) -> List[Dict[str, Any]]`
 Find lawful basis attachments in the vCon.
@@ -339,10 +363,10 @@ attachments = vcon.find_lawful_basis_attachments(party_index=0)
 ```
 
 ###### `find_wtf_attachments(party_index: Optional[int] = None) -> List[Dict[str, Any]]`
-Find WTF transcription attachments in the vCon.
+Find WTF transcription attachments written by the deprecated `add_wtf_transcription_attachment()`. Transcriptions added with `add_wtf_transcription_analysis()` are analysis entries:
 
 ```python
-attachments = vcon.find_wtf_attachments(party_index=0)
+transcriptions = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
 ```
 
 ###### `check_lawful_basis_permission(purpose: str, party_index: Optional[int] = None) -> bool`
@@ -369,14 +393,14 @@ results = vcon.process_extensions()
 ##### Security
 
 ###### `sign(private_key: Union[rsa.RSAPrivateKey, bytes], alg: str = "RS256") -> None`
-Sign the vCon with a private key.
+Sign the vCon with a private key. Signing uses joserfc; the key may be an RSA, EC or Ed25519 `cryptography` key object or PEM bytes, matching `alg` (RS\*/PS\* for RSA, ES\* for EC, EdDSA for Ed25519).
 
 ```python
 vcon.sign(private_key)
 ```
 
 ###### `verify(public_key: Union[rsa.RSAPublicKey, bytes]) -> bool`
-Verify the vCon signature.
+Verify the vCon signature. Accepts the public key as a `cryptography` key object or PEM, of the type the signature's `alg` needs.
 
 ```python
 is_valid = vcon.verify(public_key)
@@ -385,10 +409,17 @@ is_valid = vcon.verify(public_key)
 ##### Validation
 
 ###### `is_valid() -> Tuple[bool, List[str]]`
-Validate the vCon object.
+Validate the vCon object against the core-05 MUST rules. Besides structure, this reports a malformed `content_hash` (it must be `<algorithm>-<unpadded base64url digest>`, 86 characters for sha512 and 43 for sha256); an unparseable `created_at`; and errors in the body of every `lawful_basis` attachment (missing `lawful_basis`, `expiration`, `purpose_grants` and so on).
 
 ```python
 is_valid, errors = vcon.is_valid()
+```
+
+###### `get_validation_warnings() -> List[str]`
+Findings that do not make the vCon invalid, for example a `url` without a `content_hash` on a dialog, attachment or analysis entry (a MUST in core-05, reported as a warning in 1.0.x and an `is_valid()` error from vcon 1.1), an `encoding: "json"` body that is a serialized JSON string, and lawful-basis warnings (an unknown proof type, hash algorithm or canonicalization method is a warning, since the draft's lists are open).
+
+```python
+warnings = vcon.get_validation_warnings()
 ```
 
 ##### Serialization
@@ -446,7 +477,7 @@ Get the vCon syntax version (`build_new()` writes `"0.5.0"`; input declaring `"0
 Get the vCon subject.
 
 ##### `created_at`
-Get the creation timestamp.
+Get the creation timestamp, exactly as written in the loaded vCon (loading does not reformat it).
 
 ##### `updated_at`
 Get the update timestamp.
@@ -618,8 +649,8 @@ Convert Dialog to dictionary.
 ##### `add_external_data(url: str, filename: str, mediatype: str) -> None`
 Add external data to dialog.
 
-##### `add_inline_data(body: str, filename: str, mediatype: str) -> None`
-Add inline data to dialog.
+##### `add_inline_data(body: Union[str, bytes], filename: str, mediatype: str) -> None`
+Add inline data to dialog with `encoding` `"base64url"`. Raw `bytes` are encoded for you; a `str` must already be base64url. The `content_hash` is computed over the decoded content.
 
 ##### `is_external_data() -> bool`
 Check if dialog has external data.
@@ -658,10 +689,16 @@ Check if dialog has PDF content.
 Add video data to dialog.
 
 ##### `extract_video_metadata(video_path: Optional[str] = None) -> dict`
-Extract video metadata using FFmpeg.
+Extract video metadata using FFmpeg. Needs `pip install "vcon[video]"` (ffmpeg-python) and the ffmpeg binary.
 
-##### `generate_thumbnail(timestamp: float = 0.0, width: int = 320, height: int = 240, quality: int = 90) -> bytes`
-Generate video thumbnail.
+##### `generate_thumbnail(*args, **kwargs)`
+Generate a thumbnail for an image or video Dialog: calls `generate_video_thumbnail()` for video content and `generate_image_thumbnail()` otherwise, passing the arguments through.
+
+##### `generate_video_thumbnail(timestamp: float = 0.0, width: int = 320, height: int = 240, quality: int = 90) -> bytes`
+Generate a JPEG thumbnail from the video at `timestamp`. Needs the `video` extra and the ffmpeg binary.
+
+##### `get_video_format_from_mediatype(mediatype: Optional[str] = None) -> str`
+Map a video media type to a format name (`mp4`, `webm`, ...; `unknown` otherwise). Defaults to this Dialog's `mediatype`.
 
 ##### `add_streaming_video_reference(reference_id: str, mediatype: str, metadata: Optional[dict] = None) -> None`
 Add streaming video reference.
@@ -670,7 +707,7 @@ Add streaming video reference.
 Add video with optimal storage method.
 
 ##### `transcode_video(target_format: str, codec: Optional[str] = None, bit_rate: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None) -> None`
-Transcode video to different format.
+Transcode video to different format. Needs the `video` extra and the ffmpeg binary.
 
 ##### `add_image_data(image_path: str, mediatype: Optional[str] = None) -> None`
 Add image data from file.
@@ -678,8 +715,8 @@ Add image data from file.
 ##### `extract_image_metadata(image_data: bytes, mediatype: str) -> None`
 Extract image metadata.
 
-##### `generate_thumbnail(max_size: Tuple[int, int] = (200, 200)) -> Optional[str]`
-Generate image thumbnail.
+##### `generate_image_thumbnail(max_size: Tuple[int, int] = (200, 200)) -> Optional[str]`
+Generate an image thumbnail, returned as a base64url string (None if it cannot be made).
 
 ##### `is_external_data_changed() -> bool`
 Check if external data has changed.
@@ -931,7 +968,7 @@ proof = ProofMechanism(
 #### Validation and Processing
 
 ##### `LawfulBasisValidator`
-Validates lawful basis attachments and extension usage.
+Validates lawful basis attachments and extension usage. `Vcon.is_valid()` runs it on the body of every `lawful_basis` attachment. An unknown proof type, hash algorithm or canonicalization method is a warning, not an error, because the draft's lists are open.
 
 ```python
 from vcon.extensions.lawful_basis import LawfulBasisValidator
@@ -978,7 +1015,7 @@ The WTF (World Transcription Format) extension provides standardized representat
 #### Core Classes
 
 ##### `WTFAttachment`
-Main class representing a WTF transcription attachment.
+Main class representing a WTF transcription document (the body of a `wtf_transcription` analysis entry; `WTFAttachment.from_dict(entry["body"])` reads one back).
 
 ```python
 from vcon.extensions.wtf import WTFAttachment, Transcript, Segment, Word, Speaker, Quality, Metadata
@@ -1432,11 +1469,11 @@ video_dialog.add_video_data(
     inline=True
 )
 
-# Extract metadata
+# Extract metadata (needs pip install "vcon[video]" and the ffmpeg binary)
 metadata = video_dialog.extract_video_metadata()
 
-# Generate thumbnail
-thumbnail = video_dialog.generate_thumbnail(timestamp=10.0)
+# Generate thumbnail (JPEG bytes; generate_thumbnail() dispatches here for video)
+thumbnail = video_dialog.generate_video_thumbnail(timestamp=10.0)
 
 vcon.add_dialog(video_dialog, session=0)
 ```
@@ -1591,8 +1628,8 @@ dialog = Dialog(
 )
 vcon.add_dialog(dialog, session=0)
 
-# Add WTF transcription attachment
-vcon.add_wtf_transcription_attachment(
+# Add WTF transcription (stored as analysis, per the WTF draft)
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, this is a test transcription.",
         "language": "en",
@@ -1625,18 +1662,18 @@ vcon.add_wtf_transcription_attachment(
         "audio_quality": "high",
         "background_noise": 0.1
     },
-    party_index=0,
     dialog_index=0
 )
 
-# Find WTF attachments
-attachments = vcon.find_wtf_attachments(party_index=0)
-print(f"Found {len(attachments)} WTF attachments")
+# Find WTF transcriptions
+transcriptions = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
+print(f"Found {len(transcriptions)} WTF transcriptions")
 
 # Export to SRT format
-if attachments:
+entry = vcon.find_analysis_by_type("wtf_transcription")
+if entry:
     from vcon.extensions.wtf import WTFAttachment
-    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    wtf_attachment = WTFAttachment.from_dict(entry["body"])
     srt_content = wtf_attachment.export_to_srt()
     print("SRT Export:")
     print(srt_content)
@@ -1685,7 +1722,7 @@ whisper_adapter = WhisperAdapter()
 wtf_attachment = whisper_adapter.convert(whisper_data)
 
 # Add to vCon
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
     metadata=wtf_attachment.metadata.to_dict(),
@@ -1741,7 +1778,7 @@ vcon.add_lawful_basis_attachment(
 )
 
 # Add transcription
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, I need help with my account.",
         "language": "en",
@@ -1764,7 +1801,6 @@ vcon.add_wtf_transcription_attachment(
         "provider": "whisper",
         "model": "whisper-1"
     },
-    party_index=0,
     dialog_index=0
 )
 

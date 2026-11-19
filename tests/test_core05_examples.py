@@ -86,7 +86,7 @@ def test_library_built_vcon_with_every_object_kind_validates():
     vcon.vcon_dict["sessions"][0]["sessions"] = [{"session": 1, "type": "child", "description": "consult"}]
     vcon.add_dialog(
         Dialog(type="recording", start="2026-01-01T00:00:00Z", duration=60, parties=[[0], [1]],
-               mediatype="audio/wav", url="https://example.com/a.wav", content_hash="sha512-abc"),
+               mediatype="audio/wav", url="https://example.com/a.wav", content_hash="sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"),
         session=0,
     )
     vcon.add_dialog(Dialog(type="text", start="2026-01-01T00:00:10Z", parties=[1], body="hello", mediatype="text/plain", encoding="none"), session=1)

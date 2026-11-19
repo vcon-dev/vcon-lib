@@ -11,8 +11,8 @@ from datetime import datetime
 from datetime import timezone
 from pydash import get as _get
 import base64
-from authlib.jose import JsonWebSignature
-from authlib.jose.errors import BadSignatureError
+from joserfc import jwk, jws
+from joserfc.errors import BadSignatureError
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import requests
@@ -106,6 +106,31 @@ PERMITTED_JWS_ALGORITHMS = (
     "ES256", "ES384", "ES512",
     "EdDSA",
 )
+
+
+def _jwk_key_type(alg: str) -> str:
+    """The JWK key type an algorithm needs (RS/PS: RSA, ES: EC, EdDSA: OKP)."""
+    if alg.startswith(("RS", "PS")):
+        return "RSA"
+    if alg.startswith("ES"):
+        return "EC"
+    return "OKP"
+
+
+def _import_jwk(key: Any, alg: str, private: bool):
+    """Import a cryptography key object or PEM bytes/str as a joserfc key."""
+    if hasattr(key, "private_bytes") and private:
+        key = key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+    elif hasattr(key, "public_bytes") and not private:
+        key = key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    return jwk.import_key(key, _jwk_key_type(alg))
 
 
 class AlgorithmNotPermittedError(ValueError):
@@ -370,11 +395,9 @@ class Vcon:
             if isinstance(vcon_dict["created_at"], datetime):
                 vcon_dict["created_at"] = vcon_dict["created_at"].isoformat()
                 logger.debug("Converted datetime created_at to ISO format")
-            elif isinstance(vcon_dict["created_at"], str):
-                vcon_dict["created_at"] = parser.parse(
-                    vcon_dict["created_at"]
-                ).isoformat()
-                logger.debug("Parsed string created_at to ISO format")
+            # A string is kept exactly as written: rewriting it would change
+            # the document (and break a signature over it). An unparseable
+            # value is left for is_valid() to report.
         else:
             vcon_dict["created_at"] = datetime.now(timezone.utc).isoformat()
             logger.debug("Set default created_at timestamp")
@@ -636,6 +659,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_tag("category", "meeting")
             >>> tags = vcon.tags
             >>> print(tags["body"])  # Prints ["category:meeting"]
@@ -660,6 +685,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_tag("category", "meeting")
             >>> value = vcon.get_tag("category")
             >>> print(value)  # Prints "meeting"
@@ -729,19 +756,30 @@ class Vcon:
             "(add a Session first with add_session() if the vCon has none)."
         )
 
-    def add_tag(self, tag_name: str, tag_value: str) -> None:
+    def add_tag(self, tag_name: str, tag_value: str, party: Optional[int] = None) -> None:
         """
         Add a tag to the vCon.
 
         This method adds a tag with the specified name and value to the vCon's tags
         attachment. If no tags attachment exists, it creates one.
 
+        Core-05 requires the attachment's ``party`` to be a valid party index
+        (the party that adds the tags). It defaults to 0. On a vCon with no
+        parties this still writes party 0 but warns (DeprecationWarning),
+        because the result fails ``is_valid()``; from vcon 1.1 it will raise.
+
         Args:
             tag_name: The name of the tag
             tag_value: The value to associate with the tag
+            party: Party index for a new tags attachment (default 0)
+
+        Raises:
+            ValueError: If ``party`` is given (or the vCon has parties) and it
+                is not a valid party index
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Acme Corp"))
             >>> vcon.add_tag("category", "meeting")
             >>> vcon.add_tag("priority", "high")
         """
@@ -749,16 +787,35 @@ class Vcon:
         tags_attachment = self.find_attachment_by_purpose("tags")
         if not tags_attachment:
             logger.debug("Creating new tags attachment")
+            n_parties = len(self.vcon_dict.get("parties") or [])
+            if party is None and n_parties == 0:
+                # Kept for compatibility: the result fails is_valid() (party 0
+                # does not exist). Raises ValueError from vcon 1.1.
+                warnings.warn(
+                    "add_tag() on a vCon with no parties writes party 0, which does not exist, "
+                    "so the vCon fails is_valid(). Add the party that adds the tags first. "
+                    "This will raise ValueError in vcon 1.1.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                party = 0
+            else:
+                party = 0 if party is None else party
+                if not (isinstance(party, int) and not isinstance(party, bool) and 0 <= party < n_parties):
+                    raise ValueError(
+                        f"add_tag() needs a valid party index for the tags attachment (core-05 section 4.6); "
+                        f"got {party!r} but the vCon has {n_parties} parties."
+                    )
             tags_attachment = {
                 "purpose": "tags",
                 "body": [],
                 "encoding": "json",
                 "mediatype": "application/json",
                 "start": self.vcon_dict.get("created_at"),
-                "party": 0,
+                "party": party,
             }
             tags_attachment.update(self._resolve_attachment_scope(whole_vcon=True))
-            self.vcon_dict["attachments"].append(tags_attachment)
+            self.vcon_dict.setdefault("attachments", []).append(tags_attachment)
         else:
             # Normalize a legacy (pre-0.10.0 / -02 convention) JSON-string
             # body to the -04 list-valued body in place, preserving
@@ -906,6 +963,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_lawful_basis_attachment(
             ...     lawful_basis="consent",
             ...     expiration="2026-01-01T00:00:00Z",
@@ -949,7 +1008,7 @@ class Vcon:
             attachment.setdefault("mediatype", "application/json")
             attachment.setdefault("start", self.vcon_dict.get("created_at"))
 
-            self.vcon_dict["attachments"].append(attachment)
+            self.vcon_dict.setdefault("attachments", []).append(attachment)
             
             # Add extension to extensions list if not already present
             if "lawful_basis" not in self.get_extensions():
@@ -973,6 +1032,9 @@ class Vcon:
         """
         Add a WTF transcription attachment to the vCon.
 
+        Deprecated: draft-howe-vcon-wtf-extension stores transcriptions as
+        analysis (section 6.1). Use :meth:`add_wtf_transcription_analysis`.
+
         Scoped by ``dialog_index`` and/or ``session_index`` as given; with
         neither, the only Session when the vCon has exactly one, else
         ``ValueError`` (see ``add_attachment``).
@@ -988,6 +1050,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_wtf_transcription_attachment(
             ...     transcript={"text": "Hello world", "language": "en", "duration": 2.0, "confidence": 0.95},
             ...     segments=[{"id": 0, "start": 0.0, "end": 2.0, "text": "Hello world", "confidence": 0.95}],
@@ -995,6 +1059,12 @@ class Vcon:
             ...              "provider": "whisper", "model": "whisper-1"}
             ... )
         """
+        warnings.warn(
+            "add_wtf_transcription_attachment() is deprecated: draft-howe-vcon-wtf-extension "
+            "stores transcriptions as analysis. Use add_wtf_transcription_analysis().",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not EXTENSIONS_AVAILABLE:
             raise RuntimeError("Extensions not available")
         
@@ -1018,7 +1088,7 @@ class Vcon:
             attachment.setdefault("mediatype", "application/json")
             attachment.setdefault("start", self.vcon_dict.get("created_at"))
 
-            self.vcon_dict["attachments"].append(attachment)
+            self.vcon_dict.setdefault("attachments", []).append(attachment)
             
             # Add extension to extensions list if not already present
             if "wtf_transcription" not in self.get_extensions():
@@ -1043,10 +1113,10 @@ class Vcon:
         """
         Add a WTF transcription as an analysis entry (vs. an attachment).
 
-        Use ``add_wtf_transcription_attachment`` for canonical placement
-        (matches the speckit example, attachments[]). Use this method if your
-        pipeline treats transcripts as derived analysis output and prefers
-        analysis[] placement.
+        This is the placement draft-howe-vcon-wtf-extension requires
+        (section 6.1: transcription results MUST be stored as analysis).
+        ``add_wtf_transcription_attachment`` writes to attachments[] and is
+        deprecated.
 
         Emits the analysis entry defined by draft-howe-vcon-wtf-extension
         (section 5.3): ``type="wtf_transcription"``, ``vendor`` and ``product``
@@ -1235,6 +1305,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_tag("category", "meeting")
             >>> Vcon.decoded_body(vcon.tags)  # ["category:meeting"]
         """
@@ -1255,12 +1327,14 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_attachment("metadata", {"version": "1.0"})
             >>> metadata = vcon.find_attachment_by_purpose("metadata")
         """
         logger.debug(f"Searching for attachment of purpose: {purpose}")
         attachment = next(
-            (a for a in self.vcon_dict["attachments"] if a["purpose"] == purpose), None
+            (a for a in self.vcon_dict.get("attachments") or [] if a.get("purpose") == purpose), None
         )
         if attachment:
             logger.debug(f"Found attachment of purpose: {purpose}")
@@ -1314,6 +1388,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> attachment = vcon.add_attachment("metadata", {"version": "1.0"}, "json")
             >>> print(attachment.purpose)  # Prints "metadata"
         """
@@ -1345,7 +1421,7 @@ class Vcon:
         # Process attachment dict according to property handling mode
         processed_attachment = self._process_properties(attachment_dict, _ALLOWED_ATTACHMENT_PROPERTIES)
     
-        self.vcon_dict["attachments"].append(processed_attachment)
+        self.vcon_dict.setdefault("attachments", []).append(processed_attachment)
     
         logger.info(f"Added new attachment of purpose {purpose}")
         return attachment
@@ -1399,7 +1475,7 @@ class Vcon:
             attachment.party = party
         attachment.dialog = dialog
         attachment.session = session
-        self.vcon_dict["attachments"].append(attachment.to_dict())
+        self.vcon_dict.setdefault("attachments", []).append(attachment.to_dict())
         logger.info(f"Added new image attachment of purpose {purpose}")
         return attachment
 
@@ -1423,7 +1499,7 @@ class Vcon:
         """
         logger.debug(f"Searching for analysis of type: {type}")
         analysis = next(
-            (a for a in self.vcon_dict["analysis"] if a["type"] == type), None
+            (a for a in self.vcon_dict.get("analysis") or [] if a.get("type") == type), None
         )
         if analysis:
             logger.debug(f"Found analysis of type: {type}")
@@ -1553,7 +1629,7 @@ class Vcon:
         # Process analysis dict according to property handling mode
         processed_analysis = self._process_properties(analysis, _ALLOWED_ANALYSIS_PROPERTIES)
 
-        self.vcon_dict["analysis"].append(processed_analysis)
+        self.vcon_dict.setdefault("analysis", []).append(processed_analysis)
         logger.info(f"Added analysis of type {type} from vendor {vendor}")
 
     def add_party(self, party: Party) -> None:
@@ -1576,7 +1652,7 @@ class Vcon:
         party_dict = party.to_dict()
         processed_party = self._process_properties(party_dict, _ALLOWED_PARTY_PROPERTIES)
     
-        self.vcon_dict["parties"].append(processed_party)
+        self.vcon_dict.setdefault("parties", []).append(processed_party)
         logger.info("Added party")
 
 
@@ -1604,7 +1680,7 @@ class Vcon:
         index = next(
             (
                 ind
-                for ind, party in enumerate(self.vcon_dict["parties"])
+                for ind, party in enumerate(self.vcon_dict.get("parties") or [])
                 if _get(party, by) == val
             ),
             None,
@@ -1638,7 +1714,7 @@ class Vcon:
         """
         logger.debug(f"Searching for dialog with {by}={val}")
         dialog = next(
-            (dialog for dialog in self.vcon_dict["dialog"] if dialog and _get(dialog, by) == val),
+            (dialog for dialog in self.vcon_dict.get("dialog") or [] if dialog and _get(dialog, by) == val),
             None,
         )
         if dialog:
@@ -1660,7 +1736,7 @@ class Vcon:
             >>> vcon = Vcon.build_new()
             >>> incomplete = vcon.find_dialogs_by_type("incomplete")
         """
-        return [dialog for dialog in self.vcon_dict["dialog"] if dialog.get("type") == type]
+        return [dialog for dialog in self.vcon_dict.get("dialog") or [] if dialog.get("type") == type]
 
     def add_dialog(self, dialog: Dialog, session: Optional[int] = None) -> int:
         """
@@ -1697,7 +1773,7 @@ class Vcon:
             if not isinstance(session, int) or not 0 <= session < len(sessions):
                 raise ValueError(f"Invalid session index: {session}")
     
-        self.vcon_dict["dialog"].append(processed_dialog)
+        self.vcon_dict.setdefault("dialog", []).append(processed_dialog)
         index = len(self.vcon_dict["dialog"]) - 1
         if session is not None:
             self.vcon_dict["sessions"][session].setdefault("dialog", []).append(index)
@@ -1935,6 +2011,8 @@ class Vcon:
 
         Example:
             >>> vcon = Vcon.build_new()
+            >>> vcon.add_party(Party(name="Alice"))
+            >>> vcon.add_session()
             >>> vcon.add_attachment("metadata", {"version": "1.0"})
             >>> attachments = vcon.attachments
             >>> print(attachments[0]["purpose"])  # Prints "metadata"
@@ -2082,21 +2160,9 @@ class Vcon:
         self._check_jws_alg(alg)
         try:
             payload = self.to_json()
-            jws = JsonWebSignature(algorithms=list(PERMITTED_JWS_ALGORITHMS))
             protected = {"alg": alg, "typ": "JWS"}
-            
-            # Convert private key to PEM format if it's not already
-            if isinstance(private_key, rsa.RSAPrivateKey):
-                pem = private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption(),
-                )
-            else:
-                pem = private_key
-
-            signed = jws.serialize_compact(protected, payload, pem)
-            signed_str = signed.decode("utf-8")
+            key = _import_jwk(private_key, alg, private=True)
+            signed_str = jws.serialize_compact(protected, payload, key, algorithms=[alg])
             header, payload, signature = signed_str.split(".")
 
             self.vcon_dict["signatures"] = [{"protected": header, "signature": signature}]
@@ -2171,20 +2237,14 @@ class Vcon:
             logger.error("Cannot verify: no alg in the JWS protected header or header")
             return False
 
+        alg = declared[0]
+        if alg not in PERMITTED_JWS_ALGORITHMS:
+            logger.error(f"Cannot verify: JWS alg {alg!r} is not supported")
+            return False
         try:
-            jws = JsonWebSignature(algorithms=list(PERMITTED_JWS_ALGORITHMS))
             signed_data = f"{self.vcon_dict['signatures'][0]['protected']}.{self.vcon_dict['payload']}.{self.vcon_dict['signatures'][0]['signature']}"
-
-            # Convert public key to PEM format if it's not already
-            if isinstance(public_key, rsa.RSAPublicKey):
-                pem = public_key.public_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo,
-                )
-            else:
-                pem = public_key
-
-            jws.deserialize_compact(signed_data, pem)
+            key = _import_jwk(public_key, alg, private=False)
+            jws.deserialize_compact(signed_data, key, algorithms=[alg])
             logger.info("Successfully verified vCon signature")
             return True
         except BadSignatureError:
@@ -2227,8 +2287,10 @@ class Vcon:
         Session exists when there are Dialogs or Events, that attachments have
         ``party`` and ``dialog`` or ``session``, that ``redacted_from`` and
         ``amended_from`` are exclusive, that ``extensions`` lists every extension
-        in use (and every ``critical`` entry), and that every
-        ``__REDACTED_REF_#`` has a ``redacted_strings`` entry.
+        in use (and every ``critical`` entry), that every
+        ``__REDACTED_REF_#`` has a ``redacted_strings`` entry, that every ``url``
+        has a ``content_hash`` and every ``content_hash`` is well formed, and
+        the body of every ``lawful_basis`` attachment.
 
         SHOULD-level findings are not errors; see :meth:`get_validation_warnings`.
 
@@ -2237,7 +2299,7 @@ class Vcon:
             is valid and False otherwise, and the second element is a list of error messages.
         """
         logger.debug("Validating vCon")
-        errors, _warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        errors, _warnings = self._validate_all()
         for error in errors:
             logger.error(error)
         if len(errors) == 0:
@@ -2248,8 +2310,29 @@ class Vcon:
 
     def get_validation_warnings(self) -> List[str]:
         """SHOULD-level findings (for example SHOULD NOT parameters on Events)."""
-        _errors, warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        _errors, warnings = self._validate_all()
         return warnings
+
+    def _validate_all(self) -> Tuple[List[str], List[str]]:
+        """Core rules plus the body of every lawful_basis attachment."""
+        errors, warnings = validate_vcon_dict(self.vcon_dict, Dialog.MIME_TYPES)
+        if EXTENSIONS_AVAILABLE:
+            from .extensions.lawful_basis.validation import LawfulBasisValidator
+            validator = LawfulBasisValidator()
+            attachments = self.vcon_dict.get("attachments")
+            for i, attachment in enumerate(attachments if isinstance(attachments, list) else []):
+                if not isinstance(attachment, dict) or attachment.get("purpose") != "lawful_basis":
+                    continue
+                if isinstance(self.vcon_dict.get("redacted_from"), dict) and "body" not in attachment:
+                    continue
+                # Scope (party, dialog/session) is checked by the core rules above.
+                result = validator.validate_attachment(attachment)
+                errors.extend(f"Attachment at index {i} (lawful_basis): {e}" for e in result.errors)
+                warnings.extend(
+                    f"Attachment at index {i} (lawful_basis): {w}" for w in result.warnings
+                    if "no party" not in w and "no session" not in w
+                )
+        return errors, warnings
 
     @staticmethod
     def validate_file(file_path: str) -> tuple[bool, list[str]]:

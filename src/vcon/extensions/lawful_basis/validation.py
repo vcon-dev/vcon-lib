@@ -93,9 +93,9 @@ class LawfulBasisValidator(ExtensionValidator):
         
         # Validate required fields
         body_result = self._validate_lawful_basis_body(body)
+        result.warnings.extend(body_result.warnings)
         if not body_result.is_valid:
             result.errors.extend(body_result.errors)
-            result.warnings.extend(body_result.warnings)
             result.is_valid = False
         
         return result
@@ -168,6 +168,7 @@ class LawfulBasisValidator(ExtensionValidator):
         # Validate optional fields
         if "content_hash" in body:
             hash_result = self._validate_content_hash(body["content_hash"])
+            result.warnings.extend(f"Content hash: {w}" for w in hash_result.warnings)
             if not hash_result.is_valid:
                 result.add_error(f"Content hash validation failed: {', '.join(hash_result.errors)}")
                 result.is_valid = False
@@ -179,6 +180,7 @@ class LawfulBasisValidator(ExtensionValidator):
             else:
                 for i, proof in enumerate(proof_mechanisms):
                     proof_result = self._validate_proof_mechanism(proof)
+                    result.warnings.extend(f"Proof mechanism {i}: {w}" for w in proof_result.warnings)
                     if not proof_result.is_valid:
                         result.add_error(f"Proof mechanism {i}: {', '.join(proof_result.errors)}")
                         result.is_valid = False
@@ -234,13 +236,13 @@ class LawfulBasisValidator(ExtensionValidator):
         if "algorithm" in content_hash:
             algorithm = content_hash["algorithm"]
             if algorithm not in self.supported_hash_algorithms:
-                result.add_error(f"Unsupported hash algorithm: {algorithm}")
+                result.add_warning(f"Hash algorithm {algorithm!r} is not one this library can verify")
         
         # Validate canonicalization
         if "canonicalization" in content_hash:
             canonicalization = content_hash["canonicalization"]
             if canonicalization not in self.supported_canonicalization:
-                result.add_error(f"Unsupported canonicalization method: {canonicalization}")
+                result.add_warning(f"Canonicalization method {canonicalization!r} is not one this library can apply")
         
         # Validate hash value format
         if "value" in content_hash:
@@ -263,7 +265,7 @@ class LawfulBasisValidator(ExtensionValidator):
         if "proof_type" in proof:
             proof_type = proof["proof_type"]
             if proof_type not in self.supported_proof_types:
-                result.add_error(f"Unsupported proof type: {proof_type}")
+                result.add_warning(f"Proof type {proof_type!r} is not one of the types the draft defines")
         
         # Validate timestamp
         if "timestamp" in proof:

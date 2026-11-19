@@ -1,5 +1,47 @@
 # Migration Guide
 
+## Upgrading to library 1.0.4
+
+1.0.4 is a fix release on vCon 0.5.0. Most code runs unchanged; check these:
+
+| Before 1.0.4 | 1.0.4 |
+| --- | --- |
+| `add_wtf_transcription_attachment()` | deprecated (`DeprecationWarning`): the WTF draft stores a transcription as analysis. Use `add_wtf_transcription_analysis(transcript, segments, metadata, dialog_index=None, session_index=None, **kwargs)`; read it back with `vcon.find_analysis_by_type("wtf_transcription")` instead of `find_wtf_attachments()` |
+| `add_tag()` on a vCon with no parties wrote `party: 0` silently | still writes party 0, but emits a `DeprecationWarning` (the vCon fails `is_valid()`); it will raise `ValueError` in 1.1. Add a party before the first tag. New `party=` argument (default 0); an index out of range raises `ValueError` |
+| `is_valid()` did not check `content_hash` or lawful-basis bodies | errors for a malformed `content_hash` (`<algorithm>-<unpadded base64url digest>`, 86 characters for sha512, 43 for sha256) and for problems in a `lawful_basis` attachment body. Unknown lawful-basis proof types, hash algorithms and canonicalization methods are warnings |
+| no check for `url` without `content_hash` | reported by `get_validation_warnings()`; an `is_valid()` error from 1.1 |
+| (no check) | `get_validation_warnings()` reports an `encoding: "json"` body that is a serialized JSON string |
+| loading rewrote `created_at` into Python's ISO format (and an unparseable value crashed `Vcon()`) | `created_at` is kept exactly as written; `is_valid()` reports an unparseable value |
+| `Dialog.add_inline_data()` took a str and hashed the base64url text | also takes `bytes` (encoded for you); `content_hash` is over the decoded content |
+| `Dialog.generate_thumbnail()` was always the image version | dispatches to `generate_image_thumbnail(max_size)` or `generate_video_thumbnail(timestamp, width, height, quality)` |
+| `ffmpeg` dependency (the wrong package: video helpers failed) | optional: `pip install "vcon[video]"` (ffmpeg-python) plus the ffmpeg binary |
+| `authlib` for JWS | `joserfc`; `sign()`/`verify()` are unchanged and also accept EC and Ed25519 keys |
+
+```python
+from vcon import Vcon
+from vcon.party import Party
+from vcon.session import Session
+
+vcon = Vcon.build_new()
+vcon.add_party(Party(name="Alice"))  # before add_tag()
+vcon.add_session(Session(start="2024-01-01T00:00:00Z", parties=[0]))
+vcon.add_tag("category", "support")
+
+# Was: vcon.add_wtf_transcription_attachment(...) and vcon.find_wtf_attachments()
+vcon.add_wtf_transcription_analysis(
+    transcript={"text": "Hello", "language": "en", "duration": 1.0, "confidence": 0.9},
+    segments=[{"id": 0, "start": 0.0, "end": 1.0, "text": "Hello", "confidence": 0.9}],
+    metadata={"created_at": "2024-01-01T00:00:00Z", "processed_at": "2024-01-01T00:00:05Z",
+              "provider": "whisper", "model": "whisper-1"},
+    session_index=0,
+)
+entry = vcon.find_analysis_by_type("wtf_transcription")
+wtf_body = Vcon.decoded_body(entry)
+
+is_valid, errors = vcon.is_valid()
+warnings = vcon.get_validation_warnings()
+```
+
 ## Migrating to vCon 0.5.0 (library 1.0.0)
 
 Library 1.0.0 implements `draft-ietf-vcon-vcon-core-05` (syntax `"0.5.0"`). Readers accept 0.4.0 and 0.5.0;

@@ -4,6 +4,7 @@ from src.vcon.dialog import (
     compute_content_hash,
     parse_content_hash_algorithm,
     b64url_decode,
+    b64url_encode,
 )
 import hashlib
 import base64
@@ -266,11 +267,12 @@ class TestDialog:
         # Add inline data
         dialog.add_inline_data("example_body", "example_filename", "text/plain")
 
-        # Check that the content hash is the spec-compliant sha512 form
-        expected_content_hash = compute_content_hash("example_body".encode())
+        # A str body is base64url already; the hash is over the decoded content
+        expected_content_hash = compute_content_hash(b64url_decode("example_body"))
         assert expected_content_hash.startswith("sha512-")
         assert "=" not in dialog.content_hash  # no base64 padding
         assert dialog.content_hash == expected_content_hash
+        assert dialog.verify_content_hash(dialog.content_hash)
 
     # Sets the encoding to "base64url"
     def test_encoding_base64url(self):
@@ -928,10 +930,12 @@ def test_spec_example_hash_is_well_formed():
 
 def test_add_inline_data_emits_sha512():
     dialog = Dialog(type="text", start="2023-06-01T10:00:00Z", parties=[0])
-    dialog.add_inline_data("body text", "note.txt", "text/plain")
+    dialog.add_inline_data(b"body text", "note.txt", "text/plain")
+    assert dialog.body == b64url_encode(b"body text")
     assert dialog.content_hash.startswith("sha512-")
     assert "=" not in dialog.content_hash
     assert dialog.content_hash == compute_content_hash(b"body text")
+    assert dialog.verify_content_hash(dialog.content_hash)
 
 
 def test_add_external_data_emits_sha512(mocker):
