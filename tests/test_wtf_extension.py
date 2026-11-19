@@ -652,7 +652,7 @@ class TestWTFTranscriptionAnalysis:
         s = vcon.add_session(Session(start=datetime.now(timezone.utc), parties=[0]))
         vcon.add_dialog(Dialog(type="recording", start=datetime.now(timezone.utc), parties=[0],
                                url="https://example.com/a.wav", mediatype="audio/x-wav",
-                               content_hash="sha512-AAAA"), session=s)
+                               content_hash="sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"), session=s)
         vcon.add_wtf_transcription_analysis(**self._payload(), session_index=s)
         entry = vcon.vcon_dict["analysis"][0]
         assert entry["sessions"] in (0, [0])

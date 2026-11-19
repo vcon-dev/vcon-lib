@@ -139,7 +139,9 @@ vCon has exactly one and raises ``ValueError`` otherwise.
     )
 
 Tags are whole-vCon metadata. ``add_tag()`` lists every Session, and adds an
-empty placeholder Session when the vCon has none.
+empty placeholder Session when the vCon has none. The tags attachment needs a
+valid ``party`` (default 0, or pass ``party=``), so add a party first; on a
+vCon with no parties ``add_tag()`` warns, and from 1.1 it will raise.
 
 .. code-block:: python
 
@@ -182,10 +184,19 @@ Reading and validating
 
     is_valid, errors = Vcon.validate_file("conversation.vcon.json")
 
+Besides the structure and references, ``is_valid()`` checks that every
+``content_hash`` has the form ``<algorithm>-<unpadded base64url digest>`` and
+the body of every ``lawful_basis`` attachment. A ``url`` without a
+``content_hash`` is reported by ``get_validation_warnings()`` in 1.0.x and
+will be an error from 1.1. Loading keeps every value as written, including
+timestamps, so an invalid ``created_at`` is reported by ``is_valid()`` rather
+than raised.
+
 Signing
 -------
 
-``sign()`` uses RS256 by default. ``sign()`` and ``verify()`` reject the JWS
+``sign()`` uses RS256 by default and accepts RSA, EC and Ed25519 keys (RS*,
+PS*, ES* and EdDSA), as cryptography key objects or PEM. ``sign()`` and ``verify()`` reject the JWS
 ``alg`` value ``"none"`` with ``AlgorithmNotPermittedError``.
 
 .. code-block:: python

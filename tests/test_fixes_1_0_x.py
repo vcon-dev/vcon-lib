@@ -103,3 +103,30 @@ def test_import_does_not_configure_root_logging():
     out = subprocess.run([sys.executable, "-W", "ignore", "-c", code],
                          capture_output=True, text=True, check=True)
     assert out.stdout.split() == [str(logging.WARNING), "0"]
+
+
+def test_vcon_without_optional_arrays_accepts_writes_and_reads():
+    """A loaded vCon may omit analysis, attachments, parties and dialog (all optional)."""
+    v = Vcon({"vcon": "0.5.0", "uuid": "01928e10-193e-8231-b9a2-279e0d16bc46",
+              "created_at": "2024-01-01T00:00:00Z"})
+    for key in ("analysis", "parties", "dialog"):
+        v.vcon_dict.pop(key, None)
+    assert v.find_analysis_by_type("x") is None
+    assert v.find_dialogs_by_type("text") == []
+    assert v.find_party_index("name", "x") is None
+    v.add_party(Party(name="A"))
+    s = v.add_session(Session(start="2024-01-01T00:00:00Z", parties=[0]))
+    v.add_dialog(Dialog(type="text", start="2024-01-01T00:00:00Z", parties=[0], body="hi",
+                        encoding="none", mediatype="text/plain"), session=s)
+    v.add_analysis(type="summary", vendor="v", body={"s": 1}, encoding="json", sessions=s)
+    assert v.find_analysis_by_type("summary")["body"] == {"s": 1}
+    assert v.is_valid() == (True, [])
+
+
+def test_created_at_is_kept_as_written():
+    raw = "2026-10-24T01:29:10.590Z"
+    v = Vcon({"vcon": "0.5.0", "uuid": "01928e10-193e-8231-b9a2-279e0d16bc46", "created_at": raw})
+    assert v.created_at == raw
+    bad = Vcon({"vcon": "0.5.0", "uuid": "01928e10-193e-8231-b9a2-279e0d16bc46", "created_at": "{{now}}"})
+    ok, errors = bad.is_valid()
+    assert not ok and any("created_at" in e for e in errors)

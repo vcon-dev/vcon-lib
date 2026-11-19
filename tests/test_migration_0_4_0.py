@@ -44,7 +44,7 @@ def v04(**kw):
 
 def rec(**kw):
     d = {"type": "recording", "start": T0, "duration": 10, "parties": [0, 1],
-         "mediatype": "audio/x-wav", "url": "https://e.com/a.wav", "content_hash": "sha512-x"}
+         "mediatype": "audio/x-wav", "url": "https://e.com/a.wav", "content_hash": "sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"}
     d.update(kw)
     return d
 
@@ -578,7 +578,7 @@ class TestIndexStability:
 
 class TestT11T12Renames:
     def test_redacted_to_redacted_from(self):
-        r = {"uuid": "01a16b86-96e7-80a8-b9a2-279e0d16bc46", "type": "PII Redaction", "url": "https://e.com/u", "content_hash": "sha512-x"}
+        r = {"uuid": "01a16b86-96e7-80a8-b9a2-279e0d16bc46", "type": "PII Redaction", "url": "https://e.com/u", "content_hash": "sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"}
         out, _ = migrate(v04(redacted=r))
         assert out["redacted_from"] == r and "redacted" not in out
 

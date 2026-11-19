@@ -11,6 +11,24 @@ from dateutil import parser
 
 logger = logging.getLogger(__name__)
 
+
+def _import_ffmpeg():
+    """Import ffmpeg-python for the video helpers, with a clear error if it is missing.
+
+    The PyPI package named ``ffmpeg`` is an unrelated empty module; the video
+    helpers need ``ffmpeg-python`` (the ``video`` extra) and the ffmpeg binary.
+    """
+    try:
+        import ffmpeg
+    except ImportError:
+        ffmpeg = None
+    if ffmpeg is None or not hasattr(ffmpeg, "probe"):
+        raise ImportError(
+            "The video helpers need ffmpeg-python: pip install 'vcon[video]', "
+            "and the ffmpeg binary on PATH."
+        )
+    return ffmpeg
+
 MIME_TYPES = [
     "text/plain",
     "audio/x-wav",
@@ -222,7 +240,8 @@ class Dialog:
     ]
 
 
-    # Include the required types for tests to pass
+    # recording, text and incomplete are the core-05 types; audio and video
+    # are deprecated aliases accepted on construction (they become recording).
     VALID_TYPES = [
         "recording", 
         "text", 
@@ -482,12 +501,16 @@ class Dialog:
         raw_content = response.content
         self.content_hash = compute_content_hash(raw_content)
 
-    def add_inline_data(self, body: str, filename: str, mediatype: str) -> None:
+    def add_inline_data(self, body: Union[str, bytes], filename: str, mediatype: str) -> None:
         """
         Add inline data to the dialog.
 
-        :param body: the body of the inline data
-        :type body: str
+        The Dialog is written with ``encoding: "base64url"``. Pass raw ``bytes``
+        and they are encoded; a ``str`` is taken to be base64url already. The
+        ``content_hash`` is over the decoded content.
+
+        :param body: the content as bytes, or as a base64url string
+        :type body: bytes or str
         :param filename: the filename of the inline data
         :type filename: str
         :param mediatype: the mediatype of the inline data
@@ -495,11 +518,13 @@ class Dialog:
         :return: None
         :rtype: None
         """
+        if isinstance(body, (bytes, bytearray)):
+            body = b64url_encode(bytes(body))
         self.body = body
         self.mediatype = mediatype
         self.filename = filename
         self.encoding = "base64url"
-        self.content_hash = compute_content_hash(self.body.encode())
+        self.content_hash = compute_content_hash(self._content_bytes())
 
     def is_external_data(self) -> bool:
         """
@@ -696,7 +721,7 @@ class Dialog:
         Returns:
             Dictionary containing detailed video metadata
         """
-        import ffmpeg
+        ffmpeg = _import_ffmpeg()
         
         # Create temporary file if working with inline data
         temp_file = None
@@ -800,7 +825,7 @@ class Dialog:
         except (ValueError, ZeroDivisionError):
             return 0
 
-    def generate_thumbnail(self, timestamp=0.0, width=320, height=240, quality=90) -> bytes:
+    def generate_video_thumbnail(self, timestamp=0.0, width=320, height=240, quality=90) -> bytes:
         """
         Generate a high-quality thumbnail from the video at the specified timestamp.
         
@@ -813,7 +838,7 @@ class Dialog:
         Returns:
             Binary thumbnail data in JPEG format
         """
-        import ffmpeg
+        ffmpeg = _import_ffmpeg()
         
         if not self.is_video():
             raise ValueError("Cannot generate thumbnail for non-video content")
@@ -935,12 +960,12 @@ class Dialog:
             self.meta["video"] = metadata
     
 
-    def get_video_format_from_mediatype(self, mediatype) -> str:
+    def get_video_format_from_mediatype(self, mediatype: Optional[str] = None) -> str:
         """
         Get the video format name from a MIME type.
         
         Args:
-            mediatype: MIME type of the video
+            mediatype: MIME type of the video (default: this Dialog's mediatype)
             
         Returns:
             Format name (mp4, mov, etc.)
@@ -957,6 +982,8 @@ class Dialog:
             'video/ogg': 'ogg'
         }
         
+        if mediatype is None:
+            mediatype = getattr(self, "mediatype", None)
         return mediatype_to_format.get(mediatype, 'unknown')
     
     def has_thumbnail(self) -> bool:
@@ -1018,7 +1045,7 @@ class Dialog:
         Returns:
             None - updates the dialog's content in place
         """
-        import ffmpeg
+        ffmpeg = _import_ffmpeg()
         
         if not self.is_video():
             raise ValueError("Cannot transcode non-video content")
@@ -1044,6 +1071,7 @@ class Dialog:
             else:
                 raise ValueError("Cannot transcode: no video content available")
             
+            original_format = self.get_video_format_from_mediatype()
             # Setup output file
             temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=f".{target_format}")
             temp_output.close()
@@ -1063,7 +1091,7 @@ class Dialog:
                 output_params['b:v'] = bit_rate
             
             # Run transcoding
-            ffmpeg.output(stream, temp_output.name, **output_params).run(quiet=True)
+            ffmpeg.output(stream, temp_output.name, **output_params).overwrite_output().run(quiet=True)
             
             # Read the transcoded file
             with open(temp_output.name, "rb") as f:
@@ -1101,7 +1129,7 @@ class Dialog:
                     
                 self.metadata["video"] = metadata
                 self.metadata["video"]["transcoded"] = {
-                    "original_format": self.get_video_format_from_mediatype(),
+                    "original_format": original_format,
                     "target_format": target_format,
                     "codec": codec,
                     "bit_rate": bit_rate,
@@ -1265,7 +1293,20 @@ class Dialog:
                 # PIL not installed
                 self.metadata["image"]["note"] = "Install Pillow for enhanced image metadata"
 
-    def generate_thumbnail(self, max_size: Tuple[int, int] = (200, 200)) -> Optional[str]:
+    def generate_thumbnail(self, *args, **kwargs):
+        """
+        Generate a thumbnail for an image or a video Dialog.
+
+        For an image this calls :meth:`generate_image_thumbnail` (``max_size``,
+        returns a base64url string or None). For a video it calls
+        :meth:`generate_video_thumbnail` (``timestamp``, ``width``, ``height``,
+        ``quality``; returns JPEG bytes).
+        """
+        if self.is_video():
+            return self.generate_video_thumbnail(*args, **kwargs)
+        return self.generate_image_thumbnail(*args, **kwargs)
+
+    def generate_image_thumbnail(self, max_size: Tuple[int, int] = (200, 200)) -> Optional[str]:
         """
         Generate a thumbnail for the image and return it as a base64-encoded string.
         

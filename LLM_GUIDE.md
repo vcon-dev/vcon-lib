@@ -36,8 +36,9 @@ pip install -e .
 ## Requirements
 
 - Python 3.12+
-- Core dependencies: authlib, uuid6, requests, pydash, python-dateutil
-- Media and document dependencies: mutagen, ffmpeg (ffmpeg-python), pillow, pypdf
+- Core dependencies: joserfc (JWS signing), uuid6, requests, pydash, python-dateutil
+- Media and document dependencies: mutagen, pillow, pypdf
+- Optional video support: `pip install "vcon[video]"` (ffmpeg-python) plus the ffmpeg binary on `PATH`, needed by `extract_video_metadata()`, `generate_video_thumbnail()` and `transcode_video()`
 
 ## Core Classes and Usage Patterns
 
@@ -269,10 +270,10 @@ Events and a Session), and Dialog parameters such as `transfer`, `party_history`
 
 ### 4. Working with Tags
 
-Tags are key-value pairs for simple metadata.
+Tags are key-value pairs for simple metadata. The tags attachment names the party that adds the tags: `add_tag(name, value, party=None)` uses party 0 by default. Always add a party before the first tag: on a vCon with no parties `add_tag()` still writes party 0 (so the vCon fails `is_valid()`) and emits a `DeprecationWarning`, and from vcon 1.1 it will raise `ValueError`. A `party` index that is out of range raises `ValueError`.
 
 ```python
-# Add tags
+# Add tags (the vCon already has parties)
 vcon.add_tag("customer_id", "12345")
 vcon.add_tag("interaction_id", "INT-001")
 
@@ -485,11 +486,13 @@ The WTF extension provides standardized representation of speech-to-text transcr
 - **Provider Adapters**: Automatic conversion from provider-specific formats
 - **Analysis Tools**: Keyword extraction, confidence analysis, and transcription comparison
 
-#### Adding WTF Transcription Attachments
+#### Adding WTF Transcriptions
+
+The WTF draft stores a transcription as analysis. Use `add_wtf_transcription_analysis()`, which writes an analysis entry with type `"wtf_transcription"` and the WTF document as a JSON body. `add_wtf_transcription_attachment()` is deprecated (it emits a `DeprecationWarning`); do not generate new code with it.
 
 ```python
-# Add WTF transcription attachment
-vcon.add_wtf_transcription_attachment(
+# Add WTF transcription analysis
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, this is a test transcription.",
         "language": "en",
@@ -522,7 +525,6 @@ vcon.add_wtf_transcription_attachment(
         "audio_quality": "high",
         "background_noise": 0.1
     },
-    party_index=0,
     dialog_index=0
 )
 
@@ -530,24 +532,25 @@ vcon.add_wtf_transcription_attachment(
 vcon.add_extension("wtf_transcription")
 ```
 
-#### Finding WTF Attachments
+#### Finding WTF Transcriptions
 
 ```python
-# Find all WTF attachments
-attachments = vcon.find_wtf_attachments()
+# Find the first WTF transcription and read its body
+entry = vcon.find_analysis_by_type("wtf_transcription")
+wtf_body = Vcon.decoded_body(entry)
 
-# Find attachments for a specific party
-party_attachments = vcon.find_wtf_attachments(party_index=0)
+# Find all WTF transcriptions
+transcriptions = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
 ```
 
 #### Exporting Transcriptions
 
 ```python
-# Find WTF attachments and export to SRT
-attachments = vcon.find_wtf_attachments(party_index=0)
-if attachments:
+# Find the WTF transcription and export to SRT
+entry = vcon.find_analysis_by_type("wtf_transcription")
+if entry:
     from vcon.extensions.wtf import WTFAttachment
-    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    wtf_attachment = WTFAttachment.from_dict(entry["body"])
     
     # Export to SRT format
     srt_content = wtf_attachment.export_to_srt()
@@ -581,7 +584,7 @@ whisper_adapter = WhisperAdapter()
 wtf_attachment = whisper_adapter.convert(whisper_data)
 
 # Add to vCon
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
     metadata=wtf_attachment.metadata.to_dict(),
@@ -821,6 +824,8 @@ vcon.sign(private_key)
 is_valid = vcon.verify(public_key)
 ```
 
+JWS signing uses joserfc. `sign(key, alg=...)` and `verify(key)` accept RSA, EC and Ed25519 keys as `cryptography` key objects or PEM (`alg` RS\*/PS\* for RSA, ES\* for EC, EdDSA for Ed25519).
+
 ### Validation
 
 ```python
@@ -829,12 +834,22 @@ is_valid, errors = vcon.is_valid()
 if not is_valid:
     print("Validation errors:", errors)
 
+# SHOULD-level findings (not errors)
+warnings = vcon.get_validation_warnings()
+
 # Validate a file
 is_valid, errors = Vcon.validate_file("conversation.json")
 
 # Validate a JSON string
 is_valid, errors = Vcon.validate_json(json_string)
 ```
+
+`is_valid()` also reports:
+- a malformed `content_hash`: it must be `<algorithm>-<unpadded base64url digest>` (86 characters for sha512, 43 for sha256); use `compute_content_hash()` or `calculate_content_hash()` rather than writing one by hand
+- an unparseable `created_at` (loading keeps `created_at` exactly as written and no longer reformats or rejects it)
+- errors in the body of every `lawful_basis` attachment (missing `lawful_basis`, `expiration`, `purpose_grants` and so on)
+
+`get_validation_warnings()` adds a `url` without a `content_hash` on a dialog, attachment or analysis entry (a MUST in core-05: a warning in 1.0.x, an `is_valid()` error from vcon 1.1, so always set `content_hash` with a `url`), an `encoding: "json"` body that is a serialized JSON string (pass the JSON value itself), and lawful-basis warnings; an unknown proof type, hash algorithm or canonicalization method is a warning, not an error.
 
 ## Common Patterns and Best Practices
 
@@ -907,6 +922,8 @@ audio_dialog = Dialog(
     encoding="base64url",
     filename="recording.mp3"
 )
+# Or let the Dialog encode raw bytes and set content_hash for you:
+# audio_dialog.add_inline_data(audio_data, "recording.mp3", "audio/mp3")
 vcon.add_dialog(audio_dialog, session=0)
 ```
 
@@ -934,6 +951,8 @@ if dialog.is_inline_data():
 
 ### 4. Video Content Handling
 
+`extract_video_metadata()`, `generate_video_thumbnail()` and `transcode_video()` need `pip install "vcon[video]"` (ffmpeg-python) and the ffmpeg binary on `PATH`.
+
 ```python
 # Add video data with metadata (a "recording"; the mediatype says it is video)
 video_dialog = Dialog(
@@ -958,8 +977,8 @@ video_dialog.add_video_data(
 # Extract video metadata using FFmpeg
 metadata = video_dialog.extract_video_metadata()
 
-# Generate thumbnail
-thumbnail_data = video_dialog.generate_thumbnail(
+# Generate a JPEG thumbnail (bytes); generate_thumbnail() dispatches here for video
+thumbnail_data = video_dialog.generate_video_thumbnail(
     timestamp=10.0,  # Time in seconds
     width=320,
     height=240,
@@ -992,8 +1011,8 @@ image_dialog.add_image_data(
     mediatype="image/jpeg"  # Optional, auto-detected if not provided
 )
 
-# Generate thumbnail
-thumbnail_b64 = image_dialog.generate_thumbnail(max_size=(200, 200))
+# Generate a thumbnail (base64url str); generate_thumbnail() dispatches here for images
+thumbnail_b64 = image_dialog.generate_image_thumbnail(max_size=(200, 200))
 
 # Check if dialog has image content
 if image_dialog.is_image():
@@ -1198,8 +1217,8 @@ def create_extension_enabled_conversation():
         party_index=0
     )
     
-    # Add transcription
-    vcon.add_wtf_transcription_attachment(
+    # Add transcription (stored as analysis, per the WTF draft)
+    vcon.add_wtf_transcription_analysis(
         transcript={
             "text": "Hello, I need help with my account.",
             "language": "en",
@@ -1222,7 +1241,6 @@ def create_extension_enabled_conversation():
             "provider": "whisper",
             "model": "whisper-1"
         },
-        party_index=0,
         dialog_index=0
     )
     
@@ -1599,7 +1617,7 @@ def add_privacy_compliance(vcon, party_index, purposes, expiration_days=365):
 
 #### Converting Provider Transcription to WTF
 ```python
-def convert_provider_transcription(vcon, provider_data, provider_type, party_index=0, dialog_index=0):
+def convert_provider_transcription(vcon, provider_data, provider_type, dialog_index=0):
     """Convert provider-specific transcription data to WTF format."""
     from vcon.extensions.wtf import WhisperAdapter, DeepgramAdapter, AssemblyAIAdapter
     
@@ -1618,11 +1636,10 @@ def convert_provider_transcription(vcon, provider_data, provider_type, party_ind
     wtf_attachment = adapter.convert(provider_data)
     
     # Add to vCon
-    vcon.add_wtf_transcription_attachment(
+    vcon.add_wtf_transcription_analysis(
         transcript=wtf_attachment.transcript.to_dict(),
         segments=[segment.to_dict() for segment in wtf_attachment.segments],
         metadata=wtf_attachment.metadata.to_dict(),
-        party_index=party_index,
         dialog_index=dialog_index
     )
     
@@ -1642,14 +1659,14 @@ def check_privacy_permissions(vcon, party_index, purposes):
 
 #### Exporting Transcriptions
 ```python
-def export_transcriptions(vcon, party_index=None, format="srt"):
+def export_transcriptions(vcon, format="srt"):
     """Export transcriptions from vCon to various formats."""
-    attachments = vcon.find_wtf_attachments(party_index)
+    entries = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
     exports = []
     
-    for attachment in attachments:
+    for entry in entries:
         from vcon.extensions.wtf import WTFAttachment
-        wtf_attachment = WTFAttachment.from_dict(attachment["body"])
+        wtf_attachment = WTFAttachment.from_dict(entry["body"])
         
         if format.lower() == "srt":
             content = wtf_attachment.export_to_srt()
@@ -1659,9 +1676,8 @@ def export_transcriptions(vcon, party_index=None, format="srt"):
             raise ValueError(f"Unsupported format: {format}")
         
         exports.append({
-            "party_index": attachment.get("party"),
-            "dialog_index": attachment.get("dialog"),
-            "session_index": attachment.get("session"),
+            "dialog": entry.get("dialog"),
+            "sessions": entry.get("sessions"),
             "format": format,
             "content": content
         })

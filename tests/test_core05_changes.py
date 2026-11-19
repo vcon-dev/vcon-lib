@@ -45,7 +45,7 @@ class TestRedactedFromAmendedFrom:
         v = _base()
         v.vcon_dict["amended_from"] = {"url": "https://example.com/v.json"}
         assert any("content_hash" in e for e in v.is_valid()[1])
-        v.vcon_dict["amended_from"] = {"url": "https://example.com/v.json", "content_hash": "sha512-abc"}
+        v.vcon_dict["amended_from"] = {"url": "https://example.com/v.json", "content_hash": "sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"}
         assert v.is_valid()[0]
 
     def test_amended_from_needs_uuid_or_url(self):
@@ -128,6 +128,7 @@ class TestAttachments:
 
     def test_tags_describe_the_whole_vcon(self):
         v = Vcon.build_new()
+        v.add_party(Party(name="Acme"))
         v.add_tag("k", "v")
         assert v.sessions == [{}]
         assert v.vcon_dict["attachments"][0]["session"] == [0]
@@ -135,6 +136,19 @@ class TestAttachments:
         w.add_session(Session(start=T))
         w.add_tag("k", "v")
         assert w.vcon_dict["attachments"][0]["session"] == [0, 1]
+
+    def test_tags_need_a_party(self):
+        v = Vcon.build_new()
+        with pytest.warns(DeprecationWarning, match="no parties"):
+            v.add_tag("k", "v")
+        assert v.get_tag("k") == "v"
+        assert any("invalid party index" in e for e in v.is_valid()[1])
+        w = _base()
+        with pytest.raises(ValueError):
+            w.add_tag("k", "v", party=7)
+        w.add_tag("k", "v", party=1)
+        assert w.vcon_dict["attachments"][0]["party"] == 1
+        assert w.is_valid() == (True, [])
 
     def test_attachment_class_has_session_and_no_dialog_default(self):
         a = Attachment("p", body="b", session=[0])
@@ -177,7 +191,7 @@ class TestDialog:
     def test_parties_may_contain_nulls_and_lists(self):
         v = _base()
         v.add_dialog(
-            Dialog(type="recording", start=T, parties=[[0, 1], None, 1], mediatype="audio/wav", url="https://e.com/a.wav", content_hash="sha512-x"),
+            Dialog(type="recording", start=T, parties=[[0, 1], None, 1], mediatype="audio/wav", url="https://e.com/a.wav", content_hash="sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"),
             session=0,
         )
         assert v.is_valid() == (True, [])
@@ -218,7 +232,7 @@ class TestDialog:
         v = _base()
         v.add_dialog(
             Dialog(type="recording", start=T, parties=[0], mediatype="audio/wav", url="https://e.com/a.wav",
-                   content_hash="sha512-x", redacted_segments=[{"start": T, "end": "2026-01-01T00:00:05Z"}]),
+                   content_hash="sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A", redacted_segments=[{"start": T, "end": "2026-01-01T00:00:05Z"}]),
             session=0,
         )
         assert v.is_valid() == (True, [])
@@ -286,7 +300,9 @@ class TestExtensionsEnforcement:
     def test_lawful_basis_in_use_must_be_listed(self):
         v = _base()
         v.vcon_dict["attachments"].append(
-            {"purpose": "lawful_basis", "start": T, "party": 0, "session": [0], "body": {}, "encoding": "json", "mediatype": "application/json"}
+            {"purpose": "lawful_basis", "start": T, "party": 0, "session": [0], "encoding": "json", "mediatype": "application/json",
+             "body": {"lawful_basis": "consent", "expiration": None,
+                      "purpose_grants": [{"purpose": "recording", "granted": True, "granted_at": T}]}}
         )
         valid, errors = v.is_valid()
         assert not valid
@@ -418,7 +434,7 @@ class TestLegacyMediaDialogTypes:
     def test_constructor_normalizes_to_recording(self, kind):
         with pytest.warns(DeprecationWarning, match="not a core-05 type"):
             d = Dialog(type=kind, start=T, parties=[0], mediatype=f"{kind}/mp4" if kind == "video" else "audio/wav",
-                       url="https://e.com/x", content_hash="sha512-x")
+                       url="https://e.com/x", content_hash="sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A")
         assert d.to_dict()["type"] == "recording"
 
     def test_video_helpers_emit_recording(self):
@@ -429,7 +445,7 @@ class TestLegacyMediaDialogTypes:
     def test_read_is_a_warning_not_an_error(self):
         v = _base()
         v.vcon_dict["dialog"].append({"type": "video", "start": T, "parties": [0], "mediatype": "video/mp4",
-                                      "url": "https://e.com/v.mp4", "content_hash": "sha512-x"})
+                                      "url": "https://e.com/v.mp4", "content_hash": "sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A"})
         v.vcon_dict["sessions"][0]["dialog"] = [0]
         assert v.is_valid() == (True, [])
         assert any("type 'video'" in w for w in v.get_validation_warnings())

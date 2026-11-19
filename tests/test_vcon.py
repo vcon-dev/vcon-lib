@@ -36,7 +36,7 @@ test_vcon_string_0_4_0 = (
     '"meta":{"role":"customer"}}],"dialog":[{"type":"recording",'
     '"start":"2024-10-20T15:02:54.888840","duration":52.68,"parties":[0,1],'
     '"mediatype":"audio/x-wav","filename":"bb1489ad-0b45-47a0-bca6-de124da39a3a.mp3",'
-    '"body":"","encoding":"base64url","content_hash":"JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",'
+    '"body":"","encoding":"base64url","content_hash":"sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A",'
     '"disposition":"ANSWERED"}],"attachments":[{"purpose":"generation_info","body":'
     '{"agent_name":"David Scott","customer_name":"Diane Allen",'
     '"business":"Auto Repair Shop","problem":"billing","emotion":"disappointed",'
@@ -208,6 +208,7 @@ def test_build_new() -> None:
 
 def test_tags() -> None:
     vcon = Vcon.build_new()
+    vcon.add_party(Party(name="Acme"))
     assert vcon.tags is None
 
     vcon.add_tag("test_tag", "test_value")
@@ -287,6 +288,7 @@ def test_uuid8_domain_name() -> None:
 
 def test_get_tag() -> None:
     vcon = Vcon.build_new()
+    vcon.add_party(Party(name="Acme"))
     vcon.add_tag("test_tag", "test_value")
     assert vcon.get_tag("test_tag") == "test_value"
     assert vcon.get_tag("nonexistent_tag") is None
@@ -371,7 +373,7 @@ def test_properties() -> None:
         "filename": "bb1489ad-0b45-47a0-bca6-de124da39a3a.mp3",
         "body": "",
         "encoding": "base64url",
-        "content_hash": "JBzeZEPDNVm8iPEeout0UK-B2Fp6JzeQxqy70SvM_MU=",
+        "content_hash": "sha512-vBUU3xDKpjrwFoYiMR63DejHKvgyz4N7xT7Ukx6wHQNuzU4_LY32LMljsTeCGJ_zxqjeS4PcdM0Mlg0mksM06A",
         "disposition": "ANSWERED",
     }
 
@@ -442,6 +444,7 @@ def test_find_dialog() -> None:
 def test_add_special_character_tag() -> None:
     # Given
     vcon = Vcon.build_new()
+    vcon.add_party(Party(name="Acme"))
 
     # When
     vcon.add_tag("special_tag!@#", "special_value")

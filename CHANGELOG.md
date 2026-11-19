@@ -1,5 +1,63 @@
 # Changelog
 
+## [1.0.4] - 2026-11-18
+
+### Fixed
+- `is_valid()` reports a malformed `content_hash` on a Dialog, Attachment,
+  Analysis, `redacted_from` or `amended_from`. A ContentHash is
+  `<algorithm>-<unpadded base64url digest>`; for `sha512` and `sha256` the
+  digest length is checked too, which catches hex digests and padded values.
+- `is_valid()` checks the body of every `lawful_basis` attachment with the
+  lawful basis validator (required `lawful_basis`, `expiration` and
+  `purpose_grants`, and the fields of each grant and proof mechanism).
+  Proof types, hash algorithms and canonicalization methods outside the ones
+  the draft defines are now warnings, not errors, since the draft's lists are
+  open; warnings from nested grants and proof mechanisms are no longer lost.
+- Loading a vCon keeps `created_at` exactly as written. It used to be
+  rewritten through `isoformat()` (`Z` became `+00:00`, fractions were padded),
+  which changed the document, and an unparseable value made `Vcon()` raise
+  instead of `is_valid()` reporting it.
+- A vCon without `analysis`, `parties` or `dialog` (all optional) no longer
+  raises `KeyError` in `add_analysis()`, `add_party()`, `add_dialog()`,
+  `find_analysis_by_type()`, `find_dialog()`, `find_dialogs_by_type()` or
+  `find_party_index()`.
+- `add_inline_data()` accepts bytes (encoded to base64url) as well as a
+  base64url string, and its `content_hash` is over the decoded content, the
+  same as `calculate_content_hash()`.
+- The video helpers work. They imported the PyPI package `ffmpeg`, an empty
+  module, so `extract_video_metadata()`, the video thumbnail and
+  `transcode_video()` always failed. They now use ffmpeg-python from the new
+  `video` extra (`pip install "vcon[video]"`, plus the ffmpeg binary) and raise
+  a clear `ImportError` without it. `get_video_format_from_mediatype()`
+  defaults to the Dialog's mediatype, `transcode_video()` overwrites its temp
+  output and records the original format correctly.
+- `Dialog` defined `generate_thumbnail()` twice, so the video version was
+  unreachable. It is now `generate_video_thumbnail()`, the image version is
+  `generate_image_thumbnail()`, and `generate_thumbnail()` calls whichever fits
+  the Dialog.
+- Docstring examples that raised (no party or Session before an attachment)
+  now run.
+
+### Changed
+- JWS signing and verification use joserfc instead of the deprecated
+  `authlib.jose`, so `import vcon` no longer prints a deprecation warning.
+  `sign()` and `verify()` are unchanged and interoperate with 1.0.3 in both
+  directions; they now also accept EC and Ed25519 key objects. `authlib` is no
+  longer a dependency; `joserfc` is.
+- The `ffmpeg` dependency is gone; `ffmpeg-python` is the optional `video`
+  extra.
+- `get_validation_warnings()` reports a `url` without a `content_hash` (a MUST
+  in core-05 section 2.4; it will be an `is_valid()` error in 1.1) and an
+  `encoding: "json"` body that is a serialized JSON string.
+- `add_tag()` takes `party` (default 0) and raises `ValueError` for an index
+  that does not exist. On a vCon with no parties it still writes party 0 but
+  warns (`DeprecationWarning`), because the result fails `is_valid()`; it will
+  raise in 1.1.
+
+### Deprecated
+- `add_wtf_transcription_attachment()`: draft-howe-vcon-wtf-extension stores
+  transcriptions as analysis. Use `add_wtf_transcription_analysis()`.
+
 ## [1.0.3] - 2026-11-18
 
 ### Fixed

@@ -107,7 +107,7 @@ print(f"Can record: {can_record}")
 ### Transcription with WTF Extension
 ```python
 # Add transcription
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, I need help with my account.",
         "language": "en",
@@ -130,15 +130,14 @@ vcon.add_wtf_transcription_attachment(
         "provider": "whisper",
         "model": "whisper-1"
     },
-    party_index=0,
     dialog_index=0
 )
 
 # Export to SRT format
-attachments = vcon.find_wtf_attachments(party_index=0)
-if attachments:
+entry = vcon.find_analysis_by_type("wtf_transcription")
+if entry:
     from vcon.extensions.wtf import WTFAttachment
-    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    wtf_attachment = WTFAttachment.from_dict(Vcon.decoded_body(entry))
     srt_content = wtf_attachment.export_to_srt()
     print("SRT Export:")
     print(srt_content)
@@ -185,7 +184,7 @@ vcon.add_lawful_basis_attachment(
 )
 
 # Add transcription
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, I need help with my account.",
         "language": "en",
@@ -208,7 +207,6 @@ vcon.add_wtf_transcription_attachment(
         "provider": "whisper",
         "model": "whisper-1"
     },
-    party_index=0,
     dialog_index=0
 )
 
@@ -377,7 +375,7 @@ attachments = vcon.find_lawful_basis_attachments(party_index=0)
 ### WTF Extension (Transcription Support)
 ```python
 # Add standardized transcription
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript={
         "text": "Hello, this is a test transcription.",
         "language": "en",
@@ -408,15 +406,14 @@ vcon.add_wtf_transcription_attachment(
         "provider": "whisper",
         "model": "whisper-1"
     },
-    party_index=0,
     dialog_index=0
 )
 
 # Export to subtitle formats
-attachments = vcon.find_wtf_attachments(party_index=0)
-if attachments:
+entry = vcon.find_analysis_by_type("wtf_transcription")
+if entry:
     from vcon.extensions.wtf import WTFAttachment
-    wtf_attachment = WTFAttachment.from_dict(attachments[0]["body"])
+    wtf_attachment = WTFAttachment.from_dict(Vcon.decoded_body(entry))
     
     # Export to SRT format
     srt_content = wtf_attachment.export_to_srt()
@@ -445,11 +442,10 @@ whisper_adapter = WhisperAdapter()
 wtf_attachment = whisper_adapter.convert(whisper_data)
 
 # Add to vCon
-vcon.add_wtf_transcription_attachment(
+vcon.add_wtf_transcription_analysis(
     transcript=wtf_attachment.transcript.to_dict(),
     segments=[segment.to_dict() for segment in wtf_attachment.segments],
     metadata=wtf_attachment.metadata.to_dict(),
-    party_index=0,
     session_index=0
 )
 ```
@@ -458,6 +454,8 @@ vcon.add_wtf_transcription_attachment(
 
 ```bash
 pip install vcon
+pip install "vcon[image]"   # image and PDF helpers (Pillow, pypdf)
+pip install "vcon[video]"   # video metadata, thumbnails and transcoding (ffmpeg-python; needs the ffmpeg binary)
 ```
 
 ## Basic Usage
@@ -701,8 +699,8 @@ processing_results = vcon.process_extensions()
 # Check specific permissions
 can_record = vcon.check_lawful_basis_permission("recording", party_index=0)
 
-# Export transcriptions
-attachments = vcon.find_wtf_attachments(party_index=0)
+# Find transcriptions
+transcripts = [a for a in vcon.analysis if a["type"] == "wtf_transcription"]
 ```
 
 ## Documentation
