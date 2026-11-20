@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.6] - 2026-11-20
+
+### Changed
+- A `url` without a `content_hash` is allowed on a Dialog, Attachment or
+  Analysis. A producer cannot always obtain stable bytes for the URL (a
+  streaming-service page such as YouTube, audio behind a login), so a hash
+  cannot be computed. This follows the working group's direction on
+  draft-ietf-vcon-vcon-core issue #40; core-05 itself still says MUST. 1.0.4
+  and 1.0.5 reported it as a warning and said it would become an error in
+  1.1; that plan is dropped. An Attachment needs `body`+`encoding` or `url`
+  (it used to need `url`+`content_hash`).
+- Unchanged: a malformed `content_hash` is still an `is_valid()` error, and
+  `redacted_from` and `amended_from` still need a `content_hash` with a `url`.
+
 ## [1.0.5] - 2026-11-18
 
 ### Fixed

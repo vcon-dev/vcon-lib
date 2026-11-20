@@ -187,8 +187,9 @@ Reading and validating
 Besides the structure and references, ``is_valid()`` checks that every
 ``content_hash`` has the form ``<algorithm>-<unpadded base64url digest>`` and
 the body of every ``lawful_basis`` attachment. A ``url`` without a
-``content_hash`` is reported by ``get_validation_warnings()`` in 1.0.x and
-will be an error from 1.1. Loading keeps every value as written, including
+``content_hash`` is allowed on a Dialog, Attachment or Analysis, because a
+producer cannot always get stable bytes for it (a YouTube page, audio behind a
+login); ``redacted_from`` and ``amended_from`` still need one. Loading keeps every value as written, including
 timestamps, so an invalid ``created_at`` is reported by ``is_valid()`` rather
 than raised.
 

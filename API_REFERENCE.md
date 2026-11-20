@@ -23,7 +23,7 @@ Complete API documentation for the vCon library - a Python implementation of the
 | --- | --- |
 | `add_tag()` wrote `party: 0` even with no parties | `add_tag(name, value, party=None)`; `party` defaults to 0. On a vCon with no parties it still writes party 0 but emits a `DeprecationWarning` (it will raise in 1.1); a `party` index out of range raises `ValueError` |
 | `add_wtf_transcription_attachment()` | deprecated (`DeprecationWarning`); use `add_wtf_transcription_analysis()`, which writes the analysis entry the WTF draft requires |
-| `is_valid()` core structure only | also reports a malformed `content_hash` and errors in the body of every `lawful_basis` attachment; `get_validation_warnings()` adds a `url` without `content_hash` (an error from 1.1), JSON-string bodies under `encoding: "json"`, and lawful-basis warnings |
+| `is_valid()` core structure only | also reports a malformed `content_hash` and errors in the body of every `lawful_basis` attachment; `get_validation_warnings()` adds JSON-string bodies under `encoding: "json"`, and lawful-basis warnings |
 | loading rewrote `created_at` (and crashed on an unparseable one) | `created_at` is kept exactly as written; `is_valid()` reports an unparseable value |
 | `Dialog.add_inline_data(body: str, ...)` | also accepts `bytes` (encoded to base64url); `content_hash` is over the decoded content |
 | `generate_thumbnail()` defined twice (the image one won) | dispatches to `generate_image_thumbnail()` or `generate_video_thumbnail()`; video helpers need `pip install "vcon[video]"` and the ffmpeg binary |
@@ -416,7 +416,7 @@ is_valid, errors = vcon.is_valid()
 ```
 
 ###### `get_validation_warnings() -> List[str]`
-Findings that do not make the vCon invalid, for example a `url` without a `content_hash` on a dialog, attachment or analysis entry (a MUST in core-05, reported as a warning in 1.0.x and an `is_valid()` error from vcon 1.1), an `encoding: "json"` body that is a serialized JSON string, and lawful-basis warnings (an unknown proof type, hash algorithm or canonicalization method is a warning, since the draft's lists are open).
+Findings that do not make the vCon invalid, for example an `encoding: "json"` body that is a serialized JSON string, and lawful-basis warnings (an unknown proof type, hash algorithm or canonicalization method is a warning, since the draft's lists are open). A `url` without a `content_hash` is allowed on a dialog, attachment or analysis entry (from 1.0.6; earlier 1.0.x releases warned), because a producer cannot always get stable bytes for it, such as a YouTube page or audio behind a login. `redacted_from` and `amended_from` still need a `content_hash` with a `url`.
 
 ```python
 warnings = vcon.get_validation_warnings()
