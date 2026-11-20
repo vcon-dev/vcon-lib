@@ -90,17 +90,16 @@ def content_hash_problems(value: Any) -> List[str]:
     return problems
 
 
-def _check_content(obj: Dict[str, Any], label: str, errors: List[str], warnings: List[str],
-                   check_url: bool = True) -> None:
+def _check_content(obj: Dict[str, Any], label: str, errors: List[str], warnings: List[str]) -> None:
     """Integrity and body-form checks shared by Dialog, Attachment, Analysis and the
-    redacted_from / amended_from references (section 2.4)."""
-    if check_url and "url" in obj and "content_hash" not in obj:
-        # A MUST in section 2.4. Reported as a warning in 1.0.x so producers
-        # that only hold a carrier URL keep validating; an error from 1.1.
-        warnings.append(
-            f"{label} has a url but no content_hash (an external reference MUST have both; "
-            "this will be an error in vcon 1.1)."
-        )
+    redacted_from / amended_from references (section 2.4).
+
+    A ``url`` without a ``content_hash`` is allowed on Dialog, Attachment and
+    Analysis: a producer cannot always obtain stable bytes for the URL (a
+    streaming-service page, audio behind a login). This follows the working
+    group's direction on draft-ietf-vcon-vcon-core issue #40; core-05 still
+    says MUST. ``redacted_from`` and ``amended_from`` keep the requirement.
+    """
     if "content_hash" in obj:
         for problem in content_hash_problems(obj["content_hash"]):
             errors.append(f"{label} has an invalid content_hash: {problem}.")
@@ -362,7 +361,7 @@ def validate_vcon_dict(
                 errors.append("redacted_from is missing required field: type")
             if "url" in rf and "content_hash" not in rf:
                 errors.append("redacted_from with url must include content_hash.")
-            _check_content(rf, "redacted_from", errors, warnings, check_url=False)
+            _check_content(rf, "redacted_from", errors, warnings)
     af = vcon.get("amended_from")
     if "amended_from" in vcon:
         if not isinstance(af, dict):
@@ -372,7 +371,7 @@ def validate_vcon_dict(
                 errors.append("amended_from must include uuid, or an external reference (url).")
             if "url" in af and "content_hash" not in af:
                 errors.append("amended_from with url must include content_hash.")
-            _check_content(af, "amended_from", errors, warnings, check_url=False)
+            _check_content(af, "amended_from", errors, warnings)
 
     # --- extensions / critical -------------------------------------------
     ext_listed = vcon.get("extensions", [])
@@ -551,11 +550,10 @@ def validate_vcon_dict(
         if "purpose" not in attachment:
             errors.append(f"Attachment at index {i} is missing required field: purpose")
         has_inline = "body" in attachment and "encoding" in attachment
-        has_external = "url" in attachment and "content_hash" in attachment
+        has_external = "url" in attachment
         if not (has_inline or has_external or redacted):
-            errors.append(f"Attachment at index {i} must include body+encoding or url+content_hash.")
-        _check_content(attachment, f"Attachment at index {i}", errors, warnings,
-                       check_url=has_inline or redacted)
+            errors.append(f"Attachment at index {i} must include body+encoding or url.")
+        _check_content(attachment, f"Attachment at index {i}", errors, warnings)
         if "encoding" in attachment and attachment["encoding"] not in CORE_ENCODINGS and not ext_listed:
             errors.append(f"Attachment at index {i} has invalid encoding: {attachment['encoding']}")
         if "body" in attachment and attachment["body"] != "" and "mediatype" not in attachment:

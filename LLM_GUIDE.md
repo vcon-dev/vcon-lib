@@ -849,7 +849,7 @@ is_valid, errors = Vcon.validate_json(json_string)
 - an unparseable `created_at` (loading keeps `created_at` exactly as written and no longer reformats or rejects it)
 - errors in the body of every `lawful_basis` attachment (missing `lawful_basis`, `expiration`, `purpose_grants` and so on)
 
-`get_validation_warnings()` adds a `url` without a `content_hash` on a dialog, attachment or analysis entry (a MUST in core-05: a warning in 1.0.x, an `is_valid()` error from vcon 1.1, so always set `content_hash` with a `url`), an `encoding: "json"` body that is a serialized JSON string (pass the JSON value itself), and lawful-basis warnings; an unknown proof type, hash algorithm or canonicalization method is a warning, not an error.
+Set `content_hash` with a `url` whenever you have the bytes (`compute_content_hash()`); it may be left out when you cannot get stable bytes, such as a YouTube page or audio behind a login, but `redacted_from` and `amended_from` always need it. `get_validation_warnings()` adds an `encoding: "json"` body that is a serialized JSON string (pass the JSON value itself), and lawful-basis warnings; an unknown proof type, hash algorithm or canonicalization method is a warning, not an error.
 
 ## Common Patterns and Best Practices
 

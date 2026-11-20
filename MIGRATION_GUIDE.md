@@ -9,7 +9,7 @@
 | `add_wtf_transcription_attachment()` | deprecated (`DeprecationWarning`): the WTF draft stores a transcription as analysis. Use `add_wtf_transcription_analysis(transcript, segments, metadata, dialog_index=None, session_index=None, **kwargs)`; read it back with `vcon.find_analysis_by_type("wtf_transcription")` instead of `find_wtf_attachments()` |
 | `add_tag()` on a vCon with no parties wrote `party: 0` silently | still writes party 0, but emits a `DeprecationWarning` (the vCon fails `is_valid()`); it will raise `ValueError` in 1.1. Add a party before the first tag. New `party=` argument (default 0); an index out of range raises `ValueError` |
 | `is_valid()` did not check `content_hash` or lawful-basis bodies | errors for a malformed `content_hash` (`<algorithm>-<unpadded base64url digest>`, 86 characters for sha512, 43 for sha256) and for problems in a `lawful_basis` attachment body. Unknown lawful-basis proof types, hash algorithms and canonicalization methods are warnings |
-| no check for `url` without `content_hash` | reported by `get_validation_warnings()`; an `is_valid()` error from 1.1 |
+| no check for `url` without `content_hash` | 1.0.4 and 1.0.5 warned; from 1.0.6 it is allowed on Dialog, Attachment and Analysis (still required on `redacted_from` and `amended_from`) |
 | (no check) | `get_validation_warnings()` reports an `encoding: "json"` body that is a serialized JSON string |
 | loading rewrote `created_at` into Python's ISO format (and an unparseable value crashed `Vcon()`) | `created_at` is kept exactly as written; `is_valid()` reports an unparseable value |
 | `Dialog.add_inline_data()` took a str and hashed the base64url text | also takes `bytes` (encoded for you); `content_hash` is over the decoded content |

@@ -28,11 +28,21 @@ def _recording(**kw):
 
 
 class TestContentHash:
-    def test_url_needs_content_hash(self):
+    def test_url_without_content_hash_is_allowed(self):
+        # 1.0.6: allowed on Dialog, Attachment and Analysis (WG direction on
+        # draft-ietf-vcon-vcon-core issue #40, e.g. a YouTube recording link).
         v = _base()
-        v.add_dialog(_recording(url="https://example.com/a.wav"), session=0)
-        assert v.is_valid() == (True, [])  # a warning in 1.0.x, an error from 1.1
-        assert any("has a url but no content_hash" in w for w in v.get_validation_warnings())
+        v.add_dialog(_recording(url="https://www.youtube.com/watch?v=x"), session=0)
+        v.add_attachment("doc", url="https://example.com/d.pdf", party=0, session=0)
+        v.add_analysis(type="summary", vendor="v", url="https://example.com/s.json",
+                       sessions=0, body=None)
+        assert v.is_valid() == (True, [])
+        assert not any("content_hash" in w for w in v.get_validation_warnings())
+
+    def test_redacted_and_amended_from_still_need_content_hash(self):
+        v = _base()
+        v.vcon_dict["amended_from"] = {"url": "https://example.com/v.json"}
+        assert "amended_from with url must include content_hash." in v.is_valid()[1]
 
     def test_well_formed_hash_passes(self):
         v = _base()
@@ -52,7 +62,7 @@ class TestContentHash:
 
     def test_attachment_and_analysis_are_checked(self):
         v = _base()
-        v.add_attachment("doc", url="https://example.com/d.pdf", party=0, session=0)
+        v.vcon_dict["attachments"].append({"purpose": "doc", "start": T, "party": 0, "session": 0})
         v.add_analysis(type="summary", vendor="v", url="https://example.com/s.json",
                        content_hash="sha512-x", sessions=0, body=None)
         errors = v.is_valid()[1]
