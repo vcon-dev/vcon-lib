@@ -37,7 +37,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-ansi
+        run: poetry install --no-interaction --no-ansi --extras video
 
       - name: Lint with flake8
         run: |
